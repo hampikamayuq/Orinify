@@ -2,6 +2,7 @@ package com.zionhuang.innertube
 
 import com.zionhuang.innertube.encoder.brotli
 import com.zionhuang.innertube.models.Context
+import com.zionhuang.innertube.models.PlayerCredentials
 import com.zionhuang.innertube.models.YouTubeClient
 import com.zionhuang.innertube.models.YouTubeLocale
 import com.zionhuang.innertube.models.body.*
@@ -27,6 +28,21 @@ import java.util.*
  */
 class InnerTube {
     private var httpClient = createClient()
+
+    companion object {
+        /**
+         * The serializer every request body goes through. `explicitNulls = false` is what lets a
+         * null field be left out of the JSON rather than sent as `null`, which is how an absent
+         * `visitorData` is expressed.
+         */
+        @OptIn(ExperimentalSerializationApi::class)
+        val requestJson = Json {
+            ignoreUnknownKeys = true
+            explicitNulls = false
+            encodeDefaults = true
+        }
+    }
+
 
     var locale = YouTubeLocale(
         gl = Locale.getDefault().country,
@@ -54,11 +70,7 @@ class InnerTube {
         expectSuccess = true
 
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                explicitNulls = false
-                encodeDefaults = true
-            })
+            json(requestJson)
         }
 
         install(ContentEncoding) {
@@ -78,7 +90,13 @@ class InnerTube {
         }
     }
 
-    private fun HttpRequestBuilder.ytClient(client: YouTubeClient, setLogin: Boolean = false) {
+    private fun HttpRequestBuilder.ytClient(
+        client: YouTubeClient,
+        setLogin: Boolean = false,
+        signRequest: Boolean = true,
+        withAuthUser: Boolean = false,
+        apiKey: String? = null,
+    ) {
         contentType(ContentType.Application.Json)
         headers {
             append("X-Goog-Api-Format-Version", "1")
@@ -91,7 +109,8 @@ class InnerTube {
             if (setLogin) {
                 cookie?.let { cookie ->
                     append("cookie", cookie)
-                    if ("SAPISID" !in cookieMap) return@let
+                    if (withAuthUser) append("X-Goog-AuthUser", "0")
+                    if (!signRequest || "SAPISID" !in cookieMap) return@let
                     val currentTime = System.currentTimeMillis() / 1000
                     val sapisidHash = sha1("$currentTime ${cookieMap["SAPISID"]} https://music.youtube.com")
                     append("Authorization", "SAPISIDHASH ${currentTime}_${sapisidHash}")
@@ -99,7 +118,9 @@ class InnerTube {
             }
         }
         userAgent(client.userAgent)
-        parameter("key", client.api_key)
+        // Newer clients are accepted without the legacy API key, and those keys are being retired.
+        // Send one only when the caller asked for it or the client still carries its own.
+        (apiKey ?: client.api_key.takeIf { it.isNotEmpty() })?.let { parameter("key", it) }
         parameter("prettyPrint", false)
     }
 
@@ -125,11 +146,20 @@ class InnerTube {
         client: YouTubeClient,
         videoId: String,
         playlistId: String?,
+        credentials: PlayerCredentials = PlayerCredentials.ANONYMOUS,
     ) = httpClient.post("player") {
-        ytClient(client, setLogin = true)
+        // Every player request states how it presents itself. The server rejects some credential
+        // presentations outright, and a client refused one way may answer perfectly well another.
+        ytClient(
+            client,
+            setLogin = credentials.withLogin,
+            signRequest = credentials.signRequest,
+            withAuthUser = credentials.withAuthUser,
+            apiKey = credentials.apiKey,
+        )
         setBody(
             PlayerBody(
-                context = client.toContext(locale, visitorData).let {
+                context = client.toContext(locale, visitorData.takeIf { credentials.withVisitorData }).let {
                     if (client == YouTubeClient.TVHTML5) {
                         it.copy(
                             thirdParty = Context.ThirdParty(

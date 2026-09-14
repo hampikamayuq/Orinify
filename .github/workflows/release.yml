@@ -50,6 +50,11 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK_PATH"
           cp "$APK_PATH" "Orinify-${GITHUB_REF_NAME}.apk"
           sha256sum "Orinify-${GITHUB_REF_NAME}.apk" > "Orinify-${GITHUB_REF_NAME}.apk.sha256"
+          # Without a crash reporter, the mapping file is the only way to read a stack trace
+          # reported against this build. Fail the release if it is missing.
+          MAPPING_PATH=app/build/outputs/mapping/fossRelease/mapping.txt
+          test -f "$MAPPING_PATH"
+          cp "$MAPPING_PATH" "Orinify-${GITHUB_REF_NAME}-mapping.txt"
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v7
@@ -58,6 +63,7 @@ jobs:
           path: |
             Orinify-${{ github.ref_name }}.apk
             Orinify-${{ github.ref_name }}.apk.sha256
+            Orinify-${{ github.ref_name }}-mapping.txt
 
       - name: Create GitHub release
         env:
@@ -66,5 +72,6 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             "Orinify-${GITHUB_REF_NAME}.apk" \
             "Orinify-${GITHUB_REF_NAME}.apk.sha256" \
+            "Orinify-${GITHUB_REF_NAME}-mapping.txt" \
             --generate-notes \
             --title "$GITHUB_REF_NAME"

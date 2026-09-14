@@ -14,6 +14,7 @@ import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadNotificationHelper
 import com.zionhuang.innertube.YouTube
+import com.zionhuang.music.R
 import com.zionhuang.music.constants.AudioQuality
 import com.zionhuang.music.constants.AudioQualityKey
 import com.zionhuang.music.db.MusicDatabase
@@ -22,6 +23,15 @@ import com.zionhuang.music.di.DownloadCache
 import com.zionhuang.music.di.PlayerCache
 import com.zionhuang.music.utils.enumPreference
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.diego.orinify.audio.FormatResolver
+import dev.diego.orinify.audio.LegacyFormatPolicy
+import dev.diego.orinify.audio.codecFromMimeType
+import dev.diego.orinify.audio.toAudioFormatInfo
+import dev.diego.orinify.di.DownloadStreamUrls
+import dev.diego.orinify.diagnostics.ResolverShadow
+import dev.diego.orinify.network.StreamUrlCache
+import dev.diego.orinify.playback.networkProfile
+import dev.diego.orinify.playback.toPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,10 +51,12 @@ class DownloadUtil @Inject constructor(
     val databaseProvider: DatabaseProvider,
     @DownloadCache val downloadCache: SimpleCache,
     @PlayerCache val playerCache: SimpleCache,
+    @DownloadStreamUrls private val songUrlCache: StreamUrlCache,
+    private val resolverShadow: ResolverShadow,
 ) {
+    private val appContext = context
     private val connectivityManager = context.getSystemService<ConnectivityManager>()!!
     private val audioQuality by enumPreference(context, AudioQualityKey, AudioQuality.AUTO)
-    private val songUrlCache = HashMap<String, Pair<String, Long>>()
     private val dataSourceFactory = ResolvingDataSource.Factory(
         CacheDataSource.Factory()
             .setCache(playerCache)
@@ -63,8 +75,8 @@ class DownloadUtil @Inject constructor(
             return@Factory dataSpec
         }
 
-        songUrlCache[mediaId]?.takeIf { it.second < System.currentTimeMillis() }?.let {
-            return@Factory dataSpec.withUri(it.first.toUri())
+        songUrlCache.get(mediaId)?.let { cachedUrl ->
+            return@Factory dataSpec.withUri(cachedUrl.toUri())
         }
 
         val playedFormat = runBlocking(Dispatchers.IO) { database.format(mediaId).first() }
@@ -75,41 +87,79 @@ class DownloadUtil @Inject constructor(
             throw PlaybackException(playerResponse.playabilityStatus.reason, null, PlaybackException.ERROR_CODE_REMOTE_ERROR)
         }
 
-        val format =
-            if (playedFormat != null) {
-                playerResponse.streamingData?.adaptiveFormats?.find { it.itag == playedFormat.itag }
-            } else {
-                playerResponse.streamingData?.adaptiveFormats
-                    ?.filter { it.isAudio }
-                    ?.maxByOrNull {
-                        it.bitrate * when (audioQuality) {
-                            AudioQuality.AUTO -> if (connectivityManager.isActiveNetworkMetered) -1 else 1
-                            AudioQuality.HIGH -> 1
-                            AudioQuality.LOW -> -1
-                        } + (if (it.mimeType.startsWith("audio/webm")) 10240 else 0) // prefer opus stream
-                    }
-            }!!.let {
-                // Specify range to avoid YouTube's throttling
-                it.copy(url = "${it.url}&range=0-${it.contentLength ?: 10000000}")
-            }
+        val streamingData = playerResponse.streamingData
+        // Only audio-only formats carrying a usable URL can be downloaded.
+        val audioFormats = streamingData?.adaptiveFormats
+            ?.filter { it.isAudio && !it.url.isNullOrEmpty() }
+            .orEmpty()
 
-        database.query {
-            upsert(
-                FormatEntity(
-                    id = mediaId,
-                    itag = format.itag,
-                    mimeType = format.mimeType.split(";")[0],
-                    codecs = format.mimeType.split("codecs=")[1].removeSurrounding("\""),
-                    bitrate = format.bitrate,
-                    sampleRate = format.audioSampleRate,
-                    contentLength = format.contentLength!!,
-                    loudnessDb = playerResponse.playerConfig?.audioConfig?.loudnessDb
-                )
+        val audioFormatInfos = audioFormats.map {
+            it.toAudioFormatInfo(sourceClient = null, isAuthenticated = YouTube.isLoggedIn)
+        }
+        val qualityPreference = audioQuality.toPreference()
+        val networkProfile = connectivityManager.networkProfile()
+
+        // Downloads run the same comparison as playback, into the same counters.
+        val legacyIndex = LegacyFormatPolicy.select(audioFormatInfos, qualityPreference, networkProfile)
+        resolverShadow.record(
+            videoId = mediaId,
+            candidates = audioFormatInfos,
+            legacyIndex = legacyIndex,
+            selection = FormatResolver.resolve(
+                candidates = audioFormatInfos,
+                target = FormatResolver.qualityTargetFor(qualityPreference, networkProfile),
+            ),
+        )
+
+        // Prefer the itag already played, but fall back to the regular selection when the
+        // responding client does not offer it, instead of failing the download.
+        val reusedFormat = playedFormat?.let { played -> audioFormats.find { it.itag == played.itag } }
+        val format = reusedFormat
+            ?: legacyIndex?.let(audioFormats::getOrNull)
+            ?: throw PlaybackException(
+                appContext.getString(R.string.error_no_stream),
+                null,
+                MusicService.ERROR_CODE_NO_STREAM
             )
+
+        if (playedFormat != null && reusedFormat == null) {
+            // Same hazard as playback: this pipeline reads through the player cache, which keys its
+            // spans by media id alone, so bytes of the previous encoding would be written into the
+            // download. Drop them before fetching the replacement.
+            playerCache.removeResource(mediaId)
         }
 
-        songUrlCache[mediaId] = format.url!! to playerResponse.streamingData!!.expiresInSeconds * 1000L
-        dataSpec.withUri(format.url!!.toUri())
+        val streamUrl = format.url
+            ?: throw PlaybackException(
+                appContext.getString(R.string.error_no_stream),
+                null,
+                MusicService.ERROR_CODE_NO_STREAM
+            )
+        val contentLength = format.contentLength
+        // Specify range to avoid YouTube's throttling. When the server did not report a length,
+        // request the whole resource: a made-up ceiling silently truncates long tracks.
+        val downloadUrl = contentLength?.let { "$streamUrl&range=0-$it" } ?: streamUrl
+
+        // The entity requires a content length, so persist the details only when it is known.
+        if (contentLength != null) {
+            database.query {
+                upsert(
+                    FormatEntity(
+                        id = mediaId,
+                        itag = format.itag,
+                        mimeType = format.mimeType.substringBefore(';').trim(),
+                        codecs = codecFromMimeType(format.mimeType).orEmpty(),
+                        bitrate = format.bitrate,
+                        sampleRate = format.audioSampleRate,
+                        contentLength = contentLength,
+                        loudnessDb = playerResponse.playerConfig?.audioConfig?.loudnessDb
+                    )
+                )
+            }
+        }
+
+        songUrlCache.put(mediaId, downloadUrl, streamingData?.expiresInSeconds ?: 0)
+        dataSpec.withUri(downloadUrl.toUri())
     }
     val downloadNotificationHelper = DownloadNotificationHelper(context, ExoDownloadService.CHANNEL_ID)
     val downloadManager: DownloadManager = DownloadManager(context, databaseProvider, downloadCache, dataSourceFactory, Executor(Runnable::run)).apply {
