@@ -40,13 +40,21 @@ fun hasAuthenticatedSession(cookie: String?): Boolean {
         ?.containsKey("SAPISID") == true
 }
 
+/**
+ * Cookie values routinely contain "=" — base64 padding in `__Secure-3PSIDTS` alone guarantees it —
+ * so only the first one separates the name from the value. Splitting on every "=" truncated those
+ * values, and an entry carrying no "=" at all threw, which left the caller with a cookie it could
+ * not sign while still sending it. A malformed entry is skipped instead.
+ */
 fun parseCookieString(cookie: String): Map<String, String> =
-    cookie.split("; ")
-        .filter { it.isNotEmpty() }
-        .associate {
-            val (key, value) = it.split("=")
-            key to value
+    cookie.split(";")
+        .mapNotNull { entry ->
+            val separator = entry.indexOf('=')
+            if (separator <= 0) return@mapNotNull null
+            entry.substring(0, separator).trim() to entry.substring(separator + 1).trim()
         }
+        .filter { it.first.isNotEmpty() }
+        .toMap()
 
 fun String.parseTime(): Int? {
     try {

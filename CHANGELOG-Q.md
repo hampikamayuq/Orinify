@@ -176,6 +176,35 @@ para um visitante que não é o da conta assinada.
   verificam a ausência da `visitorData` no corpo passam pelo mesmo `Json` que o cliente usa, e não
   por uma cópia das configurações.
 
+### A `visitorData` foi descartada; a apresentação da credencial, não
+
+O modo `no-visitor` respondeu `HTTP 400 INVALID_ARGUMENT` igual ao modo normal, nos dois clients. A
+`visitorData` está eliminada: o que o servidor recusa é a apresentação da credencial em si.
+
+Medido anonimamente, a chave de API, o `X-Goog-AuthUser` e um `Origin` real são todos inócuos —
+todas as variantes respondem 200. O que pesa é o token ter mudado entre builds: `FAILED_PRECONDITION`
+enquanto a chave aposentada era enviada, `INVALID_ARGUMENT` depois que ela saiu. As duas são
+recusas da mesma coisa.
+
+- `PlayerCredentials` declara como uma requisição se apresenta, variando de forma independente a
+  sessão, a `visitorData`, a assinatura `SAPISIDHASH`, o `X-Goog-AuthUser` e a chave de API;
+- a escada de tentativas troca exatamente um elemento por vez em relação à primeira, então a
+  tentativa que o servidor aceitar identifica sozinha o que faltava. Aparece no rastro como `key`,
+  `authuser`, `unsigned` ou `anon`;
+- é uma sonda deliberada, não o comportamento final: assim que uma delas responder, a escada colapsa
+  para o modo que funciona.
+
+### Correção no parser de cookie
+
+`parseCookieString` dividia cada entrada em **todo** `=`, e desestruturava o resultado em dois.
+Valores de cookie contêm `=` rotineiramente — o preenchimento base64 de `__Secure-3PSIDTS` já
+garante isso —, então esses valores eram truncados; e uma entrada sem nenhum `=` lançava exceção
+dentro do setter de `cookie`, deixando `cookieMap` desatualizado. O efeito seria enviar o cookie sem
+conseguir assiná-lo, exatamente a apresentação inconsistente que o servidor recusa.
+
+Agora só o primeiro `=` separa nome de valor, entradas malformadas são ignoradas e o separador é
+lido com ou sem espaço. Coberto por testes.
+
 ### Pendente antes da primeira release
 
 - keystore pessoal criada fora do repositório e secrets configurados;

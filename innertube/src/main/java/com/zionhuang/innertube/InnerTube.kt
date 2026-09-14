@@ -2,6 +2,7 @@ package com.zionhuang.innertube
 
 import com.zionhuang.innertube.encoder.brotli
 import com.zionhuang.innertube.models.Context
+import com.zionhuang.innertube.models.PlayerCredentials
 import com.zionhuang.innertube.models.YouTubeClient
 import com.zionhuang.innertube.models.YouTubeLocale
 import com.zionhuang.innertube.models.body.*
@@ -89,7 +90,13 @@ class InnerTube {
         }
     }
 
-    private fun HttpRequestBuilder.ytClient(client: YouTubeClient, setLogin: Boolean = false) {
+    private fun HttpRequestBuilder.ytClient(
+        client: YouTubeClient,
+        setLogin: Boolean = false,
+        signRequest: Boolean = true,
+        withAuthUser: Boolean = false,
+        apiKey: String? = null,
+    ) {
         contentType(ContentType.Application.Json)
         headers {
             append("X-Goog-Api-Format-Version", "1")
@@ -102,7 +109,8 @@ class InnerTube {
             if (setLogin) {
                 cookie?.let { cookie ->
                     append("cookie", cookie)
-                    if ("SAPISID" !in cookieMap) return@let
+                    if (withAuthUser) append("X-Goog-AuthUser", "0")
+                    if (!signRequest || "SAPISID" !in cookieMap) return@let
                     val currentTime = System.currentTimeMillis() / 1000
                     val sapisidHash = sha1("$currentTime ${cookieMap["SAPISID"]} https://music.youtube.com")
                     append("Authorization", "SAPISIDHASH ${currentTime}_${sapisidHash}")
@@ -110,11 +118,9 @@ class InnerTube {
             }
         }
         userAgent(client.userAgent)
-        // Newer clients are accepted without the legacy API key, and those keys are being
-        // retired. Send it only when the client still carries one.
-        if (client.api_key.isNotEmpty()) {
-            parameter("key", client.api_key)
-        }
+        // Newer clients are accepted without the legacy API key, and those keys are being retired.
+        // Send one only when the caller asked for it or the client still carries its own.
+        (apiKey ?: client.api_key.takeIf { it.isNotEmpty() })?.let { parameter("key", it) }
         parameter("prettyPrint", false)
     }
 
@@ -140,16 +146,20 @@ class InnerTube {
         client: YouTubeClient,
         videoId: String,
         playlistId: String?,
-        setLogin: Boolean = false,
-        sendVisitorData: Boolean = true,
+        credentials: PlayerCredentials = PlayerCredentials.ANONYMOUS,
     ) = httpClient.post("player") {
-        // The session is attached only when the caller asked for it. Every player request states
-        // which credential mode it wants, because a client refused with a session may answer
-        // perfectly well without one, and the reverse holds for a video behind a bot check.
-        ytClient(client, setLogin = setLogin)
+        // Every player request states how it presents itself. The server rejects some credential
+        // presentations outright, and a client refused one way may answer perfectly well another.
+        ytClient(
+            client,
+            setLogin = credentials.withLogin,
+            signRequest = credentials.signRequest,
+            withAuthUser = credentials.withAuthUser,
+            apiKey = credentials.apiKey,
+        )
         setBody(
             PlayerBody(
-                context = client.toContext(locale, visitorData.takeIf { sendVisitorData }).let {
+                context = client.toContext(locale, visitorData.takeIf { credentials.withVisitorData }).let {
                     if (client == YouTubeClient.TVHTML5) {
                         it.copy(
                             thirdParty = Context.ThirdParty(

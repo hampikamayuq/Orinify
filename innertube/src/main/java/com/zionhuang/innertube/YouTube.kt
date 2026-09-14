@@ -7,6 +7,7 @@ import com.zionhuang.innertube.models.ArtistItem
 import com.zionhuang.innertube.models.BrowseEndpoint
 import com.zionhuang.innertube.models.GridRenderer
 import com.zionhuang.innertube.models.MusicCarouselShelfRenderer
+import com.zionhuang.innertube.models.PlayerCredentials
 import com.zionhuang.innertube.models.PlaylistItem
 import com.zionhuang.innertube.models.SearchSuggestions
 import com.zionhuang.innertube.models.SongItem
@@ -507,34 +508,6 @@ object YouTube {
             }
     }
 
-    /**
-     * How one player request presents itself. The session and the stored `visitorData` are varied
-     * independently because they fail independently: a request with the session is refused with
-     * `INVALID_ARGUMENT` while the same request without it is answered, and a request without the
-     * session is answered only with a demand to sign in.
-     *
-     * The middle mode exists for that gap. `visitorData` identifies a visitor the server issued at
-     * some earlier point, and presenting one that does not belong to the signed-in session is the
-     * one malformed argument in an otherwise ordinary request. Dropping it lets the server issue a
-     * visitor for the session it is actually being shown.
-     */
-    private data class CredentialMode(
-        val withLogin: Boolean,
-        val withVisitorData: Boolean,
-        val suffix: String,
-    )
-
-    private fun credentialModes(cookie: String?): List<CredentialMode> =
-        if (cookie.isNullOrEmpty()) {
-            listOf(CredentialMode(withLogin = false, withVisitorData = true, suffix = ""))
-        } else {
-            listOf(
-                CredentialMode(withLogin = true, withVisitorData = true, suffix = ""),
-                CredentialMode(withLogin = true, withVisitorData = false, suffix = " no-visitor"),
-                CredentialMode(withLogin = false, withVisitorData = true, suffix = " anon"),
-            )
-        }
-
     suspend fun player(videoId: String, playlistId: String? = null): Result<PlayerResponse> =
         playerWithMetadata(videoId, playlistId).map { it.response }
 
@@ -558,18 +531,22 @@ object YouTube {
         val clients = if (!cookie.isNullOrEmpty()) listOf(ANDROID_MUSIC, ANDROID_VR) else listOf(ANDROID_VR)
 
         for (client in clients) {
-            for (mode in credentialModes(cookie)) {
+            val modes = if (cookie.isNullOrEmpty()) {
+                listOf(PlayerCredentials.ANONYMOUS)
+            } else {
+                PlayerCredentials.ORDERED_WITH_SESSION
+            }
+            for (mode in modes) {
                 // The version travels with the name so a failure report identifies the build that
                 // produced it: a client version retired server-side is otherwise indistinguishable
                 // from a current one that was refused.
-                val label = client.clientName + "/" + client.clientVersion + mode.suffix
+                val label = client.clientName + "/" + client.clientVersion + mode.label
                 val response = try {
                     innerTube.player(
                         client,
                         videoId,
                         playlistId,
-                        setLogin = mode.withLogin,
-                        sendVisitorData = mode.withVisitorData,
+                        credentials = mode,
                     ).body<PlayerResponse>()
                 } catch (cancellation: CancellationException) {
                     throw cancellation
@@ -631,7 +608,7 @@ object YouTube {
             return null
         }
         val embedded = try {
-            innerTube.player(TVHTML5, videoId, playlistId, setLogin = false).body<PlayerResponse>()
+            innerTube.player(TVHTML5, videoId, playlistId, PlayerCredentials.ANONYMOUS).body<PlayerResponse>()
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {
