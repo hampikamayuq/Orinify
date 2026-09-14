@@ -14,6 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import dev.diego.orinify.auth.WebPlaybackUrl
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +42,10 @@ fun Thumbnail(
 
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val error by playerConnection.error.collectAsState()
+    var webVideoId by remember { mutableStateOf<String?>(null) }
+    webVideoId?.let { videoId ->
+        WebPlaybackDialog(videoId, playerConnection.player, onDismiss = { webVideoId = null })
+    }
 
     val showLyrics by rememberPreference(ShowLyricsKey, false)
 
@@ -103,7 +111,10 @@ fun Thumbnail(
             error?.let { error ->
                 PlaybackError(
                     error = error,
-                    retry = playerConnection.player::prepare
+                    retry = playerConnection.player::prepare,
+                    openWebPlayer = mediaMetadata?.id?.takeIf { WebPlaybackUrl.forVideo(it) != null }?.let { id ->
+                        { webVideoId = id }
+                    },
                 )
             }
         }

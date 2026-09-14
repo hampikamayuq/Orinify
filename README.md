@@ -37,6 +37,7 @@ A release exige uma keystore externa e as variáveis descritas em
 - [Sincronização com upstream](docs/UPSTREAM_SYNC.md)
 - [Segurança](docs/SECURITY.md)
 - [Processo de release](docs/RELEASE_PROCESS.md)
+- [Plano de melhorias](docs/IMPROVEMENT_PLAN.md)
 
 O projeto permanece sob GPL-3.0 e mantém a atribuição e o histórico do InnerTune. Consulte
 [`UPSTREAM.md`](UPSTREAM.md) e [`LICENSE`](LICENSE).

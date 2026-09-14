@@ -29,6 +29,7 @@ import com.zionhuang.music.utils.dataStore
 import com.zionhuang.music.utils.get
 import com.zionhuang.music.utils.reportException
 import dagger.hilt.android.HiltAndroidApp
+import dev.diego.orinify.settings.AllowPipedFallbackKey
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -43,7 +44,11 @@ class App : Application(), ImageLoaderFactory {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
         super.onCreate()
-        Timber.plant(Timber.DebugTree())
+        // Release builds must not write to logcat: SECURITY.md forbids leaking request data, and a
+        // planted tree makes any future log statement a potential leak.
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
 
         val locale = Locale.getDefault()
         val languageTag = locale.toLanguageTag().replace("-Hant", "") // replace zh-Hant-* to zh-*
@@ -96,6 +101,14 @@ class App : Application(), ImageLoaderFactory {
                 .distinctUntilChanged()
                 .collect { cookie ->
                     YouTube.cookie = cookie
+                }
+        }
+        GlobalScope.launch {
+            dataStore.data
+                .map { it[AllowPipedFallbackKey] ?: false }
+                .distinctUntilChanged()
+                .collect { allowed ->
+                    YouTube.allowPipedFallback = allowed
                 }
         }
     }

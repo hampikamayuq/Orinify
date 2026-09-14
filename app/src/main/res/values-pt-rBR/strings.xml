@@ -288,4 +288,17 @@
     <string name="use_login_for_browse">Usar a conta para a navegação de conteúdo</string>
     <string name="use_login_for_browse_desc">Isto pode influenciar em que conteúdo você vê, e se você tiver Premium por exemplo, verá álbuns que só estão disponíveis com Premium</string>
     <string name="action_login">Conectar-se</string>
+    <string name="login_session_help">Entre no YouTube Music abaixo e toque em Conectar esta conta.</string>
+    <string name="login_switch_account">Trocar conta</string>
+    <string name="login_connect_account">Conectar esta conta</string>
+    <string name="login_session_checking">Verificando…</string>
+    <string name="login_session_incomplete">Conclua o login e aguarde o YouTube Music carregar antes de conectar.</string>
+    <string name="login_session_failed">Não foi possível validar esta sessão. Verifique a conexão ou entre novamente. Sua sessão anterior foi mantida.</string>
+    <string name="web_playback_title">YouTube Music</string>
+    <string name="web_playback_close">Fechar player web</string>
+    <string name="web_playback_help">Toque em reproduzir na página abaixo. Mantenha esta tela aberta para ouvir. Fechar a tela ou sair do app encerra a reprodução web.</string>
+    <string name="web_playback_open">Reproduzir na página</string>
+    <string name="native_playback_failed">O player do Orinify não conseguiu reproduzir esta faixa.</string>
+    <string name="playback_retry">Tentar novamente</string>
+    <string name="playback_details">Detalhes</string>
 </resources>

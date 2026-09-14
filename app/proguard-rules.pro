@@ -12,13 +12,11 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep line numbers so a stack trace from a release build can be read with the mapping file
+# published alongside the APK. Orinify ships no crash reporter, so this is the only way a user
+# report can be traced back to a line.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
 ## Kotlin Serialization
 # Keep `Companion` object fields of serializable classes.

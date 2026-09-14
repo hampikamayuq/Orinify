@@ -34,6 +34,7 @@ import com.zionhuang.music.ui.component.SwitchPreference
 import com.zionhuang.music.ui.utils.backToMain
 import com.zionhuang.music.utils.rememberEnumPreference
 import com.zionhuang.music.utils.rememberPreference
+import dev.diego.orinify.settings.AllowPipedFallbackKey
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +49,7 @@ fun PlayerSettings(
     val (autoLoadMore, onAutoLoadMoreChange) = rememberPreference(AutoLoadMoreKey, defaultValue = true)
     val (autoSkipNextOnError, onAutoSkipNextOnErrorChange) = rememberPreference(AutoSkipNextOnErrorKey, defaultValue = false)
     val (stopMusicOnTaskClear, onStopMusicOnTaskClearChange) = rememberPreference(StopMusicOnTaskClearKey, defaultValue = false)
+    val (allowPipedFallback, onAllowPipedFallbackChange) = rememberPreference(AllowPipedFallbackKey, defaultValue = false)
 
     Column(
         Modifier
@@ -86,6 +88,14 @@ fun PlayerSettings(
             icon = { Icon(painterResource(R.drawable.volume_up), null) },
             checked = audioNormalization,
             onCheckedChange = onAudioNormalizationChange
+        )
+
+        SwitchPreference(
+            title = { Text(stringResource(R.string.orinify_allow_piped_fallback)) },
+            description = stringResource(R.string.orinify_allow_piped_fallback_desc),
+            icon = { Icon(painterResource(R.drawable.wifi_proxy), null) },
+            checked = allowPipedFallback,
+            onCheckedChange = onAllowPipedFallbackChange
         )
 
         PreferenceGroupTitle(

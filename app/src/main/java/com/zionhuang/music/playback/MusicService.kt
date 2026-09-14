@@ -52,7 +52,17 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.zionhuang.innertube.YouTube
 import dev.diego.orinify.audio.AudioFormatInfo
+import dev.diego.orinify.audio.FormatResolver
+import dev.diego.orinify.audio.LegacyFormatPolicy
+import dev.diego.orinify.audio.codecFromMimeType
 import dev.diego.orinify.audio.toAudioFormatInfo
+import dev.diego.orinify.di.DownloadStreamUrls
+import dev.diego.orinify.di.PlaybackStreamUrls
+import dev.diego.orinify.diagnostics.ResolverShadow
+import dev.diego.orinify.diagnostics.causeChain
+import dev.diego.orinify.network.StreamUrlCache
+import dev.diego.orinify.playback.networkProfile
+import dev.diego.orinify.playback.toPreference
 import com.zionhuang.innertube.models.SongItem
 import com.zionhuang.innertube.models.WatchEndpoint
 import com.zionhuang.innertube.models.response.PlayerResponse
@@ -66,6 +76,7 @@ import com.zionhuang.music.constants.AutoSkipNextOnErrorKey
 import com.zionhuang.music.constants.DiscordTokenKey
 import com.zionhuang.music.constants.EnableDiscordRPCKey
 import com.zionhuang.music.constants.HideExplicitKey
+import com.zionhuang.music.constants.InnerTubeCookieKey
 import com.zionhuang.music.constants.MediaSessionConstants.CommandToggleLibrary
 import com.zionhuang.music.constants.MediaSessionConstants.CommandToggleLike
 import com.zionhuang.music.constants.MediaSessionConstants.CommandToggleRepeatMode
@@ -119,6 +130,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -186,6 +198,17 @@ class MusicService : MediaLibraryService(),
     @Inject
     @DownloadCache
     lateinit var downloadCache: SimpleCache
+
+    @Inject
+    @PlaybackStreamUrls
+    lateinit var streamUrlCache: StreamUrlCache
+
+    @Inject
+    @DownloadStreamUrls
+    lateinit var downloadStreamUrlCache: StreamUrlCache
+
+    @Inject
+    lateinit var resolverShadow: ResolverShadow
 
     lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaLibrarySession
@@ -291,6 +314,17 @@ class MusicService : MediaLibraryService(),
             .distinctUntilChanged()
             .collectLatest(scope) {
                 player.skipSilenceEnabled = it
+            }
+
+        // Signed URLs belong to the session that resolved them. Drop them whenever the account
+        // changes so an anonymous URL is never replayed after login, or the reverse after logout.
+        dataStore.data
+            .map { it[InnerTubeCookieKey].orEmpty() }
+            .distinctUntilChanged()
+            .drop(1)
+            .collect(scope) {
+                streamUrlCache.clear()
+                downloadStreamUrlCache.clear()
             }
 
         combine(
@@ -623,7 +657,6 @@ class MusicService : MediaLibraryService(),
             .setFlags(FLAG_IGNORE_CACHE_ON_ERROR)
 
     private fun createDataSourceFactory(): DataSource.Factory {
-        val songUrlCache = HashMap<String, Pair<String, Long>>()
         return ResolvingDataSource.Factory(createCacheDataSource()) { dataSpec ->
             val mediaId = dataSpec.key ?: error("No media id")
 
@@ -634,9 +667,9 @@ class MusicService : MediaLibraryService(),
                 return@Factory dataSpec
             }
 
-            songUrlCache[mediaId]?.takeIf { it.second < System.currentTimeMillis() }?.let {
+            streamUrlCache.get(mediaId)?.let { cachedUrl ->
                 scope.launch(Dispatchers.IO) { recoverSong(mediaId) }
-                return@Factory dataSpec.withUri(it.first.toUri())
+                return@Factory dataSpec.withUri(cachedUrl.toUri())
             }
 
             // Check whether format exists so that users from older version can view format details
@@ -645,13 +678,25 @@ class MusicService : MediaLibraryService(),
             val playerResult = runBlocking(Dispatchers.IO) {
                 YouTube.playerWithMetadata(mediaId)
             }.getOrElse { throwable ->
-                when (throwable) {
-                    is ConnectException, is UnknownHostException -> {
+                // The failure now arrives wrapped, so look through the causes before deciding.
+                val causes = throwable.causeChain()
+                when {
+                    causes.any { it is ConnectException || it is UnknownHostException } -> {
                         throw PlaybackException(getString(R.string.error_no_internet), throwable, PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED)
                     }
 
-                    is SocketTimeoutException -> {
+                    causes.any { it is SocketTimeoutException } -> {
                         throw PlaybackException(getString(R.string.error_timeout), throwable, PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT)
+                    }
+
+                    // Name the client and the status rather than saying "unknown error". This is
+                    // what the provenance recorded by the player strategy is for.
+                    throwable is YouTube.PlayerUnavailableException -> {
+                        throw PlaybackException(
+                            getString(R.string.orinify_error_no_client, YouTube.describeAttempts(throwable.attempts)),
+                            throwable,
+                            ERROR_CODE_NO_STREAM
+                        )
                     }
 
                     else -> throw PlaybackException(getString(R.string.error_unknown), throwable, PlaybackException.ERROR_CODE_REMOTE_ERROR)
@@ -659,26 +704,62 @@ class MusicService : MediaLibraryService(),
             }
             val playerResponse = playerResult.response
             if (playerResponse.playabilityStatus.status != "OK") {
-                throw PlaybackException(playerResponse.playabilityStatus.reason, null, PlaybackException.ERROR_CODE_REMOTE_ERROR)
+                // Lead with the server's own words, but keep the attempt trail beside them. The
+                // reason alone says nothing about which client heard it, and that is the fact that
+                // tells a refused session apart from a client that was never given one.
+                val attempts = YouTube.describeAttempts(playerResult.attempts)
+                val reason = playerResponse.playabilityStatus.reason
+                    ?.let { getString(R.string.orinify_error_server_reason, it, attempts) }
+                    ?: getString(R.string.orinify_error_no_client, attempts)
+                throw PlaybackException(reason, null, PlaybackException.ERROR_CODE_REMOTE_ERROR)
             }
 
-            val format =
-                if (playedFormat != null) {
-                    playerResponse.streamingData?.adaptiveFormats?.find {
-                        // Use itag to identify previously played format
-                        it.itag == playedFormat.itag
-                    }
-                } else {
-                    playerResponse.streamingData?.adaptiveFormats
-                        ?.filter { it.isAudio }
-                        ?.maxByOrNull {
-                            it.bitrate * when (audioQuality) {
-                                AudioQuality.AUTO -> if (connectivityManager.isActiveNetworkMetered) -1 else 1
-                                AudioQuality.HIGH -> 1
-                                AudioQuality.LOW -> -1
-                            } + (if (it.mimeType.startsWith("audio/webm")) 10240 else 0) // prefer opus stream
-                        }
-                } ?: throw PlaybackException(getString(R.string.error_no_stream), null, ERROR_CODE_NO_STREAM)
+            val streamingData = playerResponse.streamingData
+            // Only audio-only formats carrying a usable URL can be played.
+            val audioFormats = streamingData?.adaptiveFormats
+                ?.filter { it.isAudio && !it.url.isNullOrEmpty() }
+                .orEmpty()
+
+            val audioFormatInfos = audioFormats.map {
+                it.toAudioFormatInfo(playerResult.sourceClient, playerResult.isAuthenticated)
+            }
+            val qualityPreference = audioQuality.toPreference()
+            val networkProfile = connectivityManager.networkProfile()
+
+            // The inherited rule still decides what plays. The resolver runs beside it and only
+            // records where the two would disagree, which is step 3 of the integration order in
+            // docs/AUDIO_PIPELINE.md.
+            val legacyIndex = LegacyFormatPolicy.select(audioFormatInfos, qualityPreference, networkProfile)
+            resolverShadow.record(
+                videoId = mediaId,
+                candidates = audioFormatInfos,
+                legacyIndex = legacyIndex,
+                selection = FormatResolver.resolve(
+                    candidates = audioFormatInfos,
+                    target = FormatResolver.qualityTargetFor(qualityPreference, networkProfile),
+                ),
+            )
+
+            // Reuse the itag already played so the cached bytes stay valid, but when the responding
+            // client does not offer it, fall back to the regular selection instead of failing the
+            // track. Clients differ: a format resolved through ANDROID_MUSIC is not guaranteed to
+            // exist in an IOS or TVHTML5 response.
+            val reusedFormat = playedFormat?.let { played -> audioFormats.find { it.itag == played.itag } }
+            val format = reusedFormat
+                ?: legacyIndex?.let(audioFormats::getOrNull)
+                ?: throw PlaybackException(getString(R.string.error_no_stream), null, ERROR_CODE_NO_STREAM)
+
+            if (playedFormat != null && reusedFormat == null) {
+                // Switching encoding invalidates what is already cached for this song. Media3 keys
+                // cached spans by media id alone, so a partially cached track would feed the decoder
+                // bytes of the old format for the cached ranges and of the new one for the rest.
+                // Drop those spans before playing the replacement. Downloads are never touched: a
+                // completed download answers the cache check above and never reaches this point.
+                playerCache.removeResource(mediaId)
+            }
+
+            val streamUrl = format.url
+                ?: throw PlaybackException(getString(R.string.error_no_stream), null, ERROR_CODE_NO_STREAM)
 
             if (currentMediaMetadata.value?.id == mediaId) {
                 currentAudioFormatInfo.value = format.toAudioFormatInfo(
@@ -687,24 +768,29 @@ class MusicService : MediaLibraryService(),
                 )
             }
 
-            database.query {
-                upsert(
-                    FormatEntity(
-                        id = mediaId,
-                        itag = format.itag,
-                        mimeType = format.mimeType.split(";")[0],
-                        codecs = format.mimeType.split("codecs=")[1].removeSurrounding("\""),
-                        bitrate = format.bitrate,
-                        sampleRate = format.audioSampleRate,
-                        contentLength = format.contentLength!!,
-                        loudnessDb = playerResponse.playerConfig?.audioConfig?.loudnessDb
+            // The entity requires a content length, and a format without one is still playable, so
+            // persist the details only when the server reported it instead of failing playback.
+            val contentLength = format.contentLength
+            if (contentLength != null) {
+                database.query {
+                    upsert(
+                        FormatEntity(
+                            id = mediaId,
+                            itag = format.itag,
+                            mimeType = format.mimeType.substringBefore(';').trim(),
+                            codecs = codecFromMimeType(format.mimeType).orEmpty(),
+                            bitrate = format.bitrate,
+                            sampleRate = format.audioSampleRate,
+                            contentLength = contentLength,
+                            loudnessDb = playerResponse.playerConfig?.audioConfig?.loudnessDb
+                        )
                     )
-                )
+                }
             }
             scope.launch(Dispatchers.IO) { recoverSong(mediaId, playerResponse) }
 
-            songUrlCache[mediaId] = format.url!! to playerResponse.streamingData!!.expiresInSeconds * 1000L
-            dataSpec.withUri(format.url!!.toUri()).subrange(dataSpec.uriPositionOffset, CHUNK_LENGTH)
+            streamUrlCache.put(mediaId, streamUrl, streamingData?.expiresInSeconds ?: 0)
+            dataSpec.withUri(streamUrl.toUri()).subrange(dataSpec.uriPositionOffset, CHUNK_LENGTH)
         }
     }
 

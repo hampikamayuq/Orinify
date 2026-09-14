@@ -4,9 +4,24 @@ on:
   push:
     branches:
       - '**'
+  pull_request:
+    branches:
+      - '**'
+
+# One build per branch per event. The event name has to be part of the group: a pull_request run
+# joins the group before the job-level condition below is evaluated, so a shared group would let it
+# cancel the push run and then skip itself, leaving the commit with no build at all.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   build:
+    # A branch in this repository is already covered by its push event, so the pull_request event
+    # would only duplicate it: two runs on one commit, one of them cancelled by the concurrency
+    # group, leaving a cancelled check that makes every pull request read as unstable. The
+    # pull_request event is kept for forks, whose commits never produce a push event here.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -23,7 +38,13 @@ jobs:
           cache: 'gradle'
 
       - name: Build FOSS debug APK, lint and unit tests
-        run: ./gradlew assembleFossDebug lintFossDebug testFossDebugUnitTest --stacktrace -DskipFormatKtlint
+        run: >-
+          ./gradlew
+          assembleFossDebug lintFossDebug testFossDebugUnitTest ktlintCheck
+          :innertube:test :kugou:test :lrclib:test
+          --stacktrace
+        env:
+          PULL_REQUEST: ${{ github.event_name == 'pull_request' && 'true' || '' }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v7

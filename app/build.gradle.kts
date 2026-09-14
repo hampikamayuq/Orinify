@@ -12,13 +12,13 @@ val hasOrinifyReleaseSigning = listOf(orinifyKeystoreFile, orinifyStorePassword,
 plugins {
     id("com.android.application")
     kotlin("android")
-    kotlin("kapt")
     alias(libs.plugins.hilt)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.ktlint)
 }
 
-if (isFullBuild && System.getenv("PULL_REQUEST") == null) {
+if (isFullBuild && System.getenv("PULL_REQUEST").isNullOrEmpty()) {
     apply(plugin = "com.google.gms.google-services")
     apply(plugin = "com.google.firebase.crashlytics")
     apply(plugin = "com.google.firebase.firebase-perf")
@@ -117,13 +117,27 @@ android {
         includeInBundle = false
     }
     lint {
-        lintConfig = file("app/lint.xml")
+        lintConfig = file("lint.xml")
     }
 }
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
+
+ktlint {
+    // Pinned so a local run and the gate agree on what a violation is.
+    version.set("1.3.1")
+    filter {
+        // Only the fork's own sources are checked. Upstream files keep their formatting, so a
+        // merge from InnerTune never turns into a formatting conflict.
+        exclude { it.file.path.contains("/com/zionhuang/") }
+    }
+}
+
+// The build script is upstream-derived and follows upstream formatting. Matched lazily so
+// this never depends on when the plugin registers its tasks.
+tasks.matching { it.name.startsWith("ktlintKotlinScript") }.configureEach { enabled = false }
 
 dependencies {
     testImplementation(libs.junit)
@@ -169,7 +183,7 @@ dependencies {
     implementation(libs.apache.lang3)
 
     implementation(libs.hilt)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)
 
     implementation(projects.innertube)
     implementation(projects.kugou)

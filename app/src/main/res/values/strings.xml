@@ -332,4 +332,17 @@
     <string name="new_version_available">New version available</string>
     <string name="translation_models">Translation Models</string>
     <string name="clear_translation_models">Clear translation models</string>
+    <string name="login_session_help">Sign in to YouTube Music below, then tap Connect this account.</string>
+    <string name="login_switch_account">Switch account</string>
+    <string name="login_connect_account">Connect this account</string>
+    <string name="login_session_checking">Checking…</string>
+    <string name="login_session_incomplete">Finish signing in and wait for YouTube Music to load before connecting.</string>
+    <string name="login_session_failed">Could not validate this session. Check your connection or sign in again. Your previous session was kept.</string>
+    <string name="web_playback_title">YouTube Music</string>
+    <string name="web_playback_close">Close web player</string>
+    <string name="web_playback_help">Tap Play on the page below. Keep this screen open while listening. Closing it or leaving the app stops web playback.</string>
+    <string name="web_playback_open">Play on the web</string>
+    <string name="native_playback_failed">The Orinify player could not play this track.</string>
+    <string name="playback_retry">Try again</string>
+    <string name="playback_details">Details</string>
 </resources>
