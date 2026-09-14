@@ -52,7 +52,11 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.zionhuang.innertube.YouTube
 import dev.diego.orinify.audio.AudioFormatInfo
+import dev.diego.orinify.audio.codecFromMimeType
 import dev.diego.orinify.audio.toAudioFormatInfo
+import dev.diego.orinify.di.DownloadStreamUrls
+import dev.diego.orinify.di.PlaybackStreamUrls
+import dev.diego.orinify.network.StreamUrlCache
 import com.zionhuang.innertube.models.SongItem
 import com.zionhuang.innertube.models.WatchEndpoint
 import com.zionhuang.innertube.models.response.PlayerResponse
@@ -66,6 +70,7 @@ import com.zionhuang.music.constants.AutoSkipNextOnErrorKey
 import com.zionhuang.music.constants.DiscordTokenKey
 import com.zionhuang.music.constants.EnableDiscordRPCKey
 import com.zionhuang.music.constants.HideExplicitKey
+import com.zionhuang.music.constants.InnerTubeCookieKey
 import com.zionhuang.music.constants.MediaSessionConstants.CommandToggleLibrary
 import com.zionhuang.music.constants.MediaSessionConstants.CommandToggleLike
 import com.zionhuang.music.constants.MediaSessionConstants.CommandToggleRepeatMode
@@ -119,6 +124,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -186,6 +192,14 @@ class MusicService : MediaLibraryService(),
     @Inject
     @DownloadCache
     lateinit var downloadCache: SimpleCache
+
+    @Inject
+    @PlaybackStreamUrls
+    lateinit var streamUrlCache: StreamUrlCache
+
+    @Inject
+    @DownloadStreamUrls
+    lateinit var downloadStreamUrlCache: StreamUrlCache
 
     lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaLibrarySession
@@ -291,6 +305,17 @@ class MusicService : MediaLibraryService(),
             .distinctUntilChanged()
             .collectLatest(scope) {
                 player.skipSilenceEnabled = it
+            }
+
+        // Signed URLs belong to the session that resolved them. Drop them whenever the account
+        // changes so an anonymous URL is never replayed after login, or the reverse after logout.
+        dataStore.data
+            .map { it[InnerTubeCookieKey].orEmpty() }
+            .distinctUntilChanged()
+            .drop(1)
+            .collect(scope) {
+                streamUrlCache.clear()
+                downloadStreamUrlCache.clear()
             }
 
         combine(
@@ -623,7 +648,6 @@ class MusicService : MediaLibraryService(),
             .setFlags(FLAG_IGNORE_CACHE_ON_ERROR)
 
     private fun createDataSourceFactory(): DataSource.Factory {
-        val songUrlCache = HashMap<String, Pair<String, Long>>()
         return ResolvingDataSource.Factory(createCacheDataSource()) { dataSpec ->
             val mediaId = dataSpec.key ?: error("No media id")
 
@@ -634,9 +658,9 @@ class MusicService : MediaLibraryService(),
                 return@Factory dataSpec
             }
 
-            songUrlCache[mediaId]?.takeIf { it.second < System.currentTimeMillis() }?.let {
+            streamUrlCache.get(mediaId)?.let { cachedUrl ->
                 scope.launch(Dispatchers.IO) { recoverSong(mediaId) }
-                return@Factory dataSpec.withUri(it.first.toUri())
+                return@Factory dataSpec.withUri(cachedUrl.toUri())
             }
 
             // Check whether format exists so that users from older version can view format details
@@ -662,23 +686,29 @@ class MusicService : MediaLibraryService(),
                 throw PlaybackException(playerResponse.playabilityStatus.reason, null, PlaybackException.ERROR_CODE_REMOTE_ERROR)
             }
 
-            val format =
-                if (playedFormat != null) {
-                    playerResponse.streamingData?.adaptiveFormats?.find {
-                        // Use itag to identify previously played format
-                        it.itag == playedFormat.itag
-                    }
-                } else {
-                    playerResponse.streamingData?.adaptiveFormats
-                        ?.filter { it.isAudio }
-                        ?.maxByOrNull {
-                            it.bitrate * when (audioQuality) {
-                                AudioQuality.AUTO -> if (connectivityManager.isActiveNetworkMetered) -1 else 1
-                                AudioQuality.HIGH -> 1
-                                AudioQuality.LOW -> -1
-                            } + (if (it.mimeType.startsWith("audio/webm")) 10240 else 0) // prefer opus stream
-                        }
-                } ?: throw PlaybackException(getString(R.string.error_no_stream), null, ERROR_CODE_NO_STREAM)
+            val streamingData = playerResponse.streamingData
+            // Only audio-only formats carrying a usable URL can be played.
+            val audioFormats = streamingData?.adaptiveFormats
+                ?.filter { it.isAudio && !it.url.isNullOrEmpty() }
+                .orEmpty()
+
+            val format = playedFormat
+                // Reuse the itag already played so the cached bytes stay valid, but when the
+                // responding client does not offer it, fall back to the regular selection instead
+                // of failing the track. Clients differ: a format resolved through ANDROID_MUSIC is
+                // not guaranteed to exist in an IOS or TVHTML5 response.
+                ?.let { played -> audioFormats.find { it.itag == played.itag } }
+                ?: audioFormats.maxByOrNull {
+                    it.bitrate * when (audioQuality) {
+                        AudioQuality.AUTO -> if (connectivityManager.isActiveNetworkMetered) -1 else 1
+                        AudioQuality.HIGH -> 1
+                        AudioQuality.LOW -> -1
+                    } + (if (it.mimeType.startsWith("audio/webm")) 10240 else 0) // prefer opus stream
+                }
+                ?: throw PlaybackException(getString(R.string.error_no_stream), null, ERROR_CODE_NO_STREAM)
+
+            val streamUrl = format.url
+                ?: throw PlaybackException(getString(R.string.error_no_stream), null, ERROR_CODE_NO_STREAM)
 
             if (currentMediaMetadata.value?.id == mediaId) {
                 currentAudioFormatInfo.value = format.toAudioFormatInfo(
@@ -687,24 +717,29 @@ class MusicService : MediaLibraryService(),
                 )
             }
 
-            database.query {
-                upsert(
-                    FormatEntity(
-                        id = mediaId,
-                        itag = format.itag,
-                        mimeType = format.mimeType.split(";")[0],
-                        codecs = format.mimeType.split("codecs=")[1].removeSurrounding("\""),
-                        bitrate = format.bitrate,
-                        sampleRate = format.audioSampleRate,
-                        contentLength = format.contentLength!!,
-                        loudnessDb = playerResponse.playerConfig?.audioConfig?.loudnessDb
+            // The entity requires a content length, and a format without one is still playable, so
+            // persist the details only when the server reported it instead of failing playback.
+            val contentLength = format.contentLength
+            if (contentLength != null) {
+                database.query {
+                    upsert(
+                        FormatEntity(
+                            id = mediaId,
+                            itag = format.itag,
+                            mimeType = format.mimeType.substringBefore(';').trim(),
+                            codecs = codecFromMimeType(format.mimeType).orEmpty(),
+                            bitrate = format.bitrate,
+                            sampleRate = format.audioSampleRate,
+                            contentLength = contentLength,
+                            loudnessDb = playerResponse.playerConfig?.audioConfig?.loudnessDb
+                        )
                     )
-                )
+                }
             }
             scope.launch(Dispatchers.IO) { recoverSong(mediaId, playerResponse) }
 
-            songUrlCache[mediaId] = format.url!! to playerResponse.streamingData!!.expiresInSeconds * 1000L
-            dataSpec.withUri(format.url!!.toUri()).subrange(dataSpec.uriPositionOffset, CHUNK_LENGTH)
+            streamUrlCache.put(mediaId, streamUrl, streamingData?.expiresInSeconds ?: 0)
+            dataSpec.withUri(streamUrl.toUri()).subrange(dataSpec.uriPositionOffset, CHUNK_LENGTH)
         }
     }
 
