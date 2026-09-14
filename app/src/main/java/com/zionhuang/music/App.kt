@@ -29,6 +29,7 @@ import com.zionhuang.music.utils.dataStore
 import com.zionhuang.music.utils.get
 import com.zionhuang.music.utils.reportException
 import dagger.hilt.android.HiltAndroidApp
+import dev.diego.orinify.settings.AllowPipedFallbackKey
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -100,6 +101,14 @@ class App : Application(), ImageLoaderFactory {
                 .distinctUntilChanged()
                 .collect { cookie ->
                     YouTube.cookie = cookie
+                }
+        }
+        GlobalScope.launch {
+            dataStore.data
+                .map { it[AllowPipedFallbackKey] ?: false }
+                .distinctUntilChanged()
+                .collect { allowed ->
+                    YouTube.allowPipedFallback = allowed
                 }
         }
     }

@@ -56,6 +56,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import java.net.Proxy
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Parse useful data with [InnerTube] sending requests.
@@ -66,7 +67,34 @@ object YouTube {
         val response: PlayerResponse,
         val sourceClient: String,
         val isAuthenticated: Boolean,
+        val attempts: List<PlayerAttempt> = emptyList(),
     )
+
+    /**
+     * One client the strategy tried and how it answered. Carries no URL, header or cookie, so it
+     * is safe to show and export as it stands.
+     */
+    data class PlayerAttempt(
+        val client: String,
+        val outcome: PlayerAttemptOutcome,
+    )
+
+    enum class PlayerAttemptOutcome {
+        /** Returned a playable response. */
+        OK,
+
+        /** Answered, but will not play this video for this client. */
+        NOT_PLAYABLE,
+
+        /** Requires a signed-in session. */
+        LOGIN_REQUIRED,
+
+        /** The request never completed, so another client may still succeed. */
+        TRANSPORT_ERROR,
+
+        /** Switched off by configuration, so it was never tried. */
+        DISABLED,
+    }
 
     private val innerTube = InnerTube()
 
@@ -91,6 +119,16 @@ object YouTube {
      */
     val isLoggedIn: Boolean
         get() = hasAuthenticatedSession(cookie)
+
+    /**
+     * Whether the last-resort path that rewrites stream URLs through a public Piped instance may
+     * be used.
+     *
+     * Off by default. It sends the video id to a third party this project does not operate, has no
+     * availability guarantee, and is the one step in the chain whose data handling cannot be
+     * reasoned about from this codebase. Users who need it for a blocked region can turn it on.
+     */
+    var allowPipedFallback: Boolean = false
     var proxy: Proxy?
         get() = innerTube.proxy
         set(value) {
@@ -449,39 +487,99 @@ object YouTube {
         videoId: String,
         playlistId: String? = null,
     ): Result<PlayerResponseEnvelope> = runCatching {
-        val isAuthenticated = isLoggedIn
-        var playerResponse: PlayerResponse
-        if (isAuthenticated) { // IOS does not play age-restricted songs, so authenticated music goes first.
-            playerResponse = innerTube.player(ANDROID_MUSIC, videoId, playlistId).body<PlayerResponse>()
-            if (playerResponse.playabilityStatus.status == "OK") {
+        val authenticated = isLoggedIn
+        val attempts = mutableListOf<PlayerAttempt>()
+        var lastResponse: PlayerResponse? = null
+        var lastClient: String? = null
+        var transportFailure: Throwable? = null
+
+        // Declared order. An authenticated session asks ANDROID_MUSIC first because the IOS client
+        // refuses age-restricted songs; an anonymous session has nothing to gain from it.
+        val clients = if (authenticated) listOf(ANDROID_MUSIC, IOS) else listOf(IOS)
+
+        for (client in clients) {
+            val response = try {
+                innerTube.player(client, videoId, playlistId).body<PlayerResponse>()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (throwable: Throwable) {
+                // A client that never answered says nothing about the video, so keep going.
+                transportFailure = throwable
+                attempts += PlayerAttempt(client.clientName, PlayerAttemptOutcome.TRANSPORT_ERROR)
+                continue
+            }
+            val outcome = playabilityOutcome(response.playabilityStatus.status)
+            attempts += PlayerAttempt(client.clientName, outcome)
+            lastResponse = response
+            lastClient = client.clientName
+            if (outcome == PlayerAttemptOutcome.OK) {
                 return@runCatching PlayerResponseEnvelope(
-                    response = playerResponse,
-                    sourceClient = ANDROID_MUSIC.clientName,
-                    isAuthenticated = true,
+                    response = response,
+                    sourceClient = client.clientName,
+                    isAuthenticated = authenticated,
+                    attempts = attempts.toList(),
                 )
             }
         }
-        playerResponse = innerTube.player(IOS, videoId, playlistId).body<PlayerResponse>()
-        if (playerResponse.playabilityStatus.status == "OK") {
+
+        pipedFallback(videoId, playlistId, authenticated, attempts)?.let { return@runCatching it }
+
+        // Nothing played. Report the server's own answer when there was one, so the caller can show
+        // its reason, and otherwise rethrow the transport failure so it keeps its type.
+        lastResponse?.let { response ->
             return@runCatching PlayerResponseEnvelope(
-                response = playerResponse,
-                sourceClient = IOS.clientName,
-                isAuthenticated = isAuthenticated,
+                response = response,
+                sourceClient = lastClient.orEmpty(),
+                isAuthenticated = authenticated,
+                attempts = attempts.toList(),
             )
         }
-        val safePlayerResponse = innerTube.player(TVHTML5, videoId, playlistId).body<PlayerResponse>()
-        if (safePlayerResponse.playabilityStatus.status != "OK") {
-            return@runCatching PlayerResponseEnvelope(
-                response = playerResponse,
-                sourceClient = IOS.clientName,
-                isAuthenticated = isAuthenticated,
-            )
+        throw transportFailure ?: IllegalStateException("No player client returned a response")
+    }
+
+    /**
+     * Rewrites the embedded client's stream URLs through a public Piped instance.
+     *
+     * Returns null when the fallback is switched off or could not produce a playable response; the
+     * attempt is recorded either way.
+     */
+    private suspend fun pipedFallback(
+        videoId: String,
+        playlistId: String?,
+        authenticated: Boolean,
+        attempts: MutableList<PlayerAttempt>,
+    ): PlayerResponseEnvelope? {
+        val client = "${TVHTML5.clientName}/PIPED"
+        if (!allowPipedFallback) {
+            attempts += PlayerAttempt(client, PlayerAttemptOutcome.DISABLED)
+            return null
         }
-        val audioStreams = innerTube.pipedStreams(videoId).body<PipedResponse>().audioStreams
-        PlayerResponseEnvelope(
-            response = safePlayerResponse.copy(
-                streamingData = safePlayerResponse.streamingData?.copy(
-                    adaptiveFormats = safePlayerResponse.streamingData.adaptiveFormats.mapNotNull { adaptiveFormat ->
+        val embedded = try {
+            innerTube.player(TVHTML5, videoId, playlistId).body<PlayerResponse>()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Throwable) {
+            attempts += PlayerAttempt(client, PlayerAttemptOutcome.TRANSPORT_ERROR)
+            return null
+        }
+        val outcome = playabilityOutcome(embedded.playabilityStatus.status)
+        if (outcome != PlayerAttemptOutcome.OK) {
+            attempts += PlayerAttempt(client, outcome)
+            return null
+        }
+        val audioStreams = try {
+            innerTube.pipedStreams(videoId).body<PipedResponse>().audioStreams
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Throwable) {
+            attempts += PlayerAttempt(client, PlayerAttemptOutcome.TRANSPORT_ERROR)
+            return null
+        }
+        attempts += PlayerAttempt(client, PlayerAttemptOutcome.OK)
+        return PlayerResponseEnvelope(
+            response = embedded.copy(
+                streamingData = embedded.streamingData?.copy(
+                    adaptiveFormats = embedded.streamingData.adaptiveFormats.mapNotNull { adaptiveFormat ->
                         audioStreams.find { it.bitrate == adaptiveFormat.bitrate }?.let {
                             adaptiveFormat.copy(
                                 url = it.url
@@ -490,10 +588,18 @@ object YouTube {
                     }
                 )
             ),
-            sourceClient = "${TVHTML5.clientName}/PIPED",
-            isAuthenticated = isAuthenticated,
+            sourceClient = client,
+            isAuthenticated = authenticated,
+            attempts = attempts.toList(),
         )
     }
+
+    internal fun playabilityOutcome(status: String): PlayerAttemptOutcome =
+        when (status.uppercase()) {
+            "OK" -> PlayerAttemptOutcome.OK
+            "LOGIN_REQUIRED" -> PlayerAttemptOutcome.LOGIN_REQUIRED
+            else -> PlayerAttemptOutcome.NOT_PLAYABLE
+        }
 
     suspend fun next(endpoint: WatchEndpoint, continuation: String? = null): Result<NextResult> = runCatching {
         val response = innerTube.next(WEB_REMIX, endpoint.videoId, endpoint.playlistId, endpoint.playlistSetVideoId, endpoint.index, endpoint.params, continuation).body<NextResponse>()

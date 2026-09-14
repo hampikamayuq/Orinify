@@ -7,4 +7,6 @@
     <string name="orinify_session">Session</string>
     <string name="orinify_authenticated">Authenticated</string>
     <string name="orinify_anonymous">Anonymous</string>
+    <string name="orinify_allow_piped_fallback">Third-party stream fallback</string>
+    <string name="orinify_allow_piped_fallback_desc">Last resort when YouTube refuses every client: the video id is sent to a public Piped instance that this app does not operate. Off by default.</string>
 </resources>
