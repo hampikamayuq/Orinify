@@ -626,10 +626,22 @@ object YouTube {
         )
     }
 
-    /** A short, sanitized reason. The exception message is never used: it embeds the request URL. */
-    internal fun failureDetail(throwable: Throwable): String =
+    private val errorStatusToken = Regex("\"status\"\\s*:\\s*\"([A-Z_]+)\"")
+
+    /**
+     * A short, sanitized reason: the HTTP status plus the server's own status token when it sent
+     * one, for example "HTTP 400 FAILED_PRECONDITION". Only that token is taken, never the message
+     * or the body, and never the exception message, which embeds the request URL.
+     */
+    internal suspend fun failureDetail(throwable: Throwable): String =
         when (throwable) {
-            is ResponseException -> "HTTP " + throwable.response.status.value
+            is ResponseException -> {
+                val token = runCatching { throwable.response.bodyAsText() }
+                    .getOrNull()
+                    ?.let { errorStatusToken.find(it)?.groupValues?.getOrNull(1) }
+                "HTTP " + throwable.response.status.value + (token?.let { " $it" }.orEmpty())
+            }
+
             else -> throwable::class.simpleName ?: "error"
         }
 

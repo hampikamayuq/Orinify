@@ -10,6 +10,12 @@ data class YouTubeClient(
     val userAgent: String,
     val osVersion: String? = null,
     val referer: String? = null,
+    /**
+     * Whether this client accepts a signed-in session. A cookie and its SAPISIDHASH mean nothing
+     * to a client that has no notion of a Google account, and sending them anyway is a request the
+     * server has no reason to honour.
+     */
+    val supportsLogin: Boolean = true,
 ) {
     fun toContext(locale: YouTubeLocale, visitorData: String?) = Context(
         client = Context.Client(
@@ -54,7 +60,8 @@ data class YouTubeClient(
             clientVersion = "1.60.19",
             api_key = "",
             userAgent = USER_AGENT_ANDROID_VR,
-            osVersion = "12L"
+            osVersion = "12L",
+            supportsLogin = false
         )
 
         val ANDROID = YouTubeClient(
