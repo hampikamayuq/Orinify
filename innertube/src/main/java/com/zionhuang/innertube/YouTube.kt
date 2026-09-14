@@ -539,7 +539,11 @@ object YouTube {
                 listOf(false)
             }
             for (withLogin in credentialModes) {
-                val label = if (client.supportsLogin && !withLogin) client.clientName + "/anon" else client.clientName
+                // The version travels with the name so a failure report identifies the build that
+                // produced it: a client version retired server-side is otherwise indistinguishable
+                // from a current one that was refused.
+                val label = client.clientName + "/" + client.clientVersion +
+                    if (client.supportsLogin && !withLogin) " anon" else ""
                 val response = try {
                     innerTube.player(client, videoId, playlistId, setLogin = withLogin).body<PlayerResponse>()
                 } catch (cancellation: CancellationException) {
@@ -641,19 +645,27 @@ object YouTube {
     }
 
     private val errorStatusToken = Regex("\"status\"\\s*:\\s*\"([A-Z_]+)\"")
+    private val errorReasonToken = Regex("\"reason\"\\s*:\\s*\"([A-Za-z][A-Za-z ]{0,48})\"")
 
     /**
      * A short, sanitized reason: the HTTP status plus the server's own status token when it sent
-     * one, for example "HTTP 400 FAILED_PRECONDITION". Only that token is taken, never the message
-     * or the body, and never the exception message, which embeds the request URL.
+     * one, for example "HTTP 400 FAILED_PRECONDITION".
+     *
+     * The body is read from the response when it is still readable, and otherwise from the
+     * exception message, where Ktor caches it. Only a bounded token matched by [errorStatusToken]
+     * or [errorReasonToken] is ever carried out of either source: the raw text is never returned,
+     * because the exception message embeds the request URL. When the server sent nothing that
+     * matches, the status is reported alone with "no detail" so an empty answer is distinguishable
+     * from a missing one.
      */
     internal suspend fun failureDetail(throwable: Throwable): String =
         when (throwable) {
             is ResponseException -> {
-                val token = runCatching { throwable.response.bodyAsText() }
-                    .getOrNull()
-                    ?.let { errorStatusToken.find(it)?.groupValues?.getOrNull(1) }
-                "HTTP " + throwable.response.status.value + (token?.let { " $it" }.orEmpty())
+                val body = runCatching { throwable.response.bodyAsText() }.getOrNull().orEmpty()
+                val text = body.ifBlank { throwable.message.orEmpty() }
+                val token = errorStatusToken.find(text)?.groupValues?.getOrNull(1)
+                    ?: errorReasonToken.find(text)?.groupValues?.getOrNull(1)
+                "HTTP " + throwable.response.status.value + " " + (token ?: "no detail")
             }
 
             else -> throwable::class.simpleName ?: "error"

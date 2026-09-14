@@ -94,6 +94,42 @@ histórico e nas releases do InnerTune.
 - consequência: o fallback por Piped ficou inócuo, porque o client `TVHTML5` que ele usa também é
   recusado.
 
+### Diagnóstico da falha total de playback
+
+Medições contra o endpoint real, com o corpo e os cabeçalhos que o app envia:
+
+| Client | Versão | Resposta anônima |
+| --- | --- | --- |
+| `ANDROID_VR` | 1.60.19 | `OK`, 27 formatos, URLs diretas, zero `signatureCipher` |
+| `ANDROID_MUSIC` | 7.27.52 | `LOGIN_REQUIRED` |
+| `WEB_REMIX` | 1.20220606.03.00 | `UNPLAYABLE` |
+| `ANDROID` | 17.13.3 | HTTP 400 |
+| `TVHTML5` | 2.0 | `ERROR` |
+
+Conclusões: `ANDROID_VR` é hoje o único client que toca sem sessão, o que confirma a cadeia
+escolhida; `ANDROID` continua aposentado; e o fallback por Piped segue inócuo, porque o client que
+ele usa responde `ERROR`.
+
+Também ficou medido que um `hl` malformado — vazio, `und` ou com subtags de extensão como
+`pt-BR-u-ca-gregory` — faz o servidor responder `ERROR` sem nenhum formato, em qualquer client. O
+app já filtra o idioma por uma lista conhecida antes de montar o contexto, então não é a causa da
+falha relatada, mas é o motivo de o `hl` não poder passar a ser derivado direto de
+`Locale.toLanguageTag()`.
+
+### Relato de falha utilizável
+
+- cada tentativa passa a ser identificada por nome **e versão** do client, por exemplo
+  `ANDROID_VR/1.60.19`. Uma versão aposentada no servidor era indistinguível de uma versão atual
+  que foi recusada, e a mensagem não dizia qual build a produziu;
+- o motivo da falha deixa de depender de o corpo da resposta ainda estar legível: quando ele já foi
+  consumido, o token é extraído da mensagem da exceção, onde o Ktor o guarda. Continua saindo dali
+  apenas um token limitado (`[A-Z_]+` ou uma razão curta), nunca o texto bruto, que carrega a URL da
+  requisição;
+- resposta de erro sem nenhum detalhe passa a ser reportada como `HTTP 400 no detail`, para separar
+  "o servidor não explicou" de "não conseguimos ler a explicação";
+- coberto por testes com `MockEngine`, incluindo o caso em que o corpo traz um segredo junto do
+  token e só o token sai.
+
 ### Pendente antes da primeira release
 
 - keystore pessoal criada fora do repositório e secrets configurados;
