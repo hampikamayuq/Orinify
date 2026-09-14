@@ -52,11 +52,16 @@ import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.zionhuang.innertube.YouTube
 import dev.diego.orinify.audio.AudioFormatInfo
+import dev.diego.orinify.audio.FormatResolver
+import dev.diego.orinify.audio.LegacyFormatPolicy
 import dev.diego.orinify.audio.codecFromMimeType
 import dev.diego.orinify.audio.toAudioFormatInfo
 import dev.diego.orinify.di.DownloadStreamUrls
 import dev.diego.orinify.di.PlaybackStreamUrls
+import dev.diego.orinify.diagnostics.ResolverShadow
 import dev.diego.orinify.network.StreamUrlCache
+import dev.diego.orinify.playback.networkProfile
+import dev.diego.orinify.playback.toPreference
 import com.zionhuang.innertube.models.SongItem
 import com.zionhuang.innertube.models.WatchEndpoint
 import com.zionhuang.innertube.models.response.PlayerResponse
@@ -200,6 +205,9 @@ class MusicService : MediaLibraryService(),
     @Inject
     @DownloadStreamUrls
     lateinit var downloadStreamUrlCache: StreamUrlCache
+
+    @Inject
+    lateinit var resolverShadow: ResolverShadow
 
     lateinit var player: ExoPlayer
     private lateinit var mediaSession: MediaLibrarySession
@@ -692,19 +700,33 @@ class MusicService : MediaLibraryService(),
                 ?.filter { it.isAudio && !it.url.isNullOrEmpty() }
                 .orEmpty()
 
+            val audioFormatInfos = audioFormats.map {
+                it.toAudioFormatInfo(playerResult.sourceClient, playerResult.isAuthenticated)
+            }
+            val qualityPreference = audioQuality.toPreference()
+            val networkProfile = connectivityManager.networkProfile()
+
+            // The inherited rule still decides what plays. The resolver runs beside it and only
+            // records where the two would disagree, which is step 3 of the integration order in
+            // docs/AUDIO_PIPELINE.md.
+            val legacyIndex = LegacyFormatPolicy.select(audioFormatInfos, qualityPreference, networkProfile)
+            resolverShadow.record(
+                videoId = mediaId,
+                candidates = audioFormatInfos,
+                legacyIndex = legacyIndex,
+                selection = FormatResolver.resolve(
+                    candidates = audioFormatInfos,
+                    target = FormatResolver.qualityTargetFor(qualityPreference, networkProfile),
+                ),
+            )
+
             val format = playedFormat
                 // Reuse the itag already played so the cached bytes stay valid, but when the
                 // responding client does not offer it, fall back to the regular selection instead
                 // of failing the track. Clients differ: a format resolved through ANDROID_MUSIC is
                 // not guaranteed to exist in an IOS or TVHTML5 response.
                 ?.let { played -> audioFormats.find { it.itag == played.itag } }
-                ?: audioFormats.maxByOrNull {
-                    it.bitrate * when (audioQuality) {
-                        AudioQuality.AUTO -> if (connectivityManager.isActiveNetworkMetered) -1 else 1
-                        AudioQuality.HIGH -> 1
-                        AudioQuality.LOW -> -1
-                    } + (if (it.mimeType.startsWith("audio/webm")) 10240 else 0) // prefer opus stream
-                }
+                ?: legacyIndex?.let(audioFormats::getOrNull)
                 ?: throw PlaybackException(getString(R.string.error_no_stream), null, ERROR_CODE_NO_STREAM)
 
             val streamUrl = format.url

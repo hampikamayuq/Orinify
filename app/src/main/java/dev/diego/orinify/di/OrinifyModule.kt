@@ -4,6 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dev.diego.orinify.diagnostics.ResolverShadow
 import dev.diego.orinify.network.StreamUrlCache
 import javax.inject.Qualifier
 import javax.inject.Singleton
@@ -39,4 +40,9 @@ object OrinifyModule {
     @Singleton
     @DownloadStreamUrls
     fun provideDownloadStreamUrlCache(): StreamUrlCache = StreamUrlCache()
+
+    /** Shared, so playback and downloads accumulate one comparison count. */
+    @Provides
+    @Singleton
+    fun provideResolverShadow(): ResolverShadow = ResolverShadow()
 }
