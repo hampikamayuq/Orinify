@@ -64,6 +64,23 @@ histórico e nas releases do InnerTune.
   removidos;
 - `orinify_strings.xml` permanece em inglês e português do Brasil, sem plataforma de tradução.
 
+### Fase 2 — resolver único em modo sombra
+
+- `FormatResolver` determinístico: ordem total e estável por bitrate, família de codec e itag, sem
+  inventar bitrate e sem deixar a preferência de codec promover um formato que o servidor avaliou
+  abaixo;
+- `LegacyFormatPolicy` guarda a regra herdada, incluindo o bônus fixo de 10.240 para WebM, para que
+  a comparação em sombra use a regra real e não uma cópia;
+- a expressão de escolha saiu de `MusicService` e `DownloadUtil`; os dois passam a chamar a mesma
+  política, primeiro passo concreto do ADR-004;
+- `ResolverShadow` conta as comparações e guarda as últimas divergências, sem alterar o que toca;
+- estratégia de clients declarada, com resultado de cada tentativa (`OK`, `NOT_PLAYABLE`,
+  `LOGIN_REQUIRED`, `TRANSPORT_ERROR`, `DISABLED`) carregado no envelope;
+- falha de transporte em um client deixou de encerrar a tentativa: cada client é tratado
+  separadamente e a exceção original é relançada se todos falharem;
+- fallback via instância pública do Piped passou a ser opcional e desligado por padrão, com
+  interruptor em Configurações do player.
+
 ### Pendente antes da primeira release
 
 - keystore pessoal criada fora do repositório e secrets configurados;

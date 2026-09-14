@@ -252,13 +252,13 @@ Samsung do `TEST_PLAN.md` executada.
 
 ## Próximo passo sugerido
 
-As Fases 0 e 1 estão implementadas e verdes na CI. Restam dois passos, nesta ordem:
+As Fases 0, 1 e 2 estão implementadas e verdes na CI. Restam dois passos, nesta ordem:
 
 1. **Smoke test em aparelho real**, o único critério de aceite da Fase 0 que build automatizado não
    cobre: reprodução por mais de seis horas com tela desligada sem 403, troca de rede, download e
    reprodução offline, login e logout. Sem isso a Fase 0 não pode ser declarada PASS, conforme a
    Definition of Done do `TEST_PLAN.md`. Vale fazê-lo antes da Fase 2, porque é ele que confirma
    que a correção de expiração de URL resolveu o 403 no uso prolongado.
-2. **Fase 2**, o resolver único. É o objetivo central do fork e o primeiro item que muda
-   comportamento de escolha de formato, por isso entra com modo sombra e comparação contra a
-   política legada antes de ser ativado.
+2. **Fase 3**, o diagnóstico confiável, que é o que transforma os contadores da sombra em algo
+   legível e exportável. Ativar o resolver não deve vir antes disso: sem a tela e o export, não há
+   como saber se as divergências observadas em uso real são as conhecidas ou um bug novo.
