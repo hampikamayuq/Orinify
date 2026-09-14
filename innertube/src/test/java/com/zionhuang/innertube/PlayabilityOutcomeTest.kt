@@ -1,10 +1,49 @@
 package com.zionhuang.innertube
 
 import com.zionhuang.innertube.YouTube.PlayerAttemptOutcome
+import com.zionhuang.innertube.models.response.PlayerResponse
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class PlayabilityOutcomeTest {
+    private fun response(formats: String? = null): PlayerResponse =
+        InnerTube.requestJson.decodeFromString(
+            PlayerResponse.serializer(),
+            """{
+                "responseContext": {},
+                "playabilityStatus": {"status": "OK"},
+                "streamingData": ${formats?.let {
+                    """{"expiresInSeconds": "3600", "adaptiveFormats": [$it]}"""
+                } ?: "null"}
+            }""",
+        )
+
+    private fun format(mimeType: String, url: String? = null): String =
+        """{"itag": 140, "mimeType": "$mimeType", "bitrate": 128000, "quality": "tiny",
+            "url": ${url?.let { "\"$it\"" } ?: "null"}}"""
+
+    @Test
+    fun `OK without streaming data must not stop fallback`() {
+        assertEquals(PlayerAttemptOutcome.NOT_PLAYABLE, YouTube.playabilityOutcome(response()))
+        assertEquals(PlayerAttemptOutcome.NOT_PLAYABLE, YouTube.playabilityOutcome(response("")))
+    }
+
+    @Test
+    fun `cipher only or blank audio URLs must not stop fallback`() {
+        assertEquals(PlayerAttemptOutcome.NOT_PLAYABLE, YouTube.playabilityOutcome(response(format("audio/mp4"))))
+        assertEquals(PlayerAttemptOutcome.NOT_PLAYABLE, YouTube.playabilityOutcome(response(format("audio/mp4", ""))))
+    }
+
+    @Test
+    fun `video only response must not stop audio fallback`() {
+        assertEquals(PlayerAttemptOutcome.NOT_PLAYABLE, YouTube.playabilityOutcome(response(format("video/mp4", "https://example.test/video"))))
+    }
+
+    @Test
+    fun `direct audio stream makes OK playable`() {
+        assertEquals(PlayerAttemptOutcome.OK, YouTube.playabilityOutcome(response(format("audio/mp4", "https://example.test/audio"))))
+    }
+
     @Test
     fun `a playable response is the only OK outcome`() {
         assertEquals(PlayerAttemptOutcome.OK, YouTube.playabilityOutcome("OK"))

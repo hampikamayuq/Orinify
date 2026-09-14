@@ -37,7 +37,8 @@ fun hasAuthenticatedSession(cookie: String?): Boolean {
     if (cookie.isNullOrBlank()) return false
     return runCatching { parseCookieString(cookie) }
         .getOrNull()
-        ?.containsKey("SAPISID") == true
+        ?.get("SAPISID")
+        ?.isNotBlank() == true
 }
 
 /**

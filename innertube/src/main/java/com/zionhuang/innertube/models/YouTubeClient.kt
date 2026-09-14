@@ -11,6 +11,10 @@ data class YouTubeClient(
     val osVersion: String? = null,
     val referer: String? = null,
 ) {
+    // Browser cookies are not OAuth credentials for native YouTube clients.
+    val supportsCookieAuth: Boolean
+        get() = clientName == "WEB" || clientName == "WEB_REMIX"
+
     fun toContext(locale: YouTubeLocale, visitorData: String?) = Context(
         client = Context.Client(
             clientName = clientName,
@@ -45,21 +49,7 @@ data class YouTubeClient(
             userAgent = USER_AGENT_ANDROID_MUSIC
         )
 
-        /**
-         * Plays without a signed-in session and returns direct stream URLs, with no signature to
-         * decipher. Verified against the live endpoint: status OK anonymously, audio formats with
-         * plain `url` fields and no `signatureCipher`. This is what the retired IOS client used to
-         * provide.
-         */
-        /**
-         * Measured as the only client that answers `OK` without a session, returning direct URLs
-         * and no `signatureCipher`, which is why it anchors the player chain.
-         *
-         * It is asked with the session first all the same. Anonymously the server answers real
-         * accounts with "sign in to confirm you're not a bot" and refuses every track, and a bot
-         * check is not something a client version can satisfy. The anonymous attempt still follows
-         * when the session is refused.
-         */
+        /** Native client: anonymous requests only; browser cookies are unsupported. */
         val ANDROID_VR = YouTubeClient(
             clientName = "ANDROID_VR",
             clientVersion = "1.60.19",
@@ -88,6 +78,12 @@ data class YouTubeClient(
             api_key = "AIzaSyC9XL3ZjWddXya6X74dJoCTL-WEYFDNX30",
             userAgent = USER_AGENT_WEB,
             referer = REFERER_YOUTUBE_MUSIC
+        )
+
+        // Playback configuration kept independent of the older browse client.
+        val WEB_MUSIC_PLAYER = WEB_REMIX.copy(
+            clientVersion = "1.20260707.12.00",
+            api_key = "",
         )
 
         val TVHTML5 = YouTubeClient(

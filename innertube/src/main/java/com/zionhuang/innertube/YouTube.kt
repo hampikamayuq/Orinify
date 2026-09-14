@@ -13,7 +13,7 @@ import com.zionhuang.innertube.models.SearchSuggestions
 import com.zionhuang.innertube.models.SongItem
 import com.zionhuang.innertube.models.WatchEndpoint
 import com.zionhuang.innertube.models.WatchEndpoint.WatchEndpointMusicSupportedConfigs.WatchEndpointMusicConfig.Companion.MUSIC_VIDEO_TYPE_ATV
-import com.zionhuang.innertube.models.YouTubeClient.Companion.ANDROID_MUSIC
+import com.zionhuang.innertube.models.YouTubeClient.Companion.WEB_MUSIC_PLAYER
 import com.zionhuang.innertube.models.YouTubeClient.Companion.ANDROID_VR
 import com.zionhuang.innertube.models.YouTubeClient.Companion.TVHTML5
 import com.zionhuang.innertube.models.YouTubeClient.Companion.WEB
@@ -521,21 +521,11 @@ object YouTube {
         var lastClient: String? = null
         var transportFailure: Throwable? = null
 
-        // Declared order. Whenever a cookie exists at all, ask ANDROID_MUSIC first: it is the
-        // client that honours the account, and a cookie that cannot be signed may still be
-        // accepted. ANDROID_VR follows because it plays without a session at all.
-        //
-        // Note this is deliberately looser than [isLoggedIn], which decides what the envelope
-        // *reports*: narrowing the client order by it would drop a working request for a session we
-        // merely refuse to call authenticated.
-        val clients = if (!cookie.isNullOrEmpty()) listOf(ANDROID_MUSIC, ANDROID_VR) else listOf(ANDROID_VR)
-
+        // Only web clients can consume the browser session captured by LoginScreen.
+        val clients = if (authenticated) listOf(WEB_MUSIC_PLAYER, ANDROID_VR) else listOf(ANDROID_VR)
+        var lastAuthenticated = false
         for (client in clients) {
-            val modes = if (cookie.isNullOrEmpty()) {
-                listOf(PlayerCredentials.ANONYMOUS)
-            } else {
-                PlayerCredentials.ORDERED_WITH_SESSION
-            }
+            val modes = PlayerCredentials.forClient(client, authenticated)
             for (mode in modes) {
                 // The version travels with the name so a failure report identifies the build that
                 // produced it: a client version retired server-side is otherwise indistinguishable
@@ -556,10 +546,14 @@ object YouTube {
                     attempts += PlayerAttempt(label, PlayerAttemptOutcome.TRANSPORT_ERROR, failureDetail(throwable))
                     continue
                 }
-                val outcome = playabilityOutcome(response.playabilityStatus.status)
-                attempts += PlayerAttempt(label, outcome, response.playabilityStatus.status)
+                val outcome = playabilityOutcome(response)
+                val detail = if (response.playabilityStatus.status.equals("OK", ignoreCase = true) &&
+                    outcome != PlayerAttemptOutcome.OK
+                ) "NO_AUDIO_STREAM" else response.playabilityStatus.status
+                attempts += PlayerAttempt(label, outcome, detail)
                 lastResponse = response
                 lastClient = label
+                lastAuthenticated = authenticated && mode.withLogin
                 if (outcome == PlayerAttemptOutcome.OK) {
                     return@runCatching PlayerResponseEnvelope(
                         response = response,
@@ -575,15 +569,15 @@ object YouTube {
             }
         }
 
-        pipedFallback(videoId, playlistId, authenticated, attempts)?.let { return@runCatching it }
+        pipedFallback(videoId, playlistId, attempts)?.let { return@runCatching it }
 
         // Nothing played. Report the server's own answer when there was one, so the caller can show
         // its reason, and otherwise rethrow the transport failure so it keeps its type.
-        lastResponse?.let { response ->
+        lastResponse?.takeUnless { it.playabilityStatus.status.equals("OK", ignoreCase = true) }?.let { response ->
             return@runCatching PlayerResponseEnvelope(
                 response = response,
                 sourceClient = lastClient.orEmpty(),
-                isAuthenticated = authenticated,
+                isAuthenticated = lastAuthenticated,
                 attempts = attempts.toList(),
             )
         }
@@ -599,7 +593,6 @@ object YouTube {
     private suspend fun pipedFallback(
         videoId: String,
         playlistId: String?,
-        authenticated: Boolean,
         attempts: MutableList<PlayerAttempt>,
     ): PlayerResponseEnvelope? {
         val client = "${TVHTML5.clientName}/PIPED"
@@ -628,21 +621,24 @@ object YouTube {
             attempts += PlayerAttempt(client, PlayerAttemptOutcome.TRANSPORT_ERROR, failureDetail(throwable))
             return null
         }
+        val resolved = embedded.copy(
+            streamingData = embedded.streamingData?.copy(
+                adaptiveFormats = embedded.streamingData.adaptiveFormats.mapNotNull { adaptiveFormat ->
+                    audioStreams.find { it.bitrate == adaptiveFormat.bitrate }?.let {
+                        adaptiveFormat.copy(url = it.url)
+                    }
+                }
+            )
+        )
+        if (playabilityOutcome(resolved) != PlayerAttemptOutcome.OK) {
+            attempts += PlayerAttempt(client, PlayerAttemptOutcome.NOT_PLAYABLE, "NO_AUDIO_STREAM")
+            return null
+        }
         attempts += PlayerAttempt(client, PlayerAttemptOutcome.OK)
         return PlayerResponseEnvelope(
-            response = embedded.copy(
-                streamingData = embedded.streamingData?.copy(
-                    adaptiveFormats = embedded.streamingData.adaptiveFormats.mapNotNull { adaptiveFormat ->
-                        audioStreams.find { it.bitrate == adaptiveFormat.bitrate }?.let {
-                            adaptiveFormat.copy(
-                                url = it.url
-                            )
-                        }
-                    }
-                )
-            ),
+            response = resolved,
             sourceClient = client,
-            isAuthenticated = authenticated,
+            isAuthenticated = false,
             attempts = attempts.toList(),
         )
     }
@@ -673,6 +669,14 @@ object YouTube {
 
             else -> throwable::class.simpleName ?: "error"
         }
+
+    internal fun playabilityOutcome(response: PlayerResponse): PlayerAttemptOutcome {
+        val outcome = playabilityOutcome(response.playabilityStatus.status)
+        if (outcome != PlayerAttemptOutcome.OK) return outcome
+        return if (response.streamingData?.adaptiveFormats.orEmpty().any {
+                it.mimeType.startsWith("audio/") && !it.url.isNullOrBlank()
+            }) PlayerAttemptOutcome.OK else PlayerAttemptOutcome.NOT_PLAYABLE
+    }
 
     internal fun playabilityOutcome(status: String): PlayerAttemptOutcome =
         when (status.uppercase()) {
@@ -780,6 +784,30 @@ object YouTube {
             .jsonArray[2]
             .jsonArray.first { (it as? JsonPrimitive)?.content?.startsWith(VISITOR_DATA_PREFIX) == true }
             .jsonPrimitive.content
+    }
+
+    /** Validate a candidate without replacing the active session or persisting credentials. */
+    suspend fun validateSession(candidateCookie: String, candidateVisitorData: String): Result<AccountInfo> {
+        require(hasAuthenticatedSession(candidateCookie)) { "Missing session" }
+        val candidate = InnerTube().apply {
+            proxy = this@YouTube.proxy
+            locale = innerTube.locale
+            cookie = candidateCookie
+            visitorData = candidateVisitorData
+        }
+        return try {
+            val menu = candidate.accountMenu(WEB_REMIX).body<AccountMenuResponse>()
+            val account = menu.actions.firstNotNullOfOrNull {
+                it.openPopupAction.popup.multiPageMenuRenderer.header?.activeAccountHeaderRenderer?.toAccountInfo()
+            } ?: error("Account unavailable")
+            Result.success(account)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Result.failure(error)
+        } finally {
+            candidate.close()
+        }
     }
 
     suspend fun accountInfo(): Result<AccountInfo> = runCatching {

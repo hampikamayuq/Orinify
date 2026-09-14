@@ -22,6 +22,12 @@ class AuthenticatedSessionTest {
     }
 
     @Test
+    fun `empty SAPISID cannot sign requests`() {
+        assertFalse(hasAuthenticatedSession("SAPISID="))
+        assertFalse(hasAuthenticatedSession("SAPISID=   ; YSC=def"))
+    }
+
+    @Test
     fun `cookie with SAPISID is an authenticated session`() {
         assertTrue(hasAuthenticatedSession("VISITOR_INFO1_LIVE=abc; SAPISID=secret; YSC=def"))
     }

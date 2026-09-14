@@ -63,6 +63,8 @@ class InnerTube {
             httpClient = createClient()
         }
 
+    fun close() = httpClient.close()
+
     var useLoginForBrowse: Boolean = false
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -106,11 +108,11 @@ class InnerTube {
             if (client.referer != null) {
                 append("Referer", client.referer)
             }
-            if (setLogin) {
+            if (setLogin && client.supportsCookieAuth) {
                 cookie?.let { cookie ->
                     append("cookie", cookie)
                     if (withAuthUser) append("X-Goog-AuthUser", "0")
-                    if (!signRequest || "SAPISID" !in cookieMap) return@let
+                    if (!signRequest || cookieMap["SAPISID"].isNullOrBlank()) return@let
                     val currentTime = System.currentTimeMillis() / 1000
                     val sapisidHash = sha1("$currentTime ${cookieMap["SAPISID"]} https://music.youtube.com")
                     append("Authorization", "SAPISIDHASH ${currentTime}_${sapisidHash}")
@@ -159,7 +161,7 @@ class InnerTube {
         )
         setBody(
             PlayerBody(
-                context = client.toContext(locale, visitorData.takeIf { credentials.withVisitorData }).let {
+                context = client.toContext(locale, visitorData.takeIf { credentials.withVisitorData && client.supportsCookieAuth }).let {
                     if (client == YouTubeClient.TVHTML5) {
                         it.copy(
                             thirdParty = Context.ThirdParty(
