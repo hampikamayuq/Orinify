@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="orinify_stream_information">Informações do stream</string>
+    <string name="orinify_container">Contêiner</string>
+    <string name="orinify_channels">Canais</string>
+    <string name="orinify_source_client">Client de origem</string>
+    <string name="orinify_session">Sessão</string>
+    <string name="orinify_authenticated">Autenticada</string>
+    <string name="orinify_anonymous">Anônima</string>
+</resources>

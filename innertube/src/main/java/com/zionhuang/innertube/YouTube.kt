@@ -61,6 +61,12 @@ import java.net.Proxy
  * Modified from [ViMusic](https://github.com/vfsfitvnm/ViMusic)
  */
 object YouTube {
+    data class PlayerResponseEnvelope(
+        val response: PlayerResponse,
+        val sourceClient: String,
+        val isAuthenticated: Boolean,
+    )
+
     private val innerTube = InnerTube()
 
     var locale: YouTubeLocale
@@ -429,33 +435,56 @@ object YouTube {
             }
     }
 
-    suspend fun player(videoId: String, playlistId: String? = null): Result<PlayerResponse> = runCatching {
+    suspend fun player(videoId: String, playlistId: String? = null): Result<PlayerResponse> =
+        playerWithMetadata(videoId, playlistId).map { it.response }
+
+    suspend fun playerWithMetadata(
+        videoId: String,
+        playlistId: String? = null,
+    ): Result<PlayerResponseEnvelope> = runCatching {
+        val isAuthenticated = cookie != null
         var playerResponse: PlayerResponse
-        if (this.cookie != null) { // if logged in: try ANDROID_MUSIC client first because IOS client does not play age restricted songs
+        if (isAuthenticated) { // IOS does not play age-restricted songs, so authenticated music goes first.
             playerResponse = innerTube.player(ANDROID_MUSIC, videoId, playlistId).body<PlayerResponse>()
             if (playerResponse.playabilityStatus.status == "OK") {
-                return@runCatching playerResponse
+                return@runCatching PlayerResponseEnvelope(
+                    response = playerResponse,
+                    sourceClient = ANDROID_MUSIC.clientName,
+                    isAuthenticated = true,
+                )
             }
         }
         playerResponse = innerTube.player(IOS, videoId, playlistId).body<PlayerResponse>()
         if (playerResponse.playabilityStatus.status == "OK") {
-            return@runCatching playerResponse
+            return@runCatching PlayerResponseEnvelope(
+                response = playerResponse,
+                sourceClient = IOS.clientName,
+                isAuthenticated = isAuthenticated,
+            )
         }
         val safePlayerResponse = innerTube.player(TVHTML5, videoId, playlistId).body<PlayerResponse>()
         if (safePlayerResponse.playabilityStatus.status != "OK") {
-            return@runCatching playerResponse
+            return@runCatching PlayerResponseEnvelope(
+                response = playerResponse,
+                sourceClient = IOS.clientName,
+                isAuthenticated = isAuthenticated,
+            )
         }
         val audioStreams = innerTube.pipedStreams(videoId).body<PipedResponse>().audioStreams
-        safePlayerResponse.copy(
-            streamingData = safePlayerResponse.streamingData?.copy(
-                adaptiveFormats = safePlayerResponse.streamingData.adaptiveFormats.mapNotNull { adaptiveFormat ->
-                    audioStreams.find { it.bitrate == adaptiveFormat.bitrate }?.let {
-                        adaptiveFormat.copy(
-                            url = it.url
-                        )
+        PlayerResponseEnvelope(
+            response = safePlayerResponse.copy(
+                streamingData = safePlayerResponse.streamingData?.copy(
+                    adaptiveFormats = safePlayerResponse.streamingData.adaptiveFormats.mapNotNull { adaptiveFormat ->
+                        audioStreams.find { it.bitrate == adaptiveFormat.bitrate }?.let {
+                            adaptiveFormat.copy(
+                                url = it.url
+                            )
+                        }
                     }
-                }
-            )
+                )
+            ),
+            sourceClient = "${TVHTML5.clientName}/PIPED",
+            isAuthenticated = isAuthenticated,
         )
     }
 

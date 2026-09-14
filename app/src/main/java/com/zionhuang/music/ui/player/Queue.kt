@@ -675,6 +675,7 @@ fun DetailsDialog(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val currentFormat by playerConnection.currentFormat.collectAsState(initial = null)
 
+    val currentAudioFormatInfo by playerConnection.currentAudioFormatInfo.collectAsState()
     AlertDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
         onDismissRequest = onDismiss,
@@ -683,6 +684,9 @@ fun DetailsDialog(
                 painter = painterResource(R.drawable.info),
                 contentDescription = null
             )
+        },
+        title = {
+            Text(stringResource(R.string.orinify_stream_information))
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
@@ -699,11 +703,16 @@ fun DetailsDialog(
                     stringResource(R.string.song_title) to mediaMetadata?.title,
                     stringResource(R.string.song_artists) to mediaMetadata?.artists?.joinToString { it.name },
                     stringResource(R.string.media_id) to mediaMetadata?.id,
-                    "Itag" to currentFormat?.itag?.toString(),
-                    stringResource(R.string.mime_type) to currentFormat?.mimeType,
-                    stringResource(R.string.codecs) to currentFormat?.codecs,
-                    stringResource(R.string.bitrate) to currentFormat?.bitrate?.let { "${it / 1000} Kbps" },
-                    stringResource(R.string.sample_rate) to currentFormat?.sampleRate?.let { "$it Hz" },
+                    "Itag" to (currentAudioFormatInfo?.itag ?: currentFormat?.itag)?.toString(),
+                    stringResource(R.string.mime_type) to (currentAudioFormatInfo?.mimeType ?: currentFormat?.mimeType),
+                    stringResource(R.string.orinify_container) to currentAudioFormatInfo?.container,
+                    stringResource(R.string.codecs) to (currentAudioFormatInfo?.codec ?: currentFormat?.codecs),
+                    stringResource(R.string.bitrate) to (currentAudioFormatInfo?.bitrate ?: currentFormat?.bitrate?.toLong())?.let { "${it / 1000.0} kbps" },
+                    stringResource(R.string.sample_rate) to (currentAudioFormatInfo?.sampleRate ?: currentFormat?.sampleRate)?.let { "$it Hz" },
+                    stringResource(R.string.orinify_channels) to currentAudioFormatInfo?.channels?.toString(),
+                    stringResource(R.string.audio_quality) to currentAudioFormatInfo?.audioQuality,
+                    stringResource(R.string.orinify_source_client) to currentAudioFormatInfo?.sourceClient,
+                    stringResource(R.string.orinify_session) to currentAudioFormatInfo?.let { if (it.isAuthenticated) stringResource(R.string.orinify_authenticated) else stringResource(R.string.orinify_anonymous) },
                     stringResource(R.string.loudness) to currentFormat?.loudnessDb?.let { "$it dB" },
                     stringResource(R.string.volume) to "${(playerConnection.player.volume * 100).toInt()}%",
                     stringResource(R.string.file_size) to currentFormat?.contentLength?.let { Formatter.formatShortFileSize(context, it) }

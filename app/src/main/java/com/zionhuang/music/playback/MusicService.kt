@@ -51,6 +51,8 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.MoreExecutors
 import com.zionhuang.innertube.YouTube
+import dev.diego.orinify.audio.AudioFormatInfo
+import dev.diego.orinify.audio.toAudioFormatInfo
 import com.zionhuang.innertube.models.SongItem
 import com.zionhuang.innertube.models.WatchEndpoint
 import com.zionhuang.innertube.models.response.PlayerResponse
@@ -170,6 +172,7 @@ class MusicService : MediaLibraryService(),
     private val currentFormat = currentMediaMetadata.flatMapLatest { mediaMetadata ->
         database.format(mediaMetadata?.id)
     }
+    val currentAudioFormatInfo = MutableStateFlow<AudioFormatInfo?>(null)
 
     private val normalizeFactor = MutableStateFlow(1f)
     val playerVolume = MutableStateFlow(dataStore.get(PlayerVolumeKey, 1f).coerceIn(0f, 1f))
@@ -528,6 +531,7 @@ class MusicService : MediaLibraryService(),
     }
 
     override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+        currentAudioFormatInfo.value = null
         // Auto load more songs
         if (dataStore.get(AutoLoadMoreKey, true) &&
             reason != Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT &&
@@ -638,8 +642,8 @@ class MusicService : MediaLibraryService(),
             // Check whether format exists so that users from older version can view format details
             // There may be inconsistent between the downloaded file and the displayed info if user change audio quality frequently
             val playedFormat = runBlocking(Dispatchers.IO) { database.format(mediaId).first() }
-            val playerResponse = runBlocking(Dispatchers.IO) {
-                YouTube.player(mediaId)
+            val playerResult = runBlocking(Dispatchers.IO) {
+                YouTube.playerWithMetadata(mediaId)
             }.getOrElse { throwable ->
                 when (throwable) {
                     is ConnectException, is UnknownHostException -> {
@@ -653,6 +657,7 @@ class MusicService : MediaLibraryService(),
                     else -> throw PlaybackException(getString(R.string.error_unknown), throwable, PlaybackException.ERROR_CODE_REMOTE_ERROR)
                 }
             }
+            val playerResponse = playerResult.response
             if (playerResponse.playabilityStatus.status != "OK") {
                 throw PlaybackException(playerResponse.playabilityStatus.reason, null, PlaybackException.ERROR_CODE_REMOTE_ERROR)
             }
@@ -674,6 +679,13 @@ class MusicService : MediaLibraryService(),
                             } + (if (it.mimeType.startsWith("audio/webm")) 10240 else 0) // prefer opus stream
                         }
                 } ?: throw PlaybackException(getString(R.string.error_no_stream), null, ERROR_CODE_NO_STREAM)
+
+            if (currentMediaMetadata.value?.id == mediaId) {
+                currentAudioFormatInfo.value = format.toAudioFormatInfo(
+                    sourceClient = playerResult.sourceClient,
+                    isAuthenticated = playerResult.isAuthenticated,
+                )
+            }
 
             database.query {
                 upsert(
