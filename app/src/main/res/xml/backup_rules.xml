@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <full-backup-content>
+    <!-- Holds the YouTube session cookie; it must not leave the device through backups. -->
+    <exclude
+        domain="file"
+        path="datastore" />
     <exclude
         domain="file"
         path="./exoplayer" />

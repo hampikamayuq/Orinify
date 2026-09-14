@@ -5,6 +5,10 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
+        <!-- Holds the YouTube session cookie; it must not leave the device through backups. -->
+        <exclude
+            domain="file"
+            path="datastore" />
         <exclude
             domain="file"
             path="./exoplayer" />
@@ -16,6 +20,10 @@
             path="exoplayer_internal.db" />
     </cloud-backup>
     <device-transfer>
+        <!-- Holds the YouTube session cookie; it must not leave the device through transfers. -->
+        <exclude
+            domain="file"
+            path="datastore" />
         <exclude
             domain="file"
             path="./exoplayer" />
