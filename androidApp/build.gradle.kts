@@ -20,7 +20,10 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.maxrave.simpmusic"
+        // The namespace deliberately stays `com.maxrave.simpmusic`: it is the Kotlin package
+        // every source file declares, and renaming it would put a rename in the diff of every
+        // future merge from upstream. Only the identity the system sees changes.
+        applicationId = "dev.diego.orinify"
         minSdk = 26
         targetSdk = 36
         versionCode =
@@ -32,6 +35,12 @@ android {
                 .get()
         vectorDrawables.useSupportLibrary = true
         multiDexEnabled = true
+
+        // `${applicationId}` is substituted in AndroidManifest.xml only, never in res/xml, so a
+        // shortcut's targetPackage cannot be written that way. It is published as a string
+        // resource instead, and each build type restates it with its own suffix applied — a
+        // shortcut naming the wrong package launches whatever app owns that package.
+        resValue("string", "app_package", "dev.diego.orinify")
 
         @Suppress("UnstableApiUsage")
         androidResources {
@@ -101,6 +110,7 @@ android {
         debug {
             isMinifyEnabled = false
             applicationIdSuffix = ".dev"
+            resValue("string", "app_package", "dev.diego.orinify.dev")
             versionNameSuffix = "-dev"
         }
     }
