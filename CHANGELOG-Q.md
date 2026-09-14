@@ -28,6 +28,26 @@ histórico e nas releases do InnerTune.
 - APK verificado com `apksigner`;
 - package `dev.diego.orinify.debug`, versão `0.5.10-q1`, confirmado no artefato.
 
+### Correções da Fase 0
+
+- URLs de stream passam a expirar de verdade: `StreamUrlCache` converte o tempo de vida informado
+  pelo player em um instante absoluto, com margem de 60 s e relógio injetável. Antes uma duração era
+  comparada com o relógio, a condição era sempre verdadeira e a URL expirada era reutilizada até o
+  processo morrer;
+- reutilização de itag deixou de derrubar a faixa: quando o client que respondeu não oferece o itag
+  já tocado, a seleção normal é usada em vez de `ERROR_CODE_NO_STREAM`;
+- removidos os pontos de crash na resolução de formato: `contentLength!!` e
+  `split("codecs=")[1]`; formatos sem URL utilizável são descartados antes da escolha;
+- download sem `contentLength` informado não usa mais um teto inventado de 10 MB, que truncava
+  faixas longas;
+- caches de URL de playback e download são separados e limpos quando a conta muda;
+- `isAuthenticated` passa a exigir SAPISID, alinhado ao ADR-003 e ao que a UI já considerava login;
+- verificador de atualização compara a tag da release com o `versionName`, eliminando o aviso
+  permanente de atualização;
+- diretório do DataStore excluído de backup e transferência, para o cookie de sessão não sair do
+  aparelho;
+- `Timber.DebugTree` plantado somente em builds de debug.
+
 ### Pendente antes da primeira release
 
 - keystore pessoal criada fora do repositório e secrets configurados;
