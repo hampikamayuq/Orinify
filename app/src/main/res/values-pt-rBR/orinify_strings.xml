@@ -9,4 +9,5 @@
     <string name="orinify_anonymous">Anônima</string>
     <string name="orinify_allow_piped_fallback">Fallback de stream por terceiros</string>
     <string name="orinify_allow_piped_fallback_desc">Último recurso quando o YouTube recusa todos os clients: o id do vídeo é enviado a uma instância pública do Piped que este app não opera. Desligado por padrão.</string>
+    <string name="orinify_error_no_client">Nenhum client conseguiu tocar esta faixa: %1$s</string>
 </resources>

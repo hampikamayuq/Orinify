@@ -59,6 +59,7 @@ import dev.diego.orinify.audio.toAudioFormatInfo
 import dev.diego.orinify.di.DownloadStreamUrls
 import dev.diego.orinify.di.PlaybackStreamUrls
 import dev.diego.orinify.diagnostics.ResolverShadow
+import dev.diego.orinify.diagnostics.causeChain
 import dev.diego.orinify.network.StreamUrlCache
 import dev.diego.orinify.playback.networkProfile
 import dev.diego.orinify.playback.toPreference
@@ -677,13 +678,25 @@ class MusicService : MediaLibraryService(),
             val playerResult = runBlocking(Dispatchers.IO) {
                 YouTube.playerWithMetadata(mediaId)
             }.getOrElse { throwable ->
-                when (throwable) {
-                    is ConnectException, is UnknownHostException -> {
+                // The failure now arrives wrapped, so look through the causes before deciding.
+                val causes = throwable.causeChain()
+                when {
+                    causes.any { it is ConnectException || it is UnknownHostException } -> {
                         throw PlaybackException(getString(R.string.error_no_internet), throwable, PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED)
                     }
 
-                    is SocketTimeoutException -> {
+                    causes.any { it is SocketTimeoutException } -> {
                         throw PlaybackException(getString(R.string.error_timeout), throwable, PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT)
+                    }
+
+                    // Name the client and the status rather than saying "unknown error". This is
+                    // what the provenance recorded by the player strategy is for.
+                    throwable is YouTube.PlayerUnavailableException -> {
+                        throw PlaybackException(
+                            getString(R.string.orinify_error_no_client, YouTube.describeAttempts(throwable.attempts)),
+                            throwable,
+                            ERROR_CODE_NO_STREAM
+                        )
                     }
 
                     else -> throw PlaybackException(getString(R.string.error_unknown), throwable, PlaybackException.ERROR_CODE_REMOTE_ERROR)
@@ -691,7 +704,10 @@ class MusicService : MediaLibraryService(),
             }
             val playerResponse = playerResult.response
             if (playerResponse.playabilityStatus.status != "OK") {
-                throw PlaybackException(playerResponse.playabilityStatus.reason, null, PlaybackException.ERROR_CODE_REMOTE_ERROR)
+                // Prefer the server's own words, but never leave the user with a blank message.
+                val reason = playerResponse.playabilityStatus.reason
+                    ?: getString(R.string.orinify_error_no_client, YouTube.describeAttempts(playerResult.attempts))
+                throw PlaybackException(reason, null, PlaybackException.ERROR_CODE_REMOTE_ERROR)
             }
 
             val streamingData = playerResponse.streamingData

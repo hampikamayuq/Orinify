@@ -99,7 +99,11 @@ class InnerTube {
             }
         }
         userAgent(client.userAgent)
-        parameter("key", client.api_key)
+        // Newer clients are accepted without the legacy API key, and those keys are being
+        // retired. Send it only when the client still carries one.
+        if (client.api_key.isNotEmpty()) {
+            parameter("key", client.api_key)
+        }
         parameter("prettyPrint", false)
     }
 

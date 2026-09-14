@@ -13,7 +13,7 @@ import com.zionhuang.innertube.models.SongItem
 import com.zionhuang.innertube.models.WatchEndpoint
 import com.zionhuang.innertube.models.WatchEndpoint.WatchEndpointMusicSupportedConfigs.WatchEndpointMusicConfig.Companion.MUSIC_VIDEO_TYPE_ATV
 import com.zionhuang.innertube.models.YouTubeClient.Companion.ANDROID_MUSIC
-import com.zionhuang.innertube.models.YouTubeClient.Companion.IOS
+import com.zionhuang.innertube.models.YouTubeClient.Companion.ANDROID_VR
 import com.zionhuang.innertube.models.YouTubeClient.Companion.TVHTML5
 import com.zionhuang.innertube.models.YouTubeClient.Companion.WEB
 import com.zionhuang.innertube.models.YouTubeClient.Companion.WEB_REMIX
@@ -50,6 +50,7 @@ import com.zionhuang.innertube.pages.SearchSummary
 import com.zionhuang.innertube.pages.SearchSummaryPage
 import com.zionhuang.innertube.utils.hasAuthenticatedSession
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.statement.bodyAsText
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -77,7 +78,33 @@ object YouTube {
     data class PlayerAttempt(
         val client: String,
         val outcome: PlayerAttemptOutcome,
+        /**
+         * Why, in one short token: an HTTP status, a playability status, or an exception class.
+         * Never a server message or a URL, which would carry query strings and identifiers.
+         */
+        val detail: String? = null,
     )
+
+    /**
+     * Thrown when no client produced a playable response and none of them even answered.
+     *
+     * The message lists what each client did, so a failure that used to surface as "unknown error"
+     * names the client and the status instead. The original failure stays as the cause, so callers
+     * can still recognise a connection or timeout problem.
+     */
+    class PlayerUnavailableException(
+        val attempts: List<PlayerAttempt>,
+        override val cause: Throwable?,
+    ) : Exception(describeAttempts(attempts), cause)
+
+    fun describeAttempts(attempts: List<PlayerAttempt>): String =
+        if (attempts.isEmpty()) {
+            "no client was tried"
+        } else {
+            attempts.joinToString(", ") { attempt ->
+                attempt.client + "=" + attempt.outcome.name + (attempt.detail?.let { " ($it)" }.orEmpty())
+            }
+        }
 
     enum class PlayerAttemptOutcome {
         /** Returned a playable response. */
@@ -493,12 +520,14 @@ object YouTube {
         var lastClient: String? = null
         var transportFailure: Throwable? = null
 
-        // Declared order. Whenever a cookie exists at all, ask ANDROID_MUSIC first: the IOS client
-        // refuses age-restricted songs, and a cookie that cannot be signed may still be accepted.
+        // Declared order. Whenever a cookie exists at all, ask ANDROID_MUSIC first: it is the
+        // client that honours the account, and a cookie that cannot be signed may still be
+        // accepted. ANDROID_VR follows because it plays without a session at all.
+        //
         // Note this is deliberately looser than [isLoggedIn], which decides what the envelope
         // *reports*: narrowing the client order by it would drop a working request for a session we
         // merely refuse to call authenticated.
-        val clients = if (!cookie.isNullOrEmpty()) listOf(ANDROID_MUSIC, IOS) else listOf(IOS)
+        val clients = if (!cookie.isNullOrEmpty()) listOf(ANDROID_MUSIC, ANDROID_VR) else listOf(ANDROID_VR)
 
         for (client in clients) {
             val response = try {
@@ -508,11 +537,11 @@ object YouTube {
             } catch (throwable: Throwable) {
                 // A client that never answered says nothing about the video, so keep going.
                 transportFailure = throwable
-                attempts += PlayerAttempt(client.clientName, PlayerAttemptOutcome.TRANSPORT_ERROR)
+                attempts += PlayerAttempt(client.clientName, PlayerAttemptOutcome.TRANSPORT_ERROR, failureDetail(throwable))
                 continue
             }
             val outcome = playabilityOutcome(response.playabilityStatus.status)
-            attempts += PlayerAttempt(client.clientName, outcome)
+            attempts += PlayerAttempt(client.clientName, outcome, response.playabilityStatus.status)
             lastResponse = response
             lastClient = client.clientName
             if (outcome == PlayerAttemptOutcome.OK) {
@@ -537,7 +566,7 @@ object YouTube {
                 attempts = attempts.toList(),
             )
         }
-        throw transportFailure ?: IllegalStateException("No player client returned a response")
+        throw PlayerUnavailableException(attempts.toList(), transportFailure)
     }
 
     /**
@@ -561,21 +590,21 @@ object YouTube {
             innerTube.player(TVHTML5, videoId, playlistId).body<PlayerResponse>()
         } catch (cancellation: CancellationException) {
             throw cancellation
-        } catch (_: Throwable) {
-            attempts += PlayerAttempt(client, PlayerAttemptOutcome.TRANSPORT_ERROR)
+        } catch (throwable: Throwable) {
+            attempts += PlayerAttempt(client, PlayerAttemptOutcome.TRANSPORT_ERROR, failureDetail(throwable))
             return null
         }
         val outcome = playabilityOutcome(embedded.playabilityStatus.status)
         if (outcome != PlayerAttemptOutcome.OK) {
-            attempts += PlayerAttempt(client, outcome)
+            attempts += PlayerAttempt(client, outcome, embedded.playabilityStatus.status)
             return null
         }
         val audioStreams = try {
             innerTube.pipedStreams(videoId).body<PipedResponse>().audioStreams
         } catch (cancellation: CancellationException) {
             throw cancellation
-        } catch (_: Throwable) {
-            attempts += PlayerAttempt(client, PlayerAttemptOutcome.TRANSPORT_ERROR)
+        } catch (throwable: Throwable) {
+            attempts += PlayerAttempt(client, PlayerAttemptOutcome.TRANSPORT_ERROR, failureDetail(throwable))
             return null
         }
         attempts += PlayerAttempt(client, PlayerAttemptOutcome.OK)
@@ -596,6 +625,13 @@ object YouTube {
             attempts = attempts.toList(),
         )
     }
+
+    /** A short, sanitized reason. The exception message is never used: it embeds the request URL. */
+    internal fun failureDetail(throwable: Throwable): String =
+        when (throwable) {
+            is ResponseException -> "HTTP " + throwable.response.status.value
+            else -> throwable::class.simpleName ?: "error"
+        }
 
     internal fun playabilityOutcome(status: String): PlayerAttemptOutcome =
         when (status.uppercase()) {
