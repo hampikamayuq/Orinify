@@ -111,16 +111,23 @@ class DownloadUtil @Inject constructor(
             ),
         )
 
-        val format = playedFormat
-            // Prefer the itag already played, but fall back to the regular selection when the
-            // responding client does not offer it, instead of failing the download.
-            ?.let { played -> audioFormats.find { it.itag == played.itag } }
+        // Prefer the itag already played, but fall back to the regular selection when the
+        // responding client does not offer it, instead of failing the download.
+        val reusedFormat = playedFormat?.let { played -> audioFormats.find { it.itag == played.itag } }
+        val format = reusedFormat
             ?: legacyIndex?.let(audioFormats::getOrNull)
             ?: throw PlaybackException(
                 appContext.getString(R.string.error_no_stream),
                 null,
                 MusicService.ERROR_CODE_NO_STREAM
             )
+
+        if (playedFormat != null && reusedFormat == null) {
+            // Same hazard as playback: this pipeline reads through the player cache, which keys its
+            // spans by media id alone, so bytes of the previous encoding would be written into the
+            // download. Drop them before fetching the replacement.
+            playerCache.removeResource(mediaId)
+        }
 
         val streamUrl = format.url
             ?: throw PlaybackException(

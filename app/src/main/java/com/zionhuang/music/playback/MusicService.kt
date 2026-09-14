@@ -720,14 +720,23 @@ class MusicService : MediaLibraryService(),
                 ),
             )
 
-            val format = playedFormat
-                // Reuse the itag already played so the cached bytes stay valid, but when the
-                // responding client does not offer it, fall back to the regular selection instead
-                // of failing the track. Clients differ: a format resolved through ANDROID_MUSIC is
-                // not guaranteed to exist in an IOS or TVHTML5 response.
-                ?.let { played -> audioFormats.find { it.itag == played.itag } }
+            // Reuse the itag already played so the cached bytes stay valid, but when the responding
+            // client does not offer it, fall back to the regular selection instead of failing the
+            // track. Clients differ: a format resolved through ANDROID_MUSIC is not guaranteed to
+            // exist in an IOS or TVHTML5 response.
+            val reusedFormat = playedFormat?.let { played -> audioFormats.find { it.itag == played.itag } }
+            val format = reusedFormat
                 ?: legacyIndex?.let(audioFormats::getOrNull)
                 ?: throw PlaybackException(getString(R.string.error_no_stream), null, ERROR_CODE_NO_STREAM)
+
+            if (playedFormat != null && reusedFormat == null) {
+                // Switching encoding invalidates what is already cached for this song. Media3 keys
+                // cached spans by media id alone, so a partially cached track would feed the decoder
+                // bytes of the old format for the cached ranges and of the new one for the rest.
+                // Drop those spans before playing the replacement. Downloads are never touched: a
+                // completed download answers the cache check above and never reaches this point.
+                playerCache.removeResource(mediaId)
+            }
 
             val streamUrl = format.url
                 ?: throw PlaybackException(getString(R.string.error_no_stream), null, ERROR_CODE_NO_STREAM)

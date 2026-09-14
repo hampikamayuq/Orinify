@@ -493,9 +493,12 @@ object YouTube {
         var lastClient: String? = null
         var transportFailure: Throwable? = null
 
-        // Declared order. An authenticated session asks ANDROID_MUSIC first because the IOS client
-        // refuses age-restricted songs; an anonymous session has nothing to gain from it.
-        val clients = if (authenticated) listOf(ANDROID_MUSIC, IOS) else listOf(IOS)
+        // Declared order. Whenever a cookie exists at all, ask ANDROID_MUSIC first: the IOS client
+        // refuses age-restricted songs, and a cookie that cannot be signed may still be accepted.
+        // Note this is deliberately looser than [isLoggedIn], which decides what the envelope
+        // *reports*: narrowing the client order by it would drop a working request for a session we
+        // merely refuse to call authenticated.
+        val clients = if (!cookie.isNullOrEmpty()) listOf(ANDROID_MUSIC, IOS) else listOf(IOS)
 
         for (client in clients) {
             val response = try {
