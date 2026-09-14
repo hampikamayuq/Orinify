@@ -43,7 +43,11 @@ class App : Application(), ImageLoaderFactory {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onCreate() {
         super.onCreate()
-        Timber.plant(Timber.DebugTree())
+        // Release builds must not write to logcat: SECURITY.md forbids leaking request data, and a
+        // planted tree makes any future log statement a potential leak.
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
 
         val locale = Locale.getDefault()
         val languageTag = locale.toLanguageTag().replace("-Hant", "") // replace zh-Hant-* to zh-*
