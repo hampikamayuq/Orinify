@@ -40,8 +40,16 @@ jobs:
       - name: Build debug APK
         run: ./gradlew :androidApp:assembleDebug --stacktrace
 
-      - name: Upload APKs
+      # One artifact per ABI, not one holding all four. The four together are 287 MB,
+      # and a phone needs exactly one of them — arm64 for anything current.
+      - name: Upload arm64 APK
         uses: actions/upload-artifact@v4
         with:
-          name: orinify-debug-apk
-          path: androidApp/build/outputs/apk/debug/*.apk
+          name: orinify-debug-arm64
+          path: androidApp/build/outputs/apk/debug/*arm64-v8a*.apk
+
+      - name: Upload universal APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: orinify-debug-universal
+          path: androidApp/build/outputs/apk/debug/*universal*.apk
