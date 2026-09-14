@@ -507,6 +507,34 @@ object YouTube {
             }
     }
 
+    /**
+     * How one player request presents itself. The session and the stored `visitorData` are varied
+     * independently because they fail independently: a request with the session is refused with
+     * `INVALID_ARGUMENT` while the same request without it is answered, and a request without the
+     * session is answered only with a demand to sign in.
+     *
+     * The middle mode exists for that gap. `visitorData` identifies a visitor the server issued at
+     * some earlier point, and presenting one that does not belong to the signed-in session is the
+     * one malformed argument in an otherwise ordinary request. Dropping it lets the server issue a
+     * visitor for the session it is actually being shown.
+     */
+    private data class CredentialMode(
+        val withLogin: Boolean,
+        val withVisitorData: Boolean,
+        val suffix: String,
+    )
+
+    private fun credentialModes(cookie: String?): List<CredentialMode> =
+        if (cookie.isNullOrEmpty()) {
+            listOf(CredentialMode(withLogin = false, withVisitorData = true, suffix = ""))
+        } else {
+            listOf(
+                CredentialMode(withLogin = true, withVisitorData = true, suffix = ""),
+                CredentialMode(withLogin = true, withVisitorData = false, suffix = " no-visitor"),
+                CredentialMode(withLogin = false, withVisitorData = true, suffix = " anon"),
+            )
+        }
+
     suspend fun player(videoId: String, playlistId: String? = null): Result<PlayerResponse> =
         playerWithMetadata(videoId, playlistId).map { it.response }
 
@@ -530,18 +558,19 @@ object YouTube {
         val clients = if (!cookie.isNullOrEmpty()) listOf(ANDROID_MUSIC, ANDROID_VR) else listOf(ANDROID_VR)
 
         for (client in clients) {
-            // A client that takes a session is asked with it first and then without. A request the
-            // server refuses outright says nothing about the video, and the same client may answer
-            // perfectly well when it is asked anonymously.
-            val credentialModes = if (!cookie.isNullOrEmpty()) listOf(true, false) else listOf(false)
-            for (withLogin in credentialModes) {
+            for (mode in credentialModes(cookie)) {
                 // The version travels with the name so a failure report identifies the build that
                 // produced it: a client version retired server-side is otherwise indistinguishable
                 // from a current one that was refused.
-                val label = client.clientName + "/" + client.clientVersion +
-                    if (withLogin) "" else " anon"
+                val label = client.clientName + "/" + client.clientVersion + mode.suffix
                 val response = try {
-                    innerTube.player(client, videoId, playlistId, setLogin = withLogin).body<PlayerResponse>()
+                    innerTube.player(
+                        client,
+                        videoId,
+                        playlistId,
+                        setLogin = mode.withLogin,
+                        sendVisitorData = mode.withVisitorData,
+                    ).body<PlayerResponse>()
                 } catch (cancellation: CancellationException) {
                     throw cancellation
                 } catch (throwable: Throwable) {
@@ -558,13 +587,14 @@ object YouTube {
                     return@runCatching PlayerResponseEnvelope(
                         response = response,
                         sourceClient = label,
-                        isAuthenticated = authenticated && withLogin,
+                        isAuthenticated = authenticated && mode.withLogin,
                         attempts = attempts.toList(),
                     )
                 }
-                // The server answered. Asking the same client again without the session will not
-                // change its mind about the video, so move on.
-                break
+                // A demand to sign in is about the credentials, not the video, so the next mode is
+                // still worth asking. Any other verdict is about the video itself, and no change of
+                // credentials will make this client change its mind.
+                if (outcome != PlayerAttemptOutcome.LOGIN_REQUIRED) break
             }
         }
 

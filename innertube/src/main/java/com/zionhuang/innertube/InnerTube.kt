@@ -28,6 +28,21 @@ import java.util.*
 class InnerTube {
     private var httpClient = createClient()
 
+    companion object {
+        /**
+         * The serializer every request body goes through. `explicitNulls = false` is what lets a
+         * null field be left out of the JSON rather than sent as `null`, which is how an absent
+         * `visitorData` is expressed.
+         */
+        @OptIn(ExperimentalSerializationApi::class)
+        val requestJson = Json {
+            ignoreUnknownKeys = true
+            explicitNulls = false
+            encodeDefaults = true
+        }
+    }
+
+
     var locale = YouTubeLocale(
         gl = Locale.getDefault().country,
         hl = Locale.getDefault().toLanguageTag()
@@ -54,11 +69,7 @@ class InnerTube {
         expectSuccess = true
 
         install(ContentNegotiation) {
-            json(Json {
-                ignoreUnknownKeys = true
-                explicitNulls = false
-                encodeDefaults = true
-            })
+            json(requestJson)
         }
 
         install(ContentEncoding) {
@@ -130,6 +141,7 @@ class InnerTube {
         videoId: String,
         playlistId: String?,
         setLogin: Boolean = false,
+        sendVisitorData: Boolean = true,
     ) = httpClient.post("player") {
         // The session is attached only when the caller asked for it. Every player request states
         // which credential mode it wants, because a client refused with a session may answer
@@ -137,7 +149,7 @@ class InnerTube {
         ytClient(client, setLogin = setLogin)
         setBody(
             PlayerBody(
-                context = client.toContext(locale, visitorData).let {
+                context = client.toContext(locale, visitorData.takeIf { sendVisitorData }).let {
                     if (client == YouTubeClient.TVHTML5) {
                         it.copy(
                             thirdParty = Context.ThirdParty(

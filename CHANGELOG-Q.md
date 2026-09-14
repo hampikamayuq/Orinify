@@ -149,6 +149,33 @@ requisição anônima e exige login, e nenhuma versão de client satisfaz uma ve
   passa a mostrar as duas. A razão sozinha não diz qual client a ouviu, e essa é justamente a
   informação que separa uma sessão recusada de um client que nunca a recebeu.
 
+### `INVALID_ARGUMENT` só com a sessão anexada
+
+Com o rastro de tentativas visível, o aparelho respondeu de forma inequívoca:
+
+```
+ANDROID_MUSIC/7.27.52       = TRANSPORT_ERROR (HTTP 400 INVALID_ARGUMENT)
+ANDROID_MUSIC/7.27.52 anon  = LOGIN_REQUIRED
+ANDROID_VR/1.60.19          = TRANSPORT_ERROR (HTTP 400 INVALID_ARGUMENT)
+ANDROID_VR/1.60.19 anon     = LOGIN_REQUIRED
+```
+
+O padrão não depende do client: toda requisição **com** a sessão é recusada como argumento
+inválido, e toda requisição **sem** ela é respondida com uma exigência de login. Como as duas são
+idênticas fora os cabeçalhos de credencial, o que está malformado é a combinação — e o único
+argumento com escopo de sessão que viaja junto é a `visitorData`, emitida em algum momento anterior
+para um visitante que não é o da conta assinada.
+
+- `player()` passa a variar sessão e `visitorData` de forma independente, e um terceiro modo de
+  credencial apresenta a sessão **sem** a `visitorData` guardada, deixando o servidor emitir uma
+  para a sessão que ele está de fato vendo. A tentativa aparece no rastro como `no-visitor`;
+- uma resposta `LOGIN_REQUIRED` deixou de encerrar as tentativas daquele client. Ela é sobre a
+  credencial, não sobre a faixa, então o próximo modo ainda vale a pena; qualquer outro veredito
+  continua encerrando, porque é sobre o vídeo;
+- o serializador de requisição virou um valor único compartilhado, de modo que os testes que
+  verificam a ausência da `visitorData` no corpo passam pelo mesmo `Json` que o cliente usa, e não
+  por uma cópia das configurações.
+
 ### Pendente antes da primeira release
 
 - keystore pessoal criada fora do repositório e secrets configurados;
