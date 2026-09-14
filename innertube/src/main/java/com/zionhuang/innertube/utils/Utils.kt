@@ -25,6 +25,21 @@ fun ByteArray.toHex(): String = joinToString(separator = "") { eachByte -> "%02x
 
 fun sha1(str: String): String = MessageDigest.getInstance("SHA-1").digest(str.toByteArray()).toHex()
 
+/**
+ * True when [cookie] carries a session that can actually be signed.
+ *
+ * Requests are authenticated with a `SAPISIDHASH` built from the SAPISID cookie, so a cookie
+ * without it reaches YouTube as an anonymous request no matter how it looks. Treating "a cookie
+ * exists" as "the session is authenticated" would report a Premium-capable session that the server
+ * never saw, which contradicts ADR-003.
+ */
+fun hasAuthenticatedSession(cookie: String?): Boolean {
+    if (cookie.isNullOrBlank()) return false
+    return runCatching { parseCookieString(cookie) }
+        .getOrNull()
+        ?.containsKey("SAPISID") == true
+}
+
 fun parseCookieString(cookie: String): Map<String, String> =
     cookie.split("; ")
         .filter { it.isNotEmpty() }

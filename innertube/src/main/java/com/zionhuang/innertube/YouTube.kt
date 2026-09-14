@@ -48,6 +48,7 @@ import com.zionhuang.innertube.pages.SearchResult
 import com.zionhuang.innertube.pages.SearchSuggestionPage
 import com.zionhuang.innertube.pages.SearchSummary
 import com.zionhuang.innertube.pages.SearchSummaryPage
+import com.zionhuang.innertube.utils.hasAuthenticatedSession
 import io.ktor.client.call.body
 import io.ktor.client.statement.bodyAsText
 import kotlinx.serialization.json.Json
@@ -84,6 +85,12 @@ object YouTube {
         set(value) {
             innerTube.cookie = value
         }
+
+    /**
+     * Whether the stored cookie can sign requests. See [hasAuthenticatedSession].
+     */
+    val isLoggedIn: Boolean
+        get() = hasAuthenticatedSession(cookie)
     var proxy: Proxy?
         get() = innerTube.proxy
         set(value) {
@@ -442,7 +449,7 @@ object YouTube {
         videoId: String,
         playlistId: String? = null,
     ): Result<PlayerResponseEnvelope> = runCatching {
-        val isAuthenticated = cookie != null
+        val isAuthenticated = isLoggedIn
         var playerResponse: PlayerResponse
         if (isAuthenticated) { // IOS does not play age-restricted songs, so authenticated music goes first.
             playerResponse = innerTube.player(ANDROID_MUSIC, videoId, playlistId).body<PlayerResponse>()
