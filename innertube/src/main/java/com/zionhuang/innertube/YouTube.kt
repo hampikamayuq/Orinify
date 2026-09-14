@@ -530,27 +530,41 @@ object YouTube {
         val clients = if (!cookie.isNullOrEmpty()) listOf(ANDROID_MUSIC, ANDROID_VR) else listOf(ANDROID_VR)
 
         for (client in clients) {
-            val response = try {
-                innerTube.player(client, videoId, playlistId).body<PlayerResponse>()
-            } catch (cancellation: CancellationException) {
-                throw cancellation
-            } catch (throwable: Throwable) {
-                // A client that never answered says nothing about the video, so keep going.
-                transportFailure = throwable
-                attempts += PlayerAttempt(client.clientName, PlayerAttemptOutcome.TRANSPORT_ERROR, failureDetail(throwable))
-                continue
+            // A client that takes a session is asked with it first and then without. A request the
+            // server refuses outright says nothing about the video, and the same client may answer
+            // perfectly well when it is asked anonymously.
+            val credentialModes = if (client.supportsLogin && !cookie.isNullOrEmpty()) {
+                listOf(true, false)
+            } else {
+                listOf(false)
             }
-            val outcome = playabilityOutcome(response.playabilityStatus.status)
-            attempts += PlayerAttempt(client.clientName, outcome, response.playabilityStatus.status)
-            lastResponse = response
-            lastClient = client.clientName
-            if (outcome == PlayerAttemptOutcome.OK) {
-                return@runCatching PlayerResponseEnvelope(
-                    response = response,
-                    sourceClient = client.clientName,
-                    isAuthenticated = authenticated,
-                    attempts = attempts.toList(),
-                )
+            for (withLogin in credentialModes) {
+                val label = if (client.supportsLogin && !withLogin) client.clientName + "/anon" else client.clientName
+                val response = try {
+                    innerTube.player(client, videoId, playlistId, setLogin = withLogin).body<PlayerResponse>()
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (throwable: Throwable) {
+                    // A client that never answered says nothing about the video, so keep going.
+                    transportFailure = throwable
+                    attempts += PlayerAttempt(label, PlayerAttemptOutcome.TRANSPORT_ERROR, failureDetail(throwable))
+                    continue
+                }
+                val outcome = playabilityOutcome(response.playabilityStatus.status)
+                attempts += PlayerAttempt(label, outcome, response.playabilityStatus.status)
+                lastResponse = response
+                lastClient = label
+                if (outcome == PlayerAttemptOutcome.OK) {
+                    return@runCatching PlayerResponseEnvelope(
+                        response = response,
+                        sourceClient = label,
+                        isAuthenticated = authenticated && withLogin,
+                        attempts = attempts.toList(),
+                    )
+                }
+                // The server answered. Asking the same client again without the session will not
+                // change its mind about the video, so move on.
+                break
             }
         }
 

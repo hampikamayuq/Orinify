@@ -129,11 +129,12 @@ class InnerTube {
         client: YouTubeClient,
         videoId: String,
         playlistId: String?,
+        setLogin: Boolean = client.supportsLogin,
     ) = httpClient.post("player") {
-        // Only clients that understand a Google session get one. Attaching a cookie and an
-        // Authorization header to a client that does not is a request the server can reject
+        // Only clients that understand a Google session get one by default. Attaching a cookie and
+        // an Authorization header to a client that does not is a request the server can reject
         // outright, which is indistinguishable from the client being unavailable.
-        ytClient(client, setLogin = client.supportsLogin)
+        ytClient(client, setLogin = setLogin)
         setBody(
             PlayerBody(
                 context = client.toContext(locale, visitorData).let {

@@ -45,7 +45,9 @@ data class YouTubeClient(
         val ANDROID_MUSIC = YouTubeClient(
             clientName = "ANDROID_MUSIC",
             clientVersion = "7.27.52",
-            api_key = "AIzaSyAOghZGza2MQSZkY_zfZ370N-PUdXEo8AI",
+            // No key. This version is accepted without one, and Google APIs reject a request that
+            // presents an API key together with real credentials.
+            api_key = "",
             userAgent = USER_AGENT_ANDROID_MUSIC
         )
 
