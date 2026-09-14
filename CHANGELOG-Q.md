@@ -81,6 +81,19 @@ histórico e nas releases do InnerTune.
 - fallback via instância pública do Piped passou a ser opcional e desligado por padrão, com
   interruptor em Configurações do player.
 
+### Correção de clients do player
+
+- `ANDROID_MUSIC` passou de `5.01` para `7.27.52` e `ANDROID_VR` substituiu o `IOS` na cadeia do
+  player: as versões herdadas foram aposentadas no servidor e respondiam HTTP 400
+  FAILED_PRECONDITION, o que derrubava toda faixa com "erro desconhecido";
+- a chave de API legada só é enviada por clients que ainda a declaram;
+- falha total do player deixou de ser "erro desconhecido": `PlayerUnavailableException` carrega o
+  que cada client respondeu e a mensagem mostra, por exemplo, `ANDROID_MUSIC=TRANSPORT_ERROR (HTTP
+  400)`, preservando a cadeia de causas para que rede e timeout mantenham mensagem própria;
+- resposta não tocável sem motivo do servidor mostra o mesmo resumo em vez de diálogo em branco;
+- consequência: o fallback por Piped ficou inócuo, porque o client `TVHTML5` que ele usa também é
+  recusado.
+
 ### Pendente antes da primeira release
 
 - keystore pessoal criada fora do repositório e secrets configurados;

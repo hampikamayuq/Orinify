@@ -49,6 +49,27 @@ alteram a política de seleção de formato. As fases 2 a 4 implementam o pipeli
 | A5 | `isAuthenticated = cookie != null`, mas a UI considera logado apenas quando há `SAPISID`. | `YouTube.kt:445` | Diagnóstico pode dizer "autenticado" com cookie vazio ou inválido, contrariando ADR-003. |
 | A6 | Dependência hardcoded de `pipedapi.kavin.rocks` no fallback final. | `InnerTube.kt:147-150` | Instância pública sem SLA; envia o `videoId` a um terceiro; se cair, o terceiro nível de fallback vira erro. |
 
+### A7. Versões de client aposentadas (encontrado depois, em execução)
+
+Este achado não estava na análise original, e a razão importa: a análise leu o código e não chamou
+a API. Rodando o endpoint de player com o mesmo corpo que o app envia, as versões herdadas
+respondem assim:
+
+| Client | Versão | Resposta |
+|---|---|---|
+| `ANDROID_MUSIC` | 5.01 | HTTP 400 FAILED_PRECONDITION |
+| `IOS` | 19.29.1 | HTTP 400 FAILED_PRECONDITION |
+| `TVHTML5` | 2.0 | "YouTube is no longer supported in this application or device" |
+| `ANDROID_MUSIC` | 7.27.52 | HTTP 200 |
+| `ANDROID_VR` | 1.60.19 | HTTP 200 OK, formatos de áudio com URL direta |
+
+Efeito: nenhuma faixa tocava, logado ou não, em qualquer rede. O erro chegava ao usuário como "erro
+desconhecido" porque a exceção não era classificada.
+
+Lição para o plano: contrato com serviço externo não se audita só lendo código. Vale um teste
+opt-in que chame o endpoint real e falhe quando um client sair do ar, para que isso apareça antes
+do usuário. Fica como item da Fase 5.
+
 ### B. Diagnóstico e observabilidade
 
 | # | Achado | Onde | Efeito |
