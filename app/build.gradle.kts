@@ -18,7 +18,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
-if (isFullBuild && System.getenv("PULL_REQUEST") == null) {
+if (isFullBuild && System.getenv("PULL_REQUEST").isNullOrEmpty()) {
     apply(plugin = "com.google.gms.google-services")
     apply(plugin = "com.google.firebase.crashlytics")
     apply(plugin = "com.google.firebase.firebase-perf")

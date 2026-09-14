@@ -14,12 +14,24 @@ import io.ktor.client.request.headers
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
-import org.junit.Ignore
+import org.junit.Assume
+import org.junit.Before
 import org.junit.Test
 
-@Ignore("IDK Why GitHub Action always runs the test with error")
 class YouTubeTest {
     private val youTube = YouTube
+
+    /**
+     * These tests call YouTube for real. Live services are unstable, rate limited and unavailable
+     * to pull requests, so the gate skips them unless they are asked for explicitly.
+     */
+    @Before
+    fun requireNetworkTests() {
+        Assume.assumeTrue(
+            "Set ORINIFY_NETWORK_TESTS=1 to run tests that reach live services.",
+            System.getenv("ORINIFY_NETWORK_TESTS") == "1"
+        )
+    }
 
     @Test
     fun `Check 'player' endpoint`() = runBlocking {

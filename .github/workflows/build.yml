@@ -4,6 +4,15 @@ on:
   push:
     branches:
       - '**'
+  pull_request:
+    branches:
+      - '**'
+
+# One build per branch. A push to a branch that already has a pull request would
+# otherwise start a second, identical run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -23,7 +32,13 @@ jobs:
           cache: 'gradle'
 
       - name: Build FOSS debug APK, lint and unit tests
-        run: ./gradlew assembleFossDebug lintFossDebug testFossDebugUnitTest --stacktrace -DskipFormatKtlint
+        run: >-
+          ./gradlew
+          assembleFossDebug lintFossDebug testFossDebugUnitTest
+          :innertube:test :kugou:test :lrclib:test
+          --stacktrace
+        env:
+          PULL_REQUEST: ${{ github.event_name == 'pull_request' && 'true' || '' }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
