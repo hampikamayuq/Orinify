@@ -805,10 +805,10 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        const val ACTION_SEARCH = "com.zionhuang.music.action.SEARCH"
-        const val ACTION_SONGS = "com.zionhuang.music.action.SONGS"
-        const val ACTION_ALBUMS = "com.zionhuang.music.action.ALBUMS"
-        const val ACTION_PLAYLISTS = "com.zionhuang.music.action.PLAYLISTS"
+        const val ACTION_SEARCH = "dev.diego.orinify.action.SEARCH"
+        const val ACTION_SONGS = "dev.diego.orinify.action.SONGS"
+        const val ACTION_ALBUMS = "dev.diego.orinify.action.ALBUMS"
+        const val ACTION_PLAYLISTS = "dev.diego.orinify.action.PLAYLISTS"
     }
 }
 

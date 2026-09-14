@@ -1,6 +1,13 @@
 @file:Suppress("UnstableApiUsage")
 
 val isFullBuild: Boolean by rootProject.extra
+val orinifyKeystoreFile = System.getenv("ORINIFY_KEYSTORE_FILE")
+val orinifyStorePassword = System.getenv("ORINIFY_STORE_PASSWORD")
+val orinifyKeyAlias = System.getenv("ORINIFY_KEY_ALIAS")
+val orinifyKeyPassword = System.getenv("ORINIFY_KEY_PASSWORD")
+val hasOrinifyReleaseSigning = listOf(orinifyKeystoreFile, orinifyStorePassword, orinifyKeyAlias, orinifyKeyPassword)
+    .all { !it.isNullOrBlank() }
+
 
 plugins {
     id("com.android.application")
@@ -18,16 +25,36 @@ if (isFullBuild && System.getenv("PULL_REQUEST") == null) {
 }
 
 android {
+    // Keep the upstream namespace to minimize merge conflicts. The application ID is
+    // intentionally independent so Orinify can be installed alongside InnerTune.
     namespace = "com.zionhuang.music"
     compileSdk = 35
     buildToolsVersion = "35.0.0"
     defaultConfig {
-        applicationId = "com.zionhuang.music"
+        applicationId = "dev.diego.orinify"
         minSdk = 24
         targetSdk = 35
-        versionCode = 26
-        versionName = "0.5.10"
+        versionCode = 2601
+        versionName = "0.5.10-q1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    signingConfigs {
+        getByName("debug") {
+            if (System.getenv("MUSIC_DEBUG_SIGNING_STORE_PASSWORD") != null) {
+                storeFile = file(System.getenv("MUSIC_DEBUG_KEYSTORE_FILE"))
+                storePassword = System.getenv("MUSIC_DEBUG_SIGNING_STORE_PASSWORD")
+                keyAlias = "debug"
+                keyPassword = System.getenv("MUSIC_DEBUG_SIGNING_KEY_PASSWORD")
+            }
+        }
+        create("orinifyRelease") {
+            if (hasOrinifyReleaseSigning) {
+                storeFile = rootProject.file(orinifyKeystoreFile!!)
+                storePassword = orinifyStorePassword
+                keyAlias = orinifyKeyAlias
+                keyPassword = orinifyKeyPassword
+            }
+        }
     }
     buildTypes {
         release {
@@ -35,6 +62,9 @@ android {
             isShrinkResources = true
             isCrunchPngs = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (hasOrinifyReleaseSigning) {
+                signingConfig = signingConfigs.getByName("orinifyRelease")
+            }
         }
         debug {
             applicationIdSuffix = ".debug"
@@ -59,16 +89,6 @@ android {
 //        }
 //    }
     
-    signingConfigs {
-        getByName("debug") {
-            if (System.getenv("MUSIC_DEBUG_SIGNING_STORE_PASSWORD") != null) {
-                storeFile = file(System.getenv("MUSIC_DEBUG_KEYSTORE_FILE"))
-                storePassword = System.getenv("MUSIC_DEBUG_SIGNING_STORE_PASSWORD")
-                keyAlias = "debug"
-                keyPassword = System.getenv("MUSIC_DEBUG_SIGNING_KEY_PASSWORD")
-            }
-        }
-    }
     buildFeatures {
         buildConfig = true
         compose = true
@@ -106,6 +126,8 @@ ksp {
 }
 
 dependencies {
+    testImplementation(libs.junit)
+
     implementation(libs.guava)
     implementation(libs.coroutines.guava)
     implementation(libs.concurrent.futures)

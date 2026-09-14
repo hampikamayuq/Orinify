@@ -1,4 +1,49 @@
-# InnerTune
+# Orinify
+
+Fork pessoal e sustentável do [InnerTune](https://github.com/z-huang/InnerTune), voltado a seleção
+determinística dos melhores streams de áudio realmente disponibilizados pelo YouTube Music à sessão
+autenticada.
+
+O Orinify não falsifica entitlement Premium, não cria formatos inexistentes e não anuncia áudio
+lossless quando a fonte não é lossless. A prioridade é tornar codec, bitrate, cache, download e
+falhas de reprodução observáveis e previsíveis.
+
+## Estado
+
+- Base: `upstream/dev` no commit `bfba5ecb`.
+- Versão inicial: `0.5.10-q1` (`versionCode` 2601).
+- Application ID: `dev.diego.orinify`.
+- Namespace legado preservado para reduzir conflitos com o upstream.
+- Distribuição inicial: flavor `foss`, sem Firebase Analytics, Crashlytics ou Performance.
+
+## Build
+
+Requisitos: JDK 17, Android SDK 35 e Build Tools 35.0.0.
+
+```bash
+./gradlew assembleFossDebug lintFossDebug testFossDebugUnitTest
+```
+
+A release exige uma keystore externa e as variáveis descritas em
+[`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md). Keystores e credenciais são ignoradas pelo Git.
+
+## Documentação
+
+- [Arquitetura](docs/ARCHITECTURE-Q.md)
+- [Pipeline de áudio](docs/AUDIO_PIPELINE.md)
+- [Detecção Premium](docs/PREMIUM_DETECTION.md)
+- [Política de cache](docs/CACHE_POLICY.md)
+- [Plano de testes](docs/TEST_PLAN.md)
+- [Sincronização com upstream](docs/UPSTREAM_SYNC.md)
+- [Segurança](docs/SECURITY.md)
+- [Processo de release](docs/RELEASE_PROCESS.md)
+
+O projeto permanece sob GPL-3.0 e mantém a atribuição e o histórico do InnerTune. Consulte
+[`UPSTREAM.md`](UPSTREAM.md) e [`LICENSE`](LICENSE).
+
+---
+
+## Upstream project: InnerTune
 
 <img src="https://raw.githubusercontent.com/z-huang/InnerTune/dev/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.webp" height="72">
 

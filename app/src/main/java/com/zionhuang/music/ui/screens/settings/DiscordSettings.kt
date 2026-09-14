@@ -333,12 +333,12 @@ fun RichPresence(
 
             OutlinedButton(
                 onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/z-huang/InnerTune"))
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/hampikamayuq/Orinify"))
                     context.startActivity(intent)
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Visit InnerTune")
+                Text("Visit Orinify")
             }
         }
     }
