@@ -121,6 +121,13 @@ Objetivo: remover falhas que afetam o usuário hoje, com hunks pequenos e cobert
 Critério de aceite: CI verde, teste novo para cada item 1 a 5, smoke test de playback por mais de
 seis horas com tela desligada sem 403.
 
+**Status: implementada.** Os sete itens estão na branch `claude/analise-plano-melhorias-4h776p`.
+`assembleFossDebug`, `lintFossDebug` e `testFossDebugUnitTest` passam na CI. O `StreamUrlCache` e a
+normalização de versão têm 18 testes unitários. Falta apenas o smoke test em aparelho real, que não
+pode ser feito por build automatizado e é o último item do critério de aceite. O teste de
+`hasAuthenticatedSession` existe mas só entra no gate com a Fase 1, porque o gate atual não executa
+os testes do módulo `innertube`.
+
 ### Fase 1 — Fundação de qualidade e CI
 
 Objetivo: fazer o gate automatizado corresponder ao `TEST_PLAN.md`.
@@ -238,6 +245,12 @@ Samsung do `TEST_PLAN.md` executada.
 
 ## Próximo passo sugerido
 
-Abrir a Fase 0 como uma sequência de PRs pequenos, um por item, cada um com o teste
-correspondente, começando por A1 e A2. Os dois juntos são menos de 150 linhas e resolvem os
-dois modos de falha mais visíveis para quem usa o app o dia inteiro.
+A Fase 0 está implementada e verde na CI. Restam dois passos, nesta ordem:
+
+1. **Smoke test em aparelho real**, o único critério de aceite da Fase 0 que build automatizado não
+   cobre: reprodução por mais de seis horas com tela desligada sem 403, troca de rede, download e
+   reprodução offline, login e logout. Sem isso a Fase 0 não pode ser declarada PASS, conforme a
+   Definition of Done do `TEST_PLAN.md`.
+2. **Fase 1**, que faz o gate automatizado corresponder ao `TEST_PLAN.md`. Convém começar pela
+   unificação dos workflows com `concurrency` e pela inclusão dos testes de `innertube`, `kugou` e
+   `lrclib`, que já hoje deixam código testado fora do gate.
