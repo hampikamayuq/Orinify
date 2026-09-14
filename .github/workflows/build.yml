@@ -34,7 +34,7 @@ jobs:
       - name: Build FOSS debug APK, lint and unit tests
         run: >-
           ./gradlew
-          assembleFossDebug lintFossDebug testFossDebugUnitTest
+          assembleFossDebug lintFossDebug testFossDebugUnitTest ktlintCheck
           :innertube:test :kugou:test :lrclib:test
           --stacktrace
         env:

@@ -1,0 +1,26 @@
+# Shared by editors and by the ktlint gate. ktlint only checks the fork's own
+# sources; upstream files keep their formatting so merges stay small.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_style = space
+indent_size = 4
+max_line_length = 140
+# These three rules mandate a wrapping style the rest of this codebase does not
+# use. Enforcing them would reformat working code without making it clearer.
+ktlint_standard_multiline-expression-wrapping = disabled
+ktlint_standard_function-signature = disabled
+ktlint_standard_chain-method-continuation = disabled
+
+[*.{yml,yaml,xml,json,toml}]
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
