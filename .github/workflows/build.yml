@@ -16,6 +16,11 @@ concurrency:
 
 jobs:
   build:
+    # A branch in this repository is already covered by its push event, so the pull_request event
+    # would only duplicate it: two runs on one commit, one of them cancelled by the concurrency
+    # group, leaving a cancelled check that makes every pull request read as unstable. The
+    # pull_request event is kept for forks, whose commits never produce a push event here.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
