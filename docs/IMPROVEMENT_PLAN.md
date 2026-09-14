@@ -149,6 +149,13 @@ Objetivo: fazer o gate automatizado corresponder ao `TEST_PLAN.md`.
 Critério de aceite: um único workflow de build, tempo de CI menor que o atual, Dependabot abrindo
 PRs, release com `mapping.txt`.
 
+**Status: implementada.** O gate agora roda `assembleFossDebug`, `lintFossDebug`,
+`testFossDebugUnitTest`, `ktlintCheck` e os testes de `innertube`, `kugou` e `lrclib`, e está verde.
+Duas decisões ficaram registradas: `material3` e `navigation` continuam em RC porque uma troca de
+versão dessas exige o smoke test em aparelho, e agora é o Dependabot quem vai propor a atualização;
+e a metadata do fastlane continua descrevendo o InnerTune, inerte enquanto a distribuição for só
+pelo GitHub.
+
 ### Fase 2 — Resolver único e proveniência
 
 Objetivo: cumprir ADR-004 sem alterar ainda o comportamento observável.
@@ -245,12 +252,13 @@ Samsung do `TEST_PLAN.md` executada.
 
 ## Próximo passo sugerido
 
-A Fase 0 está implementada e verde na CI. Restam dois passos, nesta ordem:
+As Fases 0 e 1 estão implementadas e verdes na CI. Restam dois passos, nesta ordem:
 
 1. **Smoke test em aparelho real**, o único critério de aceite da Fase 0 que build automatizado não
    cobre: reprodução por mais de seis horas com tela desligada sem 403, troca de rede, download e
    reprodução offline, login e logout. Sem isso a Fase 0 não pode ser declarada PASS, conforme a
-   Definition of Done do `TEST_PLAN.md`.
-2. **Fase 1**, que faz o gate automatizado corresponder ao `TEST_PLAN.md`. Convém começar pela
-   unificação dos workflows com `concurrency` e pela inclusão dos testes de `innertube`, `kugou` e
-   `lrclib`, que já hoje deixam código testado fora do gate.
+   Definition of Done do `TEST_PLAN.md`. Vale fazê-lo antes da Fase 2, porque é ele que confirma
+   que a correção de expiração de URL resolveu o 403 no uso prolongado.
+2. **Fase 2**, o resolver único. É o objetivo central do fork e o primeiro item que muda
+   comportamento de escolha de formato, por isso entra com modo sombra e comparação contra a
+   política legada antes de ser ativado.

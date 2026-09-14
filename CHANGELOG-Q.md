@@ -48,6 +48,22 @@ histórico e nas releases do InnerTune.
   aparelho;
 - `Timber.DebugTree` plantado somente em builds de debug.
 
+### Fase 1 — gate e manutenção
+
+- workflows de push e pull request unificados, com `concurrency` por branch, eliminando o build
+  duplicado de uma branch com PR aberto;
+- `:innertube:test`, `:kugou:test` e `:lrclib:test` entraram no gate; os testes que chamam serviços
+  reais deixaram de ser desativados e passam a ser pulados salvo `ORINIFY_NETWORK_TESTS=1`;
+- removida a flag `-DskipFormatKtlint`, que nenhum plugin lia, e adicionado ktlint de verdade,
+  restrito aos fontes do fork para não gerar conflito de formatação com o upstream;
+- builds de release preservam `SourceFile` e `LineNumberTable`, e a release publica o `mapping.txt`
+  ao lado do APK, falhando se ele não existir;
+- Dependabot passa a propor atualizações mensais e agrupadas de actions e Gradle;
+- Hilt migrado de kapt para KSP e `android.enableJetifier` desligado;
+- metadados apontam para o fork: templates de issue atualizados, `FUNDING.yml` e `crowdin.yml`
+  removidos;
+- `orinify_strings.xml` permanece em inglês e português do Brasil, sem plataforma de tradução.
+
 ### Pendente antes da primeira release
 
 - keystore pessoal criada fora do repositório e secrets configurados;
