@@ -130,6 +130,25 @@ falha relatada, mas é o motivo de o `hl` não poder passar a ser derivado diret
 - coberto por testes com `MockEngine`, incluindo o caso em que o corpo traz um segredo junto do
   token e só o token sai.
 
+### Verificação de bot na conta
+
+O HTTP 400 desapareceu: o servidor passou a responder, e o que ele responde é `LOGIN_REQUIRED`
+com a razão "Faça login para confirmar que você não é um bot" — em uma conta que está logada no app.
+
+A causa é a cadeia de credenciais, não o client. `ANDROID_VR` estava marcado como incapaz de
+aceitar sessão, então era sempre perguntado anonimamente; para uma conta real o servidor recusa a
+requisição anônima e exige login, e nenhuma versão de client satisfaz uma verificação de bot.
+
+- `ANDROID_VR` passa a ser perguntado com a sessão primeiro, e anonimamente só depois. Ele continua
+  sendo o client que ancora a cadeia, porque é o único medido que devolve URLs diretas sem
+  `signatureCipher`;
+- a flag `supportsLogin` foi removida: nenhum client a definia como falsa, e um sinalizador sempre
+  verdadeiro decidindo um ramo é ruído. `player()` agora exige que cada chamada declare o modo de
+  credencial que quer;
+- a mensagem de falha deixou de escolher entre a razão do servidor e o rastro das tentativas, e
+  passa a mostrar as duas. A razão sozinha não diz qual client a ouviu, e essa é justamente a
+  informação que separa uma sessão recusada de um client que nunca a recebeu.
+
 ### Pendente antes da primeira release
 
 - keystore pessoal criada fora do repositório e secrets configurados;

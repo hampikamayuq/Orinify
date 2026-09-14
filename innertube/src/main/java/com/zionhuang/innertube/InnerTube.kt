@@ -129,11 +129,11 @@ class InnerTube {
         client: YouTubeClient,
         videoId: String,
         playlistId: String?,
-        setLogin: Boolean = client.supportsLogin,
+        setLogin: Boolean = false,
     ) = httpClient.post("player") {
-        // Only clients that understand a Google session get one by default. Attaching a cookie and
-        // an Authorization header to a client that does not is a request the server can reject
-        // outright, which is indistinguishable from the client being unavailable.
+        // The session is attached only when the caller asked for it. Every player request states
+        // which credential mode it wants, because a client refused with a session may answer
+        // perfectly well without one, and the reverse holds for a video behind a bot check.
         ytClient(client, setLogin = setLogin)
         setBody(
             PlayerBody(

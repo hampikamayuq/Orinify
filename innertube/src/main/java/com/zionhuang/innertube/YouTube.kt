@@ -533,17 +533,13 @@ object YouTube {
             // A client that takes a session is asked with it first and then without. A request the
             // server refuses outright says nothing about the video, and the same client may answer
             // perfectly well when it is asked anonymously.
-            val credentialModes = if (client.supportsLogin && !cookie.isNullOrEmpty()) {
-                listOf(true, false)
-            } else {
-                listOf(false)
-            }
+            val credentialModes = if (!cookie.isNullOrEmpty()) listOf(true, false) else listOf(false)
             for (withLogin in credentialModes) {
                 // The version travels with the name so a failure report identifies the build that
                 // produced it: a client version retired server-side is otherwise indistinguishable
                 // from a current one that was refused.
                 val label = client.clientName + "/" + client.clientVersion +
-                    if (client.supportsLogin && !withLogin) " anon" else ""
+                    if (withLogin) "" else " anon"
                 val response = try {
                     innerTube.player(client, videoId, playlistId, setLogin = withLogin).body<PlayerResponse>()
                 } catch (cancellation: CancellationException) {
@@ -605,7 +601,7 @@ object YouTube {
             return null
         }
         val embedded = try {
-            innerTube.player(TVHTML5, videoId, playlistId).body<PlayerResponse>()
+            innerTube.player(TVHTML5, videoId, playlistId, setLogin = false).body<PlayerResponse>()
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (throwable: Throwable) {

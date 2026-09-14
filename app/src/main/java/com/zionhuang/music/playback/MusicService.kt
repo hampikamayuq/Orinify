@@ -704,9 +704,13 @@ class MusicService : MediaLibraryService(),
             }
             val playerResponse = playerResult.response
             if (playerResponse.playabilityStatus.status != "OK") {
-                // Prefer the server's own words, but never leave the user with a blank message.
+                // Lead with the server's own words, but keep the attempt trail beside them. The
+                // reason alone says nothing about which client heard it, and that is the fact that
+                // tells a refused session apart from a client that was never given one.
+                val attempts = YouTube.describeAttempts(playerResult.attempts)
                 val reason = playerResponse.playabilityStatus.reason
-                    ?: getString(R.string.orinify_error_no_client, YouTube.describeAttempts(playerResult.attempts))
+                    ?.let { getString(R.string.orinify_error_server_reason, it, attempts) }
+                    ?: getString(R.string.orinify_error_no_client, attempts)
                 throw PlaybackException(reason, null, PlaybackException.ERROR_CODE_REMOTE_ERROR)
             }
 
