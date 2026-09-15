@@ -24,11 +24,9 @@ jobs:
     permissions:
       contents: read
     steps:
+      # `core` used to be a submodule and needed `submodules: recursive` here. This fork vendors
+      # it, so a plain checkout now carries data, domain and every service module.
       - uses: actions/checkout@v6
-        with:
-          # The core modules — data, domain and every service, the YouTube scraper
-          # included — live in the `core` submodule. Without this the build cannot configure.
-          submodules: 'recursive'
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4

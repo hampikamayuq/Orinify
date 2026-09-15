@@ -89,6 +89,15 @@ internal class AnalyticsRepositoryImpl(
             )
         }.flowOn(Dispatchers.IO)
 
+    override suspend fun queryRediscoverTracks(
+        goneQuietSince: LocalDateTime,
+        minPlays: Int,
+        limit: Int,
+    ): Flow<List<TopPlayedTracks>> =
+        flow {
+            emit(analyticsDatasource.queryRediscoverTracks(goneQuietSince, minPlays, limit))
+        }.flowOn(Dispatchers.IO)
+
     override suspend fun queryTopArtistsLastXDays(x: Int): Flow<List<TopPlayedArtist>> =
         flow {
             emit(analyticsDatasource.queryTopArtistsLastXDays(x))

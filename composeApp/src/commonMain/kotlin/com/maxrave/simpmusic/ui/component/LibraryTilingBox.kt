@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.maxrave.simpmusic.extension.NonLazyGrid
 import com.maxrave.simpmusic.ui.icon.Downloading
+import com.maxrave.simpmusic.ui.icon.History
 import com.maxrave.simpmusic.ui.icon.Favorite
 import com.maxrave.simpmusic.ui.icon.Insights
 import com.maxrave.simpmusic.ui.icon.SimpIcons
@@ -34,6 +35,7 @@ import simpmusic.composeapp.generated.resources.downloaded
 import simpmusic.composeapp.generated.resources.favorite
 import simpmusic.composeapp.generated.resources.followed
 import simpmusic.composeapp.generated.resources.most_played
+import simpmusic.composeapp.generated.resources.rediscover
 
 @Composable
 fun LibraryTilingBox(navController: NavController) {
@@ -43,10 +45,11 @@ fun LibraryTilingBox(navController: NavController) {
             LibraryTilingState.Followed,
             LibraryTilingState.MostPlayed,
             LibraryTilingState.Downloaded,
+            LibraryTilingState.Rediscover,
         )
     NonLazyGrid(
         columns = 2,
-        itemCount = 4,
+        itemCount = listItem.size,
         modifier =
             Modifier
                 .fillMaxWidth()
@@ -87,6 +90,14 @@ fun LibraryTilingBox(navController: NavController) {
                             navController.navigate(
                                 LibraryDynamicPlaylistDestination(
                                     type = LibraryDynamicPlaylistType.Downloaded.toStringParams(),
+                                ),
+                            )
+                        }
+
+                        LibraryTilingState.Rediscover -> {
+                            navController.navigate(
+                                LibraryDynamicPlaylistDestination(
+                                    type = LibraryDynamicPlaylistType.Rediscover.toStringParams(),
                                 ),
                             )
                         }
@@ -170,6 +181,13 @@ data class LibraryTilingState(
                 title = Res.string.downloaded,
                 containerColor = Color(0xff4CAF50),
                 icon = SimpIcons.Downloading,
+                iconColor = Color.Black,
+            )
+        val Rediscover =
+            LibraryTilingState(
+                title = Res.string.rediscover,
+                containerColor = Color(0xffB39DDB),
+                icon = SimpIcons.History,
                 iconColor = Color.Black,
             )
     }

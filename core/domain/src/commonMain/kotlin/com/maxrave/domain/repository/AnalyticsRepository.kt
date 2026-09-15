@@ -39,6 +39,16 @@ interface AnalyticsRepository {
         endTimestamp: LocalDateTime,
     ): Flow<List<TopPlayedTracks>>
 
+    /**
+     * Tracks played often before [goneQuietSince] and not once since — the ones that dropped out of
+     * rotation rather than the ones that never made it in.
+     */
+    suspend fun queryRediscoverTracks(
+        goneQuietSince: LocalDateTime,
+        minPlays: Int,
+        limit: Int,
+    ): Flow<List<TopPlayedTracks>>
+
     suspend fun queryTopArtistsLastXDays(x: Int): Flow<List<TopPlayedArtist>>
 
     suspend fun queryTopArtistsInRange(

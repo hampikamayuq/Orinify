@@ -1287,6 +1287,36 @@ interface DatabaseDao {
         endTimestamp: LocalDateTime,
     ): List<TopPlayedTracks>
 
+    /**
+     * Tracks the listener used to play often and has since stopped: at least [minPlays] plays
+     * before [goneQuietSince], and not a single one after it.
+     *
+     * The `NOT IN` is safe here only because `playback_event.videoId` is a non-null column — over a
+     * nullable one the whole clause would evaluate to NULL and silently match nothing. Empty ids
+     * are still excluded explicitly: the entity defaults `videoId` to "", so a malformed row would
+     * otherwise group into a phantom track.
+     */
+    @Query(
+        "SELECT \n" +
+            "  videoId,\n" +
+            "  COUNT(*) AS playCount,\n" +
+            "  SUM(listenedSecond) AS totalListeningTime\n" +
+            "FROM playback_event\n" +
+            "WHERE videoId != '' AND timestamp < :goneQuietSince\n" +
+            "GROUP BY videoId\n" +
+            "HAVING playCount >= :minPlays\n" +
+            "  AND videoId NOT IN (\n" +
+            "    SELECT videoId FROM playback_event WHERE timestamp >= :goneQuietSince\n" +
+            "  )\n" +
+            "ORDER BY playCount DESC\n" +
+            "LIMIT :limit",
+    )
+    suspend fun queryRediscoverTracks(
+        goneQuietSince: LocalDateTime,
+        minPlays: Int,
+        limit: Int,
+    ): List<TopPlayedTracks>
+
     @Query(
         "SELECT channelId, COUNT(*) AS playCount FROM event_artist" +
             " WHERE timestamp BETWEEN :startTimestamp AND :endTimestamp" +

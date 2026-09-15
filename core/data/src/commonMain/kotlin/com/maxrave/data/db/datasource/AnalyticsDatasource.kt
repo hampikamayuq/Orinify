@@ -48,6 +48,12 @@ internal class AnalyticsDatasource(
         endTimestamp: LocalDateTime,
     ) = databaseDao.queryTopPlayedSongsInRange(startTimestamp, endTimestamp)
 
+    suspend fun queryRediscoverTracks(
+        goneQuietSince: LocalDateTime,
+        minPlays: Int,
+        limit: Int,
+    ) = databaseDao.queryRediscoverTracks(goneQuietSince, minPlays, limit)
+
     suspend fun queryTopArtistsLastXDays(x: Int) =
         databaseDao.queryTopArtistsInRange(
             startTimestamp = now().beforeXDays(x),

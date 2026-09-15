@@ -22,6 +22,8 @@
     <string name="favorite">Favorite</string>
     <string name="followed">Followed</string>
     <string name="most_played">Most Played</string>
+    <string name="rediscover">Rediscover</string>
+    <string name="rediscover_subtitle">You used to play these a lot</string>
     <string name="Downloaded">Downloaded</string>
     <string name="favorite_playlists">Favorite Playlists</string>
     <string name="no_favorite_playlists">No favorite playlists</string>

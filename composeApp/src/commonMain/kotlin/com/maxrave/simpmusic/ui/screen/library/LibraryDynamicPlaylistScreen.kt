@@ -98,6 +98,8 @@ import simpmusic.composeapp.generated.resources.favorite
 import simpmusic.composeapp.generated.resources.followed
 import simpmusic.composeapp.generated.resources.lower_plays
 import simpmusic.composeapp.generated.resources.most_played
+import simpmusic.composeapp.generated.resources.rediscover
+import simpmusic.composeapp.generated.resources.rediscover_subtitle
 import simpmusic.composeapp.generated.resources.search
 import simpmusic.composeapp.generated.resources.seconds
 import simpmusic.composeapp.generated.resources.wrapped
@@ -141,6 +143,8 @@ fun LibraryDynamicPlaylistScreen(
     var tempDownloaded by remember { mutableStateOf(emptyList<SongEntity>()) }
     val monthlyRecap by viewModel.listMonthlyRecapSong.collectAsStateWithLifecycle()
     var tempMonthlyRecap by remember { mutableStateOf(emptyList<SongEntity>()) }
+    val rediscover by viewModel.listRediscoverSong.collectAsStateWithLifecycle()
+    var tempRediscover by remember { mutableStateOf(emptyList<SongEntity>()) }
     val analyticsUIState by analyticsViewModel.analyticsUIState.collectAsStateWithLifecycle()
     var tempTopTracks by remember { mutableStateOf(analyticsUIState.topTracks.data ?: emptyList()) }
     var tempTopArtists by remember { mutableStateOf(analyticsUIState.topArtists.data ?: emptyList()) }
@@ -171,6 +175,7 @@ fun LibraryDynamicPlaylistScreen(
         tempMostPlayed = mostPlayed.filter { it.matches(query) }
         tempDownloaded = downloaded.filter { it.matches(query) }
         tempMonthlyRecap = monthlyRecap.filter { it.matches(query) }
+        tempRediscover = rediscover.filter { it.matches(query) }
         tempTopTracks =
             analyticsUIState.topTracks.data
                 ?.filter { it.second.matches(query) }
@@ -386,6 +391,14 @@ fun LibraryDynamicPlaylistScreen(
                         }
                     }
 
+                    LibraryDynamicPlaylistType.Rediscover -> {
+                        if (query.isNotEmpty() && showSearchBar) {
+                            tempRediscover
+                        } else {
+                            rediscover
+                        }
+                    }
+
                     // Kept as an explicit branch rather than an `else`: the three cases above are
                     // reachable only because the `if` chain around this block has already ruled
                     // out every other object, and an `else` here would silently swallow the next
@@ -494,6 +507,8 @@ fun LibraryDynamicPlaylistScreen(
                     stringResource(Res.string.album_length, mostPlayed.size.toString(), "")
                 LibraryDynamicPlaylistType.Downloaded ->
                     stringResource(Res.string.album_length, downloaded.size.toString(), "")
+                LibraryDynamicPlaylistType.Rediscover ->
+                    stringResource(Res.string.rediscover_subtitle)
                 LibraryDynamicPlaylistType.Followed ->
                     "${followed.size} ${stringResource(Res.string.artists)}"
                 is LibraryDynamicPlaylistType.MonthlyRecap ->
@@ -710,6 +725,15 @@ sealed class LibraryDynamicPlaylistType {
     data object Downloaded : LibraryDynamicPlaylistType()
 
     /**
+     * Tracks that dropped out of rotation: played often a while back, and not once since.
+     *
+     * Every other list here looks at what the listener plays now. This one is the only one that
+     * looks at what they STOPPED playing, which is why it is not a variant of [MostPlayed] — a
+     * most-played list is dominated by exactly the tracks this one must exclude.
+     */
+    data object Rediscover : LibraryDynamicPlaylistType()
+
+    /**
      * The three top lists carry the period they were opened for, so the list on screen is the one
      * the user was looking at rather than whatever period this screen's own view model starts on.
      *
@@ -766,6 +790,7 @@ sealed class LibraryDynamicPlaylistType {
             Followed -> Res.string.followed
             MostPlayed -> Res.string.most_played
             Downloaded -> Res.string.downloaded
+            Rediscover -> Res.string.rediscover
             is TopAlbums -> Res.string.your_top_albums
             is TopArtists -> Res.string.your_top_artists
             is TopTracks -> Res.string.your_top_tracks
@@ -835,6 +860,7 @@ sealed class LibraryDynamicPlaylistType {
             Followed -> "followed"
             MostPlayed -> "most_played"
             Downloaded -> "downloaded"
+            Rediscover -> "rediscover"
             is TopAlbums -> TOP_ALBUMS + periodSuffix()
             is TopArtists -> TOP_ARTISTS + periodSuffix()
             is TopTracks -> TOP_TRACKS + periodSuffix()
@@ -855,6 +881,7 @@ sealed class LibraryDynamicPlaylistType {
                 "followed" -> Followed
                 "most_played" -> MostPlayed
                 "downloaded" -> Downloaded
+                "rediscover" -> Rediscover
                 TOP_ALBUMS -> TopAlbums()
                 TOP_ARTISTS -> TopArtists()
                 TOP_TRACKS -> TopTracks()
