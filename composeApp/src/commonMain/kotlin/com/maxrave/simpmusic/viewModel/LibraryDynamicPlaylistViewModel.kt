@@ -5,6 +5,7 @@ import com.maxrave.common.Config
 import com.maxrave.common.Config.REMOVED_SONG_DATE_TIME
 import com.maxrave.domain.data.entities.ArtistEntity
 import com.maxrave.domain.data.entities.SongEntity
+import com.maxrave.domain.utils.Resource
 import com.maxrave.domain.extension.now
 import com.maxrave.domain.mediaservice.handler.PlaylistType
 import com.maxrave.domain.mediaservice.handler.QueueData
@@ -12,13 +13,18 @@ import com.maxrave.domain.repository.AnalyticsRepository
 import com.maxrave.domain.repository.ArtistRepository
 import com.maxrave.domain.repository.SongRepository
 import com.maxrave.domain.utils.toArrayListTrack
+import com.maxrave.domain.utils.toSongEntity
 import com.maxrave.domain.utils.toTrack
 import com.maxrave.simpmusic.ui.screen.home.analytics.monthFullNameResource
 import com.maxrave.simpmusic.ui.screen.library.LibraryDynamicPlaylistType
 import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -52,6 +58,19 @@ class LibraryDynamicPlaylistViewModel(
     private val _listRediscoverSong: MutableStateFlow<List<SongEntity>> = MutableStateFlow(emptyList())
     val listRediscoverSong: StateFlow<List<SongEntity>> get() = _listRediscoverSong
 
+    private val _listMightLikeSong: MutableStateFlow<List<SongEntity>> = MutableStateFlow(emptyList())
+    val listMightLikeSong: StateFlow<List<SongEntity>> get() = _listMightLikeSong
+
+    /**
+     * True while the suggestions are being fetched.
+     *
+     * The other lists read the local database and are on screen in the same frame; this one waits
+     * on the network, and an empty list with no explanation reads as "nothing to suggest" rather
+     * than "still asking".
+     */
+    private val _mightLikeLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val mightLikeLoading: StateFlow<Boolean> get() = _mightLikeLoading
+
     /**
      * One month's top songs, filled in only once a route names the month.
      *
@@ -77,6 +96,72 @@ class LibraryDynamicPlaylistViewModel(
         getMostPlayedSong()
         getDownloadedSong()
         getRediscoverSong()
+        getMightLikeSong()
+    }
+
+    /**
+     * Tracks the listener has never played, related to the ones they play most.
+     *
+     * The only list here that asks the network, and the only one that can be empty for a reason
+     * other than an empty library: the seeds come from the listening history, so a library with
+     * fewer than [MIGHT_LIKE_MIN_SEEDS] played tracks has nothing to reason from.
+     *
+     * Seeds are drawn at random from the top [MIGHT_LIKE_SEED_POOL] rather than taken in order.
+     * Taken in order the list is the same every time it is opened, which is the opposite of what a
+     * discovery list is for; drawn from the pool it varies while still being anchored to what the
+     * listener actually plays.
+     */
+    private fun getMightLikeSong() {
+        viewModelScope.launch {
+            _mightLikeLoading.value = true
+            try {
+                val seeds =
+                    analyticsRepository
+                        .queryTopPlayedSongsInRange(
+                            startTimestamp = now().date.minus(MIGHT_LIKE_HISTORY_DAYS, DateTimeUnit.DAY).atTime(0, 0),
+                            endTimestamp = now(),
+                        ).firstOrNull()
+                        .orEmpty()
+                        .take(MIGHT_LIKE_SEED_POOL)
+                if (seeds.size < MIGHT_LIKE_MIN_SEEDS) {
+                    _listMightLikeSong.value = emptyList()
+                    return@launch
+                }
+                val chosen = seeds.shuffled().take(MIGHT_LIKE_SEEDS)
+                val seedIds = chosen.map { it.videoId }.toSet()
+                // Asked in parallel: each seed is its own round trip, and done in sequence the
+                // screen would wait for the sum of them.
+                val candidates =
+                    coroutineScope {
+                        chosen
+                            .map { seed ->
+                                async {
+                                    (
+                                        songRepository
+                                            .getRelatedData(seed.videoId)
+                                            .firstOrNull { it is Resource.Success || it is Resource.Error }
+                                            as? Resource.Success
+                                    )?.data?.first.orEmpty()
+                                }
+                            }.awaitAll()
+                    }.flatten()
+                        .distinctBy { it.videoId }
+                        // A seed's own radio leads with neighbouring tracks, but the seed can
+                        // still come back through another seed's radio.
+                        .filter { it.videoId !in seedIds }
+                // The whole point: what is left is only what the listener has NOT heard. Asked in
+                // one query rather than per candidate — a hundred round trips to the database to
+                // filter a hundred rows is the shape that makes a list feel slow.
+                val alreadyPlayed = analyticsRepository.queryAlreadyPlayed(candidates.map { it.videoId }).toSet()
+                _listMightLikeSong.value =
+                    candidates
+                        .filterNot { it.videoId in alreadyPlayed }
+                        .take(MIGHT_LIKE_LIMIT)
+                        .map { it.toSongEntity() }
+            } finally {
+                _mightLikeLoading.value = false
+            }
+        }
     }
 
     /**
@@ -224,6 +309,7 @@ class LibraryDynamicPlaylistViewModel(
                 LibraryDynamicPlaylistType.Followed -> return
                 LibraryDynamicPlaylistType.MostPlayed -> listMostPlayedSong.value to listMostPlayedSong.value.find { it.videoId == videoId }
                 LibraryDynamicPlaylistType.Rediscover -> listRediscoverSong.value to listRediscoverSong.value.find { it.videoId == videoId }
+                LibraryDynamicPlaylistType.MightLike -> listMightLikeSong.value to listMightLikeSong.value.find { it.videoId == videoId }
                 is LibraryDynamicPlaylistType.MonthlyRecap ->
                     listMonthlyRecapSong.value to listMonthlyRecapSong.value.find { it.videoId == videoId }
                 else -> return
@@ -252,6 +338,7 @@ class LibraryDynamicPlaylistViewModel(
             LibraryDynamicPlaylistType.Downloaded -> listDownloadedSong.value
             LibraryDynamicPlaylistType.MostPlayed -> listMostPlayedSong.value
             LibraryDynamicPlaylistType.Rediscover -> listRediscoverSong.value
+            LibraryDynamicPlaylistType.MightLike -> listMightLikeSong.value
             is LibraryDynamicPlaylistType.MonthlyRecap -> listMonthlyRecapSong.value
             else -> emptyList()
         }
@@ -317,5 +404,16 @@ class LibraryDynamicPlaylistViewModel(
 
         private const val REDISCOVER_QUERY_LIMIT = 100
         private const val REDISCOVER_LIMIT = 50
+
+        /** How far back the suggestions look for something to reason from. */
+        private const val MIGHT_LIKE_HISTORY_DAYS = 90
+
+        /** The pool the seeds are drawn from, and the floor below which there is nothing to draw. */
+        private const val MIGHT_LIKE_SEED_POOL = 20
+        private const val MIGHT_LIKE_MIN_SEEDS = 3
+
+        /** One network round trip each, so this is a cost as much as a setting. */
+        private const val MIGHT_LIKE_SEEDS = 4
+        private const val MIGHT_LIKE_LIMIT = 50
     }
 }

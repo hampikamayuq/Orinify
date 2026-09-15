@@ -1317,6 +1317,16 @@ interface DatabaseDao {
         limit: Int,
     ): List<TopPlayedTracks>
 
+    /**
+     * Of [videoIds], the ones that appear anywhere in the listening history.
+     *
+     * Asked positively — `IN` over a bound list — rather than as a `NOT IN` inside the candidate
+     * query, because the candidates are not rows in this database: they come from the network, so
+     * there is nothing here to filter. The caller subtracts the answer.
+     */
+    @Query("SELECT DISTINCT videoId FROM playback_event WHERE videoId IN (:videoIds)")
+    suspend fun queryAlreadyPlayed(videoIds: List<String>): List<String>
+
     @Query(
         "SELECT channelId, COUNT(*) AS playCount FROM event_artist" +
             " WHERE timestamp BETWEEN :startTimestamp AND :endTimestamp" +

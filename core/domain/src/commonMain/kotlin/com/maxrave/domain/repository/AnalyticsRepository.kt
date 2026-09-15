@@ -49,6 +49,9 @@ interface AnalyticsRepository {
         limit: Int,
     ): Flow<List<TopPlayedTracks>>
 
+    /** Of [videoIds], the ones already in the listening history. */
+    suspend fun queryAlreadyPlayed(videoIds: List<String>): List<String>
+
     suspend fun queryTopArtistsLastXDays(x: Int): Flow<List<TopPlayedArtist>>
 
     suspend fun queryTopArtistsInRange(

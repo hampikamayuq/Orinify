@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -97,6 +99,9 @@ import simpmusic.composeapp.generated.resources.downloaded
 import simpmusic.composeapp.generated.resources.favorite
 import simpmusic.composeapp.generated.resources.followed
 import simpmusic.composeapp.generated.resources.lower_plays
+import simpmusic.composeapp.generated.resources.might_like
+import simpmusic.composeapp.generated.resources.might_like_empty
+import simpmusic.composeapp.generated.resources.might_like_subtitle
 import simpmusic.composeapp.generated.resources.most_played
 import simpmusic.composeapp.generated.resources.rediscover
 import simpmusic.composeapp.generated.resources.rediscover_subtitle
@@ -145,6 +150,9 @@ fun LibraryDynamicPlaylistScreen(
     var tempMonthlyRecap by remember { mutableStateOf(emptyList<SongEntity>()) }
     val rediscover by viewModel.listRediscoverSong.collectAsStateWithLifecycle()
     var tempRediscover by remember { mutableStateOf(emptyList<SongEntity>()) }
+    val mightLike by viewModel.listMightLikeSong.collectAsStateWithLifecycle()
+    val mightLikeLoading by viewModel.mightLikeLoading.collectAsStateWithLifecycle()
+    var tempMightLike by remember { mutableStateOf(emptyList<SongEntity>()) }
     val analyticsUIState by analyticsViewModel.analyticsUIState.collectAsStateWithLifecycle()
     var tempTopTracks by remember { mutableStateOf(analyticsUIState.topTracks.data ?: emptyList()) }
     var tempTopArtists by remember { mutableStateOf(analyticsUIState.topArtists.data ?: emptyList()) }
@@ -176,6 +184,7 @@ fun LibraryDynamicPlaylistScreen(
         tempDownloaded = downloaded.filter { it.matches(query) }
         tempMonthlyRecap = monthlyRecap.filter { it.matches(query) }
         tempRediscover = rediscover.filter { it.matches(query) }
+        tempMightLike = mightLike.filter { it.matches(query) }
         tempTopTracks =
             analyticsUIState.topTracks.data
                 ?.filter { it.second.matches(query) }
@@ -399,6 +408,14 @@ fun LibraryDynamicPlaylistScreen(
                         }
                     }
 
+                    LibraryDynamicPlaylistType.MightLike -> {
+                        if (query.isNotEmpty() && showSearchBar) {
+                            tempMightLike
+                        } else {
+                            mightLike
+                        }
+                    }
+
                     // Kept as an explicit branch rather than an `else`: the three cases above are
                     // reachable only because the `if` chain around this block has already ruled
                     // out every other object, and an `else` here would silently swallow the next
@@ -434,6 +451,36 @@ fun LibraryDynamicPlaylistScreen(
                     onLongClick = { selectionState.start(it) },
                     onSelectToggle = { selectionState.toggle(it) },
                 )
+            }
+
+            // Every other list reads the local database and is on screen in the same frame. This
+            // one waits on the network, so the gap has to say which of the two empties it is:
+            // still asking, or asked and there is nothing to suggest.
+            //
+            // Placed after `items` deliberately: the `when` above is exhaustive only through the
+            // smart cast the enclosing `else if` chain gives `type`, and a statement between the
+            // chain and the `when` loses it. Nothing renders above this while the list is empty.
+            if (type == LibraryDynamicPlaylistType.MightLike && mightLike.isEmpty()) {
+                item {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 48.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (mightLikeLoading) {
+                            CircularProgressIndicator()
+                        } else {
+                            Text(
+                                text = stringResource(Res.string.might_like_empty),
+                                style = typo().bodyMedium,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(horizontal = 32.dp),
+                            )
+                        }
+                    }
+                }
             }
         }
         item {
@@ -509,6 +556,8 @@ fun LibraryDynamicPlaylistScreen(
                     stringResource(Res.string.album_length, downloaded.size.toString(), "")
                 LibraryDynamicPlaylistType.Rediscover ->
                     stringResource(Res.string.rediscover_subtitle)
+                LibraryDynamicPlaylistType.MightLike ->
+                    stringResource(Res.string.might_like_subtitle)
                 LibraryDynamicPlaylistType.Followed ->
                     "${followed.size} ${stringResource(Res.string.artists)}"
                 is LibraryDynamicPlaylistType.MonthlyRecap ->
@@ -734,6 +783,14 @@ sealed class LibraryDynamicPlaylistType {
     data object Rediscover : LibraryDynamicPlaylistType()
 
     /**
+     * Tracks the listener has never played, related to the ones they play most.
+     *
+     * The only list here whose contents come from the network rather than the local database, and
+     * the only one that can legitimately be empty while the library is full.
+     */
+    data object MightLike : LibraryDynamicPlaylistType()
+
+    /**
      * The three top lists carry the period they were opened for, so the list on screen is the one
      * the user was looking at rather than whatever period this screen's own view model starts on.
      *
@@ -791,6 +848,7 @@ sealed class LibraryDynamicPlaylistType {
             MostPlayed -> Res.string.most_played
             Downloaded -> Res.string.downloaded
             Rediscover -> Res.string.rediscover
+            MightLike -> Res.string.might_like
             is TopAlbums -> Res.string.your_top_albums
             is TopArtists -> Res.string.your_top_artists
             is TopTracks -> Res.string.your_top_tracks
@@ -861,6 +919,7 @@ sealed class LibraryDynamicPlaylistType {
             MostPlayed -> "most_played"
             Downloaded -> "downloaded"
             Rediscover -> "rediscover"
+            MightLike -> "might_like"
             is TopAlbums -> TOP_ALBUMS + periodSuffix()
             is TopArtists -> TOP_ARTISTS + periodSuffix()
             is TopTracks -> TOP_TRACKS + periodSuffix()
@@ -882,6 +941,7 @@ sealed class LibraryDynamicPlaylistType {
                 "most_played" -> MostPlayed
                 "downloaded" -> Downloaded
                 "rediscover" -> Rediscover
+                "might_like" -> MightLike
                 TOP_ALBUMS -> TopAlbums()
                 TOP_ARTISTS -> TopArtists()
                 TOP_TRACKS -> TopTracks()

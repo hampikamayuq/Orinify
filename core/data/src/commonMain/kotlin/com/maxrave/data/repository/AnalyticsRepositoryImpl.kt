@@ -89,6 +89,9 @@ internal class AnalyticsRepositoryImpl(
             )
         }.flowOn(Dispatchers.IO)
 
+    override suspend fun queryAlreadyPlayed(videoIds: List<String>): List<String> =
+        withContext(Dispatchers.IO) { analyticsDatasource.queryAlreadyPlayed(videoIds) }
+
     override suspend fun queryRediscoverTracks(
         goneQuietSince: LocalDateTime,
         minPlays: Int,

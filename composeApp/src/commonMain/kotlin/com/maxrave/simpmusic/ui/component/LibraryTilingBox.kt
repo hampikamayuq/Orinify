@@ -21,6 +21,7 @@ import androidx.navigation.NavController
 import com.maxrave.simpmusic.extension.NonLazyGrid
 import com.maxrave.simpmusic.ui.icon.Downloading
 import com.maxrave.simpmusic.ui.icon.History
+import com.maxrave.simpmusic.ui.icon.TipsAndUpdates
 import com.maxrave.simpmusic.ui.icon.Favorite
 import com.maxrave.simpmusic.ui.icon.Insights
 import com.maxrave.simpmusic.ui.icon.SimpIcons
@@ -35,6 +36,7 @@ import simpmusic.composeapp.generated.resources.downloaded
 import simpmusic.composeapp.generated.resources.favorite
 import simpmusic.composeapp.generated.resources.followed
 import simpmusic.composeapp.generated.resources.most_played
+import simpmusic.composeapp.generated.resources.might_like
 import simpmusic.composeapp.generated.resources.rediscover
 
 @Composable
@@ -46,6 +48,7 @@ fun LibraryTilingBox(navController: NavController) {
             LibraryTilingState.MostPlayed,
             LibraryTilingState.Downloaded,
             LibraryTilingState.Rediscover,
+            LibraryTilingState.MightLike,
         )
     NonLazyGrid(
         columns = 2,
@@ -98,6 +101,14 @@ fun LibraryTilingBox(navController: NavController) {
                             navController.navigate(
                                 LibraryDynamicPlaylistDestination(
                                     type = LibraryDynamicPlaylistType.Rediscover.toStringParams(),
+                                ),
+                            )
+                        }
+
+                        LibraryTilingState.MightLike -> {
+                            navController.navigate(
+                                LibraryDynamicPlaylistDestination(
+                                    type = LibraryDynamicPlaylistType.MightLike.toStringParams(),
                                 ),
                             )
                         }
@@ -188,6 +199,13 @@ data class LibraryTilingState(
                 title = Res.string.rediscover,
                 containerColor = Color(0xffB39DDB),
                 icon = SimpIcons.History,
+                iconColor = Color.Black,
+            )
+        val MightLike =
+            LibraryTilingState(
+                title = Res.string.might_like,
+                containerColor = Color(0xffFFAB91),
+                icon = SimpIcons.TipsAndUpdates,
                 iconColor = Color.Black,
             )
     }

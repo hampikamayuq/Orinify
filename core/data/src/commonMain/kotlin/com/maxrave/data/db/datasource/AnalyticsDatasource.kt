@@ -54,6 +54,8 @@ internal class AnalyticsDatasource(
         limit: Int,
     ) = databaseDao.queryRediscoverTracks(goneQuietSince, minPlays, limit)
 
+    suspend fun queryAlreadyPlayed(videoIds: List<String>) = databaseDao.queryAlreadyPlayed(videoIds)
+
     suspend fun queryTopArtistsLastXDays(x: Int) =
         databaseDao.queryTopArtistsInRange(
             startTimestamp = now().beforeXDays(x),
