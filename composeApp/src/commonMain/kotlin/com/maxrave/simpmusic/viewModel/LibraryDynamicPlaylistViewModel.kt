@@ -49,9 +49,6 @@ class LibraryDynamicPlaylistViewModel(
     private val _listDownloadedSong: MutableStateFlow<List<SongEntity>> = MutableStateFlow(emptyList())
     val listDownloadedSong: StateFlow<List<SongEntity>> get() = _listDownloadedSong
 
-    private val _listRediscoverSong: MutableStateFlow<List<SongEntity>> = MutableStateFlow(emptyList())
-    val listRediscoverSong: StateFlow<List<SongEntity>> get() = _listRediscoverSong
-
     /**
      * One month's top songs, filled in only once a route names the month.
      *
@@ -76,37 +73,6 @@ class LibraryDynamicPlaylistViewModel(
         getFollowedArtist()
         getMostPlayedSong()
         getDownloadedSong()
-        getRediscoverSong()
-    }
-
-    /**
-     * Tracks the listener used to play often and has since let go.
-     *
-     * Started in [init] like the other four rather than on demand: it has no parameter to wait for
-     * — the window is always "the last [REDISCOVER_QUIET_DAYS] days" — so there is nothing a route
-     * could tell it that it does not already know.
-     */
-    private fun getRediscoverSong() {
-        viewModelScope.launch {
-            analyticsRepository
-                .queryRediscoverTracks(
-                    goneQuietSince =
-                        now()
-                            .date
-                            .minus(REDISCOVER_QUIET_DAYS, DateTimeUnit.DAY)
-                            .atTime(0, 0),
-                    minPlays = REDISCOVER_MIN_PLAYS,
-                    limit = REDISCOVER_QUERY_LIMIT,
-                ).collectLatest { rows ->
-                    _listRediscoverSong.value =
-                        rows
-                            // Resolved then capped, never the other way round: a row whose song
-                            // has since been swept from the library would otherwise leave a gap in
-                            // the list. Same shape as the recap loader below.
-                            .mapNotNull { songRepository.getSongById(it.videoId).lastOrNull() }
-                            .take(REDISCOVER_LIMIT)
-                }
-        }
     }
 
     private fun getFavoriteSong() {
@@ -223,7 +189,6 @@ class LibraryDynamicPlaylistViewModel(
                 LibraryDynamicPlaylistType.Downloaded -> listDownloadedSong.value to listDownloadedSong.value.find { it.videoId == videoId }
                 LibraryDynamicPlaylistType.Followed -> return
                 LibraryDynamicPlaylistType.MostPlayed -> listMostPlayedSong.value to listMostPlayedSong.value.find { it.videoId == videoId }
-                LibraryDynamicPlaylistType.Rediscover -> listRediscoverSong.value to listRediscoverSong.value.find { it.videoId == videoId }
                 is LibraryDynamicPlaylistType.MonthlyRecap ->
                     listMonthlyRecapSong.value to listMonthlyRecapSong.value.find { it.videoId == videoId }
                 else -> return
@@ -251,7 +216,6 @@ class LibraryDynamicPlaylistViewModel(
             LibraryDynamicPlaylistType.Favorite -> listFavoriteSong.value
             LibraryDynamicPlaylistType.Downloaded -> listDownloadedSong.value
             LibraryDynamicPlaylistType.MostPlayed -> listMostPlayedSong.value
-            LibraryDynamicPlaylistType.Rediscover -> listRediscoverSong.value
             is LibraryDynamicPlaylistType.MonthlyRecap -> listMonthlyRecapSong.value
             else -> emptyList()
         }
@@ -301,21 +265,5 @@ class LibraryDynamicPlaylistViewModel(
     companion object {
         /** Songs a monthly recap holds. The ranking underneath already stops at 100. */
         private const val MONTHLY_RECAP_LIMIT = 50
-
-        /**
-         * How long a track must have been untouched to count as let go. Two months is long enough
-         * that a track merely between rotations is not offered back, and short enough that the
-         * list still has something in it after a few months of use.
-         */
-        private const val REDISCOVER_QUIET_DAYS = 60
-
-        /**
-         * A track played once and dropped was never in rotation to begin with — that is a track
-         * the listener did not like, and offering it back is worse than offering nothing.
-         */
-        private const val REDISCOVER_MIN_PLAYS = 3
-
-        private const val REDISCOVER_QUERY_LIMIT = 100
-        private const val REDISCOVER_LIMIT = 50
     }
 }
