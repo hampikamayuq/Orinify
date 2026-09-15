@@ -27,6 +27,9 @@
     <string name="might_like">You might like</string>
     <string name="might_like_subtitle">New to you, from what you play most</string>
     <string name="might_like_empty">Play a little more and suggestions will appear here</string>
+    <string name="artist_mixes">Artist mixes</string>
+    <string name="artist_mix">Mix</string>
+    <string name="artist_mix_unavailable">Could not start this mix</string>
     <string name="Downloaded">Downloaded</string>
     <string name="favorite_playlists">Favorite Playlists</string>
     <string name="no_favorite_playlists">No favorite playlists</string>

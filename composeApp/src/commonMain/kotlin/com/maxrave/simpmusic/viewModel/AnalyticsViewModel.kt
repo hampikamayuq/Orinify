@@ -16,7 +16,6 @@ import com.maxrave.domain.repository.ArtistRepository
 import com.maxrave.domain.repository.SongRepository
 import com.maxrave.domain.manager.DataStoreManager
 import com.maxrave.domain.utils.LocalResource
-import com.maxrave.domain.utils.Resource
 import com.maxrave.simpmusic.viewModel.base.BaseViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -265,8 +264,7 @@ class AnalyticsViewModel(
                     topPlayedArtists
                         .mapNotNull { topPlayedArtist ->
                             val artist =
-                                artistRepository.getArtistById(topPlayedArtist.channelId).lastOrNull()
-                                    ?: getArtistFromYouTube(topPlayedArtist.channelId)
+                                artistRepository.getArtistOrFetch(topPlayedArtist.channelId)
                                     ?: return@mapNotNull null
                             topPlayedArtist to artist
                         }.let { pairs ->
@@ -275,27 +273,6 @@ class AnalyticsViewModel(
                 }
         }
     }
-
-    private suspend fun getArtistFromYouTube(channelId: String): ArtistEntity? =
-        artistRepository
-            .getArtistData(channelId)
-            .lastOrNull()
-            ?.takeIf {
-                it is Resource.Success && it.data != null
-            }.let { it?.data }
-            ?.let {
-                val entity =
-                    ArtistEntity(
-                        channelId = channelId,
-                        name = it.name,
-                        thumbnails = it.thumbnails?.lastOrNull()?.url,
-                        followed = false,
-                        followedAt = null,
-                        inLibrary = now(),
-                    )
-                artistRepository.insertArtist(entity)
-                entity
-            }
 
     private fun getTopAlbums(
         start: LocalDateTime,

@@ -67,6 +67,7 @@ import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.extension.copy
 import com.maxrave.simpmusic.extension.isScrollingUp
 import com.maxrave.simpmusic.ui.component.AddToPlaylistModalBottomSheet
+import com.maxrave.simpmusic.ui.component.ArtistMixShelf
 import com.maxrave.simpmusic.ui.component.Chip
 import com.maxrave.simpmusic.ui.component.EndOfPage
 import com.maxrave.simpmusic.ui.component.GridLibraryPlaylist
@@ -134,6 +135,8 @@ fun LibraryScreen(
     // setting the Analytics tab does.
     val localTrackingEnabled by viewModel.localTrackingEnabled.collectAsStateWithLifecycle(initialValue = false)
     val monthlyRecaps by viewModel.monthlyRecaps.collectAsStateWithLifecycle()
+    val artistMixes by viewModel.artistMixes.collectAsStateWithLifecycle()
+    val loadingArtistMix by viewModel.loadingArtistMix.collectAsStateWithLifecycle()
     val nowPlaying by viewModel.nowPlayingVideoId.collectAsStateWithLifecycle()
     val youTubePlaylist by viewModel.youTubePlaylist.collectAsStateWithLifecycle()
     val listCanvasSong by viewModel.listCanvasSong.collectAsStateWithLifecycle()
@@ -185,6 +188,7 @@ fun LibraryScreen(
             LibraryChipType.YOUR_LIBRARY -> {
                 viewModel.getCanvasSong()
                 viewModel.getRecentlyAdded()
+                viewModel.getArtistMixes()
             }
 
             LibraryChipType.LOCAL_PLAYLIST -> {
@@ -242,6 +246,20 @@ fun LibraryScreen(
                 ) {
                     item {
                         LibraryTilingBox(navController)
+                    }
+
+                    // Built from `playback_event`, so it follows local tracking exactly as the
+                    // Wrapped chip does — with the setting off the table is empty and the shelf
+                    // would be a heading over nothing.
+                    if (localTrackingEnabled) {
+                        item {
+                            ArtistMixShelf(
+                                artists = artistMixes.data ?: emptyList(),
+                                isLoading = artistMixes is LocalResource.Loading,
+                                loadingChannelId = loadingArtistMix,
+                                onClick = { artist -> viewModel.playArtistMix(artist) },
+                            )
+                        }
                     }
 
                     if (!listCanvasSong.data.isNullOrEmpty()) {

@@ -5,6 +5,7 @@ import com.maxrave.data.extension.getFullDataFromDB
 import com.maxrave.data.parser.parseArtistData
 import com.maxrave.domain.data.entities.ArtistEntity
 import com.maxrave.domain.data.model.browse.artist.ArtistBrowse
+import com.maxrave.domain.extension.now
 import com.maxrave.domain.repository.ArtistRepository
 import com.maxrave.domain.utils.Resource
 import com.maxrave.kotlinytmusicscraper.YouTube
@@ -33,6 +34,27 @@ internal class ArtistRepositoryImpl(
         flow {
             emit(localDataSource.getArtist(id))
         }.flowOn(Dispatchers.IO)
+
+    override suspend fun getArtistOrFetch(channelId: String): ArtistEntity? =
+        withContext(Dispatchers.IO) {
+            localDataSource.getArtist(channelId)?.let { return@withContext it }
+            val browse =
+                runCatching { youTube.artist(channelId).getOrNull() }
+                    .getOrNull()
+                    ?.let { parseArtistData(it) }
+                    ?: return@withContext null
+            ArtistEntity(
+                channelId = channelId,
+                name = browse.name,
+                thumbnails = browse.thumbnails?.lastOrNull()?.url,
+                // Fetched because something was played, not because the listener asked for it:
+                // the row must not arrive pre-followed, and `followedAt` defaults to now, which
+                // would sort an artist nobody followed to the top of the Followed list.
+                followed = false,
+                followedAt = null,
+                inLibrary = now(),
+            ).also { localDataSource.insertArtist(it) }
+        }
 
     override suspend fun insertArtist(artistEntity: ArtistEntity) =
         withContext(Dispatchers.IO) {

@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.maxrave.common.Config
 import com.maxrave.common.LibraryChipType
 import com.maxrave.domain.data.entities.AlbumEntity
+import com.maxrave.domain.data.entities.ArtistEntity
 import com.maxrave.domain.data.entities.LocalPlaylistEntity
 import com.maxrave.domain.data.entities.PlaylistEntity
 import com.maxrave.domain.data.entities.SongEntity
@@ -16,6 +17,7 @@ import com.maxrave.domain.extension.now
 import com.maxrave.domain.manager.DataStoreManager
 import com.maxrave.domain.repository.AlbumRepository
 import com.maxrave.domain.repository.AnalyticsRepository
+import com.maxrave.domain.repository.ArtistRepository
 import com.maxrave.domain.repository.CommonRepository
 import com.maxrave.domain.repository.LocalPlaylistRepository
 import com.maxrave.domain.repository.PlaylistRepository
@@ -24,6 +26,8 @@ import com.maxrave.domain.repository.SongRepository
 import com.maxrave.domain.utils.LocalResource
 import com.maxrave.domain.utils.Resource
 import com.maxrave.domain.utils.isRadioPlaylistId
+import com.maxrave.domain.mediaservice.handler.QueueData
+import com.maxrave.domain.mediaservice.handler.PlaylistType as DomainPlaylistType
 import com.maxrave.simpmusic.ui.screen.home.analytics.monthFullNameResource
 import com.maxrave.simpmusic.ui.screen.library.LibraryDynamicPlaylistType
 import com.maxrave.simpmusic.viewModel.base.BaseViewModel
@@ -51,6 +55,8 @@ import kotlinx.datetime.number
 import kotlinx.datetime.plus
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.added_local_playlist
+import simpmusic.composeapp.generated.resources.artist_mix_unavailable
+import simpmusic.composeapp.generated.resources.radio
 import simpmusic.composeapp.generated.resources.wrapped_recap_month
 import simpmusic.composeapp.generated.resources.wrapped_recap_month_year
 import simpmusic.composeapp.generated.resources.youtube_liked_music
@@ -64,6 +70,7 @@ class LibraryViewModel(
     private val localPlaylistRepository: LocalPlaylistRepository,
     private val albumRepository: AlbumRepository,
     private val podcastRepository: PodcastRepository,
+    private val artistRepository: ArtistRepository,
 ) : BaseViewModel() {
     private val _currentScreen: MutableStateFlow<LibraryChipType> = MutableStateFlow(LibraryChipType.YOUR_LIBRARY)
     val currentScreen: StateFlow<LibraryChipType> get() = _currentScreen.asStateFlow()
@@ -115,6 +122,27 @@ class LibraryViewModel(
     private val _monthlyRecaps: MutableStateFlow<LocalResource<List<MonthlyRecapItem>>> =
         MutableStateFlow(LocalResource.Loading())
     val monthlyRecaps: StateFlow<LocalResource<List<MonthlyRecapItem>>> get() = _monthlyRecaps.asStateFlow()
+
+    /**
+     * The artists the listener plays most, each one standing for a radio built around them.
+     *
+     * Ranked from `playback_event` rather than from the Followed list: a follow is an intention,
+     * sometimes years old, while a play count is what is actually being listened to this month.
+     * That is also why the shelf follows local tracking, exactly as the Wrapped chip does.
+     */
+    private val _artistMixes: MutableStateFlow<LocalResource<List<ArtistEntity>>> =
+        MutableStateFlow(LocalResource.Loading())
+    val artistMixes: StateFlow<LocalResource<List<ArtistEntity>>> get() = _artistMixes.asStateFlow()
+
+    /**
+     * The channel id whose mix is being resolved right now, or null.
+     *
+     * A tap here costs two round trips — the artist page for its radio endpoint, then the radio
+     * itself — and every other tile in Library starts playing in the same frame. Without this the
+     * card looks like it ignored the tap, and the listener taps again.
+     */
+    private val _loadingArtistMix: MutableStateFlow<String?> = MutableStateFlow(null)
+    val loadingArtistMix: StateFlow<String?> get() = _loadingArtistMix.asStateFlow()
 
     private val _accountThumbnail: MutableStateFlow<String?> = MutableStateFlow(null)
     val accountThumbnail: StateFlow<String?> get() = _accountThumbnail.asStateFlow()
@@ -286,6 +314,96 @@ class LibraryViewModel(
     }
 
     /**
+     * The top artists of the last [ARTIST_MIX_DAYS] days, resolved to rows the shelf can draw.
+     *
+     * Resolved one at a time rather than in parallel: all but the newest listeners have every one
+     * of these artists on disk already, so the common case costs nothing, and the rare miss is a
+     * single fetch that should not be one of [ARTIST_MIX_COUNT] simultaneous ones.
+     *
+     * An artist with no artwork is kept — the shelf draws the same placeholder every artwork-less
+     * image in this app gets, and dropping them would silently shorten the shelf for the listener
+     * whose favourite artist happens to have a blank page.
+     */
+    fun getArtistMixes() {
+        viewModelScope.launch {
+            // Held rather than cleared: this runs again on every return to the tab, and blanking
+            // a shelf that is already on screen to re-fetch the same rows is a flicker, not a
+            // load. Only a first run, which has nothing to hold, shows the spinner.
+            if (_artistMixes.value !is LocalResource.Success) {
+                _artistMixes.value = LocalResource.Loading()
+            }
+            val ranking =
+                analyticsRepository
+                    .queryTopArtistsLastXDays(ARTIST_MIX_DAYS)
+                    .firstOrNull()
+                    .orEmpty()
+                    .take(ARTIST_MIX_COUNT)
+            _artistMixes.value =
+                LocalResource.Success(
+                    ranking.mapNotNull { artistRepository.getArtistOrFetch(it.channelId) },
+                )
+        }
+    }
+
+    /**
+     * Starts [artist]'s radio.
+     *
+     * The endpoint is read off the artist's own page rather than guessed from a video id: a
+     * `RDAMVM<videoId>` radio is a radio around one SONG, which drifts wherever that song's
+     * neighbours lead, while `radioId` is the mix YouTube itself built for the artist.
+     * [com.maxrave.domain.data.model.browse.artist.ArtistBrowse.shuffleId] is the fallback — it
+     * shuffles the artist's own catalogue, which is narrower than a mix but still theirs, and it
+     * is present on pages that carry no radio.
+     *
+     * Failure is reported: two round trips can fail for reasons the listener can act on (no
+     * network), and the alternative is a tap that does nothing.
+     */
+    fun playArtistMix(artist: ArtistEntity) {
+        if (_loadingArtistMix.value != null) return
+        viewModelScope.launch {
+            _loadingArtistMix.value = artist.channelId
+            try {
+                val browse =
+                    artistRepository
+                        .getArtistData(artist.channelId)
+                        .lastOrNull()
+                        ?.data
+                val endpoint = browse?.radioId ?: browse?.shuffleId
+                if (endpoint == null) {
+                    makeToast(getString(Res.string.artist_mix_unavailable))
+                    return@launch
+                }
+                val radio =
+                    songRepository
+                        .getRadioFromEndpoint(endpoint)
+                        .lastOrNull()
+                val tracks = radio?.data?.first
+                if (radio !is Resource.Success || tracks.isNullOrEmpty()) {
+                    makeToast(radio?.message ?: getString(Res.string.artist_mix_unavailable))
+                    return@launch
+                }
+                setQueueData(
+                    QueueData.Data(
+                        listTracks = tracks,
+                        firstPlayedTrack = tracks.first(),
+                        playlistId = endpoint.playlistId,
+                        playlistName = "\"${artist.name}\" ${getString(Res.string.radio)}",
+                        playlistType = DomainPlaylistType.RADIO,
+                        continuation = radio.data?.second,
+                    ),
+                )
+                loadMediaItem(
+                    tracks.first(),
+                    Config.PLAYLIST_CLICK,
+                    0,
+                )
+            } finally {
+                _loadingArtistMix.value = null
+            }
+        }
+    }
+
+    /**
      * Which of the last twelve months the user actually listened in, and what each tile shows.
      *
      * A month with no plays is left out rather than shown empty: a "Recap March" that opens onto
@@ -394,5 +512,17 @@ class LibraryViewModel(
     companion object {
         /** How far back the Wrapped tab offers recaps, counting the current month as the first. */
         private const val MONTHS_OF_RECAP = 12
+
+        /**
+         * How far back the artist mixes look.
+         *
+         * Three months is long enough that the shelf survives a fortnight spent on one album, and
+         * short enough that it still reads as "what you are listening to" rather than as a
+         * lifetime ranking — the Analytics screen is where the lifetime one lives.
+         */
+        private const val ARTIST_MIX_DAYS = 90
+
+        /** A shelf, not a list: enough to scroll through, few enough that every card is a real favourite. */
+        private const val ARTIST_MIX_COUNT = 12
     }
 }

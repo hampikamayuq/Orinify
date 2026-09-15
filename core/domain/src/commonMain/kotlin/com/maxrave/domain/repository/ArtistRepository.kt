@@ -11,6 +11,19 @@ interface ArtistRepository {
 
     fun getArtistById(id: String): Flow<ArtistEntity?>
 
+    /**
+     * The stored row for [channelId], fetched from YouTube and cached when this device has none.
+     *
+     * A channel id can reach the app without ever having been browsed — `event_artist` records one
+     * per artist per play, so a ranking built from the listening history routinely names artists
+     * whose `artist` row was never written. Returning null for those would quietly drop the most
+     * played artist from a list about the most played artists, so the row is fetched once and kept.
+     *
+     * Null only when the channel cannot be resolved at all; the caller decides whether that is
+     * worth showing.
+     */
+    suspend fun getArtistOrFetch(channelId: String): ArtistEntity?
+
     suspend fun insertArtist(artistEntity: ArtistEntity)
 
     suspend fun updateArtistImage(
