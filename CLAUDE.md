@@ -74,7 +74,17 @@
   - Entry point for Android app
 
 #### 3. **core/**
-Contains core modules organized by functionality:
+Contains core modules organized by functionality.
+
+> **Fork note — `core` is NOT a submodule here.** Upstream keeps it as a git submodule pointing at
+> `maxrave-dev/core`; this fork vendors its contents directly, imported at upstream commit
+> `e952a10d28ba6d2293473f3c41eef88c3302f842` (2026-09-15, "feat(media): restore system equalizer
+> broadcasts behind an option"). A submodule cannot hold this fork's own changes — it is someone
+> else's repository — and every data or domain change lands in it, so the split guaranteed
+> half-pushed commits: the parent's `git add -A` never sees those files, local builds pass because
+> the working tree has them, and only CI, which checks out the pin, sees what was really pushed.
+> Taking an upstream update is now a manual merge against that commit rather than a pointer bump.
+
 
 ##### **core/common/**
 - Shared utilities
