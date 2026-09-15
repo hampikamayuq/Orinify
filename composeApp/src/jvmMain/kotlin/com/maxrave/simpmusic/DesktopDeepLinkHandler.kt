@@ -106,7 +106,7 @@ object DesktopDeepLinkHandler {
 
         val actualUri = when {
             // simpmusic://open-app?url=<encoded_url>
-            parsed.scheme == "simpmusic" && parsed.host == "open-app" -> {
+            parsed.scheme == AppLinks.SCHEME && parsed.host == "open-app" -> {
                 val urlParam = parsed.getQueryParameter("url")
                 if (urlParam != null) {
                     Logger.d(TAG, "Extracted URL from open-app: $urlParam")
@@ -122,7 +122,7 @@ object DesktopDeepLinkHandler {
             // simpmusic://playlist?list=xxx → https://simpmusic.org/app/playlist?list=xxx
             // simpmusic://channel/UCxxx → https://simpmusic.org/app/channel/UCxxx
             // simpmusic://album?id=xxx → https://simpmusic.org/app/album?id=xxx
-            parsed.scheme == "simpmusic" && parsed.host != null -> {
+            parsed.scheme == AppLinks.SCHEME && parsed.host != null -> {
                 val host = parsed.host!!
                 val query = parsed.query?.let { "?$it" } ?: ""
                 val pathSuffix = parsed.pathSegments.joinToString("/").let {

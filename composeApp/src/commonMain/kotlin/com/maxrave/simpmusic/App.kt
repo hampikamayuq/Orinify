@@ -208,7 +208,7 @@ fun App(
         val data = intent.data
         Logger.d("MainActivity", "onCreate: $data")
         if (data != null) {
-            if (data == "simpmusic://notification".toUri()) {
+            if (data == AppLinks.uri("notification").toUri()) {
                 viewModel.setIntent(null)
                 navController.navigate(
                     NotificationDestination,
@@ -225,7 +225,7 @@ fun App(
                 // of it. The token is handed straight to the shared view model, and the screen
                 // closes itself when it sees a session key appear.
                 token?.let { viewModel.completeLastfmLogin(it) }
-            } else if (data.host == "simpmusic.org" || data.scheme == "simpmusic") {
+            } else if (data.host == AppLinks.WEB_HOST || data.scheme == AppLinks.SCHEME) {
                 // https://simpmusic.org/app/watch?v=VIDEO_ID
                 // https://simpmusic.org/app/playlist?list=PLAYLIST_ID
                 // https://simpmusic.org/app/channel/CHANNEL_ID
@@ -236,7 +236,7 @@ fun App(
                 // For simpmusic.org: segments = ["app", "watch"] → appPath = segments[1]
                 // For simpmusic://: host IS the appPath (e.g. host="watch"), segments = []
                 val appPath =
-                    if (data.scheme == "simpmusic") {
+                    if (data.scheme == AppLinks.SCHEME) {
                         data.host
                     } else {
                         segments.getOrNull(1)
@@ -266,7 +266,7 @@ fun App(
                         // simpmusic://channel/UCxxx → segments = ["UCxxx"]
                         // simpmusic.org/app/channel/UCxxx → segments = ["app", "channel", "UCxxx"]
                         val artistId =
-                            if (data.scheme == "simpmusic") {
+                            if (data.scheme == AppLinks.SCHEME) {
                                 segments.firstOrNull()
                             } else {
                                 segments.getOrNull(2)

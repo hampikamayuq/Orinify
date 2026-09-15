@@ -2,7 +2,7 @@ package com.maxrave.simpmusic.extension
 
 import com.eygraber.uri.Uri
 
-private const val APP_SCHEME = "simpmusic"
+private val APP_SCHEME = com.maxrave.simpmusic.AppLinks.SCHEME
 
 /**
  * Turn a pasted YouTube link into the `simpmusic://` deep link that already drives the app.

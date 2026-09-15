@@ -22,6 +22,7 @@ import com.maxrave.simpmusic.MainActivity
 import com.maxrave.simpmusic.R
 import com.maxrave.simpmusic.utils.ComposeResUtils
 import kotlinx.coroutines.runBlocking
+import com.maxrave.simpmusic.AppLinks
 
 object NotificationHandler {
     private const val CHANNEL_ID = "transactions_reminder_channel"
@@ -33,7 +34,7 @@ object NotificationHandler {
         //  No back-stack when launched
         val action = Intent(context, MainActivity::class.java)
         action.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-        action.data = "simpmusic://notification".toUri()
+        action.data = AppLinks.uri("notification").toUri()
         val pendingIntent =
             PendingIntent.getActivity(
                 context,

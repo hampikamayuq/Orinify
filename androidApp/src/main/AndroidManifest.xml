@@ -154,28 +154,21 @@
                 <data android:pathPrefix="/app/" />
             </intent-filter>
 
-            <!-- SimpMusic deep link filter (custom scheme) -->
+            <!-- This fork's own scheme. Deliberately not "simpmusic": both apps can be installed
+                 at once, and two apps claiming one scheme turn every link into a chooser. The
+                 single definition lives in AppLinks.SCHEME, which every producer reads. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="simpmusic" />
+                <data android:scheme="orinify" />
             </intent-filter>
 
-            <!-- Last.fm auth callback. The scheme is fixed by the callback URL registered on the
-                 Last.fm API account, so it is not "simpmusic". -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="lastfm-auth"
-                    android:scheme="wordbyword" />
-            </intent-filter>
+            <!-- The Last.fm callback filter is deliberately absent. "wordbyword://lastfm-auth" is
+                 fixed on maxrave-dev's Last.fm API account, not on one this fork holds, so
+                 claiming it here could only take the callback away from the app it belongs to. -->
 
             <!-- Share filter -->
             <intent-filter>

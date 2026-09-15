@@ -78,6 +78,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.koin.core.qualifier.named
+import com.maxrave.simpmusic.AppLinks
 
 /** How many covers fit across a 4-cell widget before they turn into stamps. */
 private const val RECENT_TILE_COUNT = 5
@@ -380,7 +381,7 @@ private suspend fun RecentlyType.toTile(context: Context): PlaylistTile? =
                 PlaylistTile(
                     title = it.title,
                     cover = context.loadBitmap(it.thumbnails, "RS${it.videoId}", TILE_DECODE_PX),
-                    uri = "simpmusic://watch?v=${it.videoId}",
+                    uri = AppLinks.uri("watch?v=${it.videoId}"),
                     song = it,
                 )
             }
@@ -390,7 +391,7 @@ private suspend fun RecentlyType.toTile(context: Context): PlaylistTile? =
                 PlaylistTile(
                     title = it.title,
                     cover = context.loadBitmap(it.thumbnails, "RA${it.browseId}", TILE_DECODE_PX),
-                    uri = "simpmusic://album?id=${it.browseId}",
+                    uri = AppLinks.uri("album?id=${it.browseId}"),
                 )
             }
 
@@ -399,7 +400,7 @@ private suspend fun RecentlyType.toTile(context: Context): PlaylistTile? =
                 PlaylistTile(
                     title = it.title,
                     cover = context.loadBitmap(it.thumbnails, "RP${it.id}", TILE_DECODE_PX),
-                    uri = "simpmusic://playlist?list=${it.id}",
+                    uri = AppLinks.uri("playlist?list=${it.id}"),
                 )
             }
 
@@ -408,7 +409,7 @@ private suspend fun RecentlyType.toTile(context: Context): PlaylistTile? =
                 PlaylistTile(
                     title = it.name,
                     cover = context.loadBitmap(it.thumbnails, "RAr${it.channelId}", TILE_DECODE_PX),
-                    uri = "simpmusic://channel/${it.channelId}",
+                    uri = AppLinks.uri("channel/${it.channelId}"),
                 )
             }
     }

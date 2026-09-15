@@ -19,13 +19,7 @@ import com.maxrave.logger.Logger
  */
 object WindowsProtocolRegistrar {
     private const val TAG = "WindowsProtocolRegistrar"
-    private const val SCHEME = "simpmusic"
-
-    /**
-     * The Last.fm auth callback. Its scheme is fixed by the callback URL registered on the Last.fm
-     * API account, so it cannot be folded into "simpmusic".
-     */
-    private const val LASTFM_SCHEME = "wordbyword"
+    private val SCHEME = AppLinks.SCHEME
 
     private fun regKeyOf(scheme: String) = "HKCU\\Software\\Classes\\$scheme"
 
@@ -37,8 +31,11 @@ object WindowsProtocolRegistrar {
             return
         }
 
-        register(SCHEME, "URL:SimpMusic Protocol", exePath)
-        register(LASTFM_SCHEME, "URL:SimpMusic Last.fm Callback", exePath)
+        register(SCHEME, "URL:Orinify Protocol", exePath)
+        // The Last.fm callback, "wordbyword://lastfm-auth", is deliberately NOT registered. It is
+        // fixed on maxrave-dev's Last.fm API account, not on one this fork holds, so registering it
+        // here would only take the callback away from the app it belongs to — and on Windows the
+        // last writer to HKCU wins, so it would do so silently.
     }
 
     private fun register(
