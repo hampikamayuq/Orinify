@@ -38,6 +38,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -1051,17 +1052,24 @@ fun QuickPicks(
             state = lazyListState,
             flingBehavior = snapperFlingBehavior,
         ) {
-            items(homeItem.contents, key = { it.hashCode() }) {
-                if (it != null) {
+            // `contents` is List<Content?> — the body has always skipped nulls — and
+            // `Any?.hashCode()` returns 0 for every one of them. Two nulls in one shelf therefore
+            // produced the same key twice, which LazyGrid rejects outright. Keyed by the id the
+            // card actually navigates with, and indexed so a null still gets a key of its own.
+            itemsIndexed(
+                homeItem.contents,
+                key = { index, item -> item?.videoId ?: item?.playlistId ?: item?.browseId ?: index },
+            ) { _, item ->
+                if (item != null) {
                     QuickPicksItem(
                         onClick = {
-                            val firstQueue: Track = it.toTrack()
+                            val firstQueue: Track = item.toTrack()
                             viewModel.setQueueData(
                                 QueueData.Data(
                                     listTracks = arrayListOf(firstQueue),
                                     firstPlayedTrack = firstQueue,
-                                    playlistId = "RDAMVM${it.videoId}",
-                                    playlistName = "\"${it.title}\" Radio",
+                                    playlistId = "RDAMVM${item.videoId}",
+                                    playlistName = "\"${item.title}\" Radio",
                                     playlistType = PlaylistType.RADIO,
                                     continuation = null,
                                 ),
@@ -1072,10 +1080,10 @@ fun QuickPicks(
                             )
                         },
                         onLongClick = {
-                            track = it.toTrack()
+                            track = item.toTrack()
                             bottomSheetShow = true
                         },
-                        data = it,
+                        data = item,
                         widthDp = widthDp,
                     )
                 }

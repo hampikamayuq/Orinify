@@ -242,7 +242,11 @@ fun LibraryDynamicPlaylistScreen(
                         } else {
                             data
                         },
-                        key = { it.first.hashCode() },
+                        // The channel id, not the row's hash: `TopPlayedArtist` carries
+                        // `playCount`, so hashing the row made the key change every time the
+                        // artist was played — the list then saw a removal and an insertion where
+                        // a count had merely gone up, and rebuilt the row instead of updating it.
+                        key = { it.first.channelId },
                     ) { artist ->
                         ArtistFullWidthItems(
                             artist.second,
@@ -277,7 +281,9 @@ fun LibraryDynamicPlaylistScreen(
                         } else {
                             data
                         },
-                        key = { it.first.hashCode() },
+                        // Same as the artists above: `TopPlayedAlbum.playCount` is part of the
+                        // hash, so the key churned on every play.
+                        key = { it.first.albumBrowseId },
                     ) { album ->
                         PlaylistFullWidthItems(
                             album.second,
@@ -312,7 +318,10 @@ fun LibraryDynamicPlaylistScreen(
                         } else {
                             data
                         },
-                        key = { it.hashCode() },
+                        // Worst of the three: this hashed the whole Pair, so the key moved when
+                        // `playCount` changed AND whenever the `SongEntity` did — liking a song or
+                        // downloading it was enough to tear its row down and build a new one.
+                        key = { it.first.videoId },
                     ) { song ->
                         SongFullWidthItems(
                             songEntity = song.second,
@@ -428,7 +437,12 @@ fun LibraryDynamicPlaylistScreen(
                         }
                     }
                 },
-                key = { it.hashCode() },
+                // The list every one of these six playlists is drawn from, and the one that hurt
+                // most: a `SongEntity` hash covers `liked`, `downloadState` and `totalPlayTime`,
+                // so liking a song in Favourites, or finishing its download, changed its key —
+                // the row was destroyed and rebuilt rather than recomposed, which is also why a
+                // heart tapped in a long list could visibly flicker.
+                key = { it.videoId },
             ) { song ->
                 SongFullWidthItems(
                     songEntity = song,

@@ -3186,7 +3186,10 @@ fun SortPlaylistBottomSheet(
                             .align(Alignment.Start),
                 )
                 LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp)) {
-                    items(filterOptions, key = { it.hashCode() }) { filterOption ->
+                    // These are `data object`s, so the hashCode this used to key on was in fact
+                    // stable and unique — but it read exactly like the data-class hash keys this
+                    // pass had to remove, and a reader cannot tell the two apart at a glance.
+                    items(filterOptions, key = { it.toString() }) { filterOption ->
                         val isSelected = filterOption == selectedState
                         Row(
                             Modifier
@@ -3258,7 +3261,7 @@ fun DevLogInBottomSheet(
                     shape = RoundedCornerShape(50),
                 ) {}
                 Spacer(modifier = Modifier.height(10.dp))
-                Text(text = runBlocking { type.getTitle() }, style = typo().labelSmall)
+                Text(text = type.title(), style = typo().labelSmall)
                 Spacer(modifier = Modifier.height(5.dp))
                 OutlinedTextField(
                     value = value,
@@ -3375,10 +3378,18 @@ sealed class DevLogInType {
 
     data object Discord : DevLogInType()
 
-    suspend fun getTitle(): String =
+    /**
+     * Read with `stringResource`, not a suspending `getString` forced through `runBlocking`.
+     *
+     * Its one call site is a header sitting directly above an `OutlinedTextField`, inside the same
+     * restart scope as that field's `value` — so every character typed recomposed it and blocked
+     * the composition thread on a resource lookup. A composable read is what this always wanted.
+     */
+    @Composable
+    fun title(): String =
         when (this) {
-            is Spotify -> getString(Res.string.your_sp_dc_param_of_spotify_cookie)
-            is YouTube -> getString(Res.string.your_youtube_cookie)
-            is Discord -> getString(Res.string.your_discord_token)
+            is Spotify -> stringResource(Res.string.your_sp_dc_param_of_spotify_cookie)
+            is YouTube -> stringResource(Res.string.your_youtube_cookie)
+            is Discord -> stringResource(Res.string.your_discord_token)
         }
 }
