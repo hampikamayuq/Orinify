@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="Song_and_artist_name">Song • %1$s</string>
-    <string name="playlist_and_author">Playlist • %1$s</string>
-    <string name="album_and_artist_name">Album • %1$s</string>
     <string name="subscribers">%1$s subscribers</string>
     <string name="year_and_category">%1$s • %2$s</string>
     <string name="album_length">%1$s tracks  %2$s</string>
@@ -10,15 +7,11 @@
     <string name="clear_search_history">Clear search history</string>
     <string name="liked">Liked</string>
     <string name="like">Like</string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="download">Download</string>
     <string name="downloaded">Downloaded</string>
     <string name="downloading">Downloading</string>
-    <string name="preparing">Preparing</string>
-    <string name="hide">Hide</string>
     <string name="show">Show</string>
     <string name="na_na">NA:NA</string>
-    <string name="cache_size">%1$s MB</string>
     <string name="favorite">Favorite</string>
     <string name="followed">Followed</string>
     <string name="most_played">Most Played</string>
@@ -30,7 +23,6 @@
     <string name="artist_mixes">Artist mixes</string>
     <string name="artist_mix">Mix</string>
     <string name="artist_mix_unavailable">Could not start this mix</string>
-    <string name="Downloaded">Downloaded</string>
     <string name="favorite_playlists">Favorite Playlists</string>
     <string name="no_favorite_playlists">No favorite playlists</string>
     <string name="downloaded_playlists">Downloaded Playlists</string>
@@ -51,11 +43,9 @@
     <string name="home">Home</string>
     <string name="popular">Popular</string>
     <string name="error">Error</string>
-    <string name="follow">Follow</string>
     <string name="retry">Retry</string>
     <string name="removed_download">Removed download</string>
     <string name="share_url">Share URL</string>
-    <string name="available_online">Available online</string>
     <string name="unavailable">Unavailable</string>
     <string name="you">You</string>
     <string name="good_morning">Good Morning</string>
@@ -63,8 +53,6 @@
     <string name="good_evening">Good Evening</string>
     <string name="good_night">Good Night</string>
     <string name="quick_picks">Quick picks</string>
-    <string name="this_song_is_not_available">This song is not available</string>
-    <string name="in_charts">in Charts</string>
     <string name="playlist_name_cannot_be_empty">Playlist name cannot be empty</string>
     <string name="this_app_needs_to_access_your_notification">This app needs to access your notification</string>
     <string name="shared">Shared</string>
@@ -72,7 +60,6 @@
     <string name="line_synced">Line Synced</string>
     <string name="unsynced">Unsynced</string>
     <string name="playlist_is_empty">Playlist is empty</string>
-    <string name="option">Option</string>
     <string name="no_description">No description</string>
     <string name="in_search">in Search</string>
     <string name="clear_player_cache">Clear Player Cache</string>
@@ -81,16 +68,12 @@
     <string name="content_country">Content Country</string>
     <string name="change">Change</string>
     <string name="quality">Quality</string>
-    <string name="prefer_320kbps_stream">Prefer 320kbps stream</string>
-    <string name="prefer_320kbps_stream_description">Automatically search for 320kbps audio stream when available on the internet. Falls back to default quality if not found.</string>
     <string name="download_quality">Download quality</string>
     <string name="video_download_quality">Video download quality</string>
     <string name="clear_downloaded_cache">Clear Downloaded Cache</string>
     <string name="clear_thumbnail_cache">Clear Thumbnail Cache</string>
-    <string name="add">Add</string>
     <string name="playlist_name">Playlist Name</string>
     <string name="create">Create</string>
-    <string name="edit">Edit</string>
     <string name="edit_title">Edit title</string>
     <string name="edit_thumbnail">Edit thumbnail</string>
     <string name="delete_playlist">Delete playlist</string>
@@ -98,19 +81,13 @@
     <string name="share">Share</string>
     <string name="move_up">Move up</string>
     <string name="move_down">Move down</string>
-    <string name="delete_from_queue">Delete from queue</string>
     <string name="more">More</string>
     <string name="singles">Singles</string>
     <string name="related_artists">Related Artists</string>
-    <string name="about">About</string>
     <string name="let_s_start_with_a_radio">LET'S START WITH A RADIO</string>
     <string name="let_s_pick_a_playlist_for_you">LET'S PICK A PLAYLIST FOR YOU</string>
-    <string name="moods_amp_moment"><![CDATA[Moods & Moment]]></string>
-    <string name="genre">Genre</string>
     <string name="what_is_best_choice_today">WHAT IS BEST CHOICE TODAY</string>
     <string name="chart">Chart</string>
-    <string name="global">Global</string>
-    <string name="top_tracks">Top tracks</string>
     <string name="top_artists">Top artists</string>
     <string name="your_playlist">Your Playlist</string>
     <string name="lyrics">Lyrics</string>
@@ -122,7 +99,6 @@
     <string name="downloaded_cache">Downloaded Cache</string>
     <string name="thumbnail_cache">Thumbnail Cache</string>
     <string name="backup">Backup</string>
-    <string name="backup_your_data">Backup Your Data</string>
     <string name="save_all_your_playlist_data">Save all your playlist data</string>
     <string name="restore_your_data">Restore Your Data</string>
     <string name="restore_your_saved_data">Restore your saved data</string>
@@ -136,12 +112,10 @@
     <string name="blog_promo_title">Something new from the dev</string>
     <string name="blog_promo_message">I just launched my personal blog at maxrave.dev — sharing the story behind SimpMusic, music-tech deep dives, and engineering notes. Give it a read if you're curious ✨</string>
     <string name="visit_blog">Visit blog</string>
-    <string name="paypal">PayPal</string>
     <string name="title">Title</string>
     <string name="custom_order">Custom order</string>
     <string name="album">Album</string>
     <string name="youtube_url">YouTube URL</string>
-    <string name="download_url">Download URL</string>
     <string name="now_playing">Now Playing</string>
     <string name="queue">Queue</string>
     <string name="recently">Recently</string>
@@ -149,25 +123,13 @@
     <string name="now_playing_upper">NOW PLAYING</string>
     <string name="language">Language</string>
     <string name="what_do_you_want_to_listen_to">What do you want to listen to?</string>
-    <string name="songs_inArtist">Songs</string>
-    <string name="albums_inArtist">Albums</string>
-    <string name="singles_inArtist">Singles</string>
-    <string name="fans_might_also_like_inArtist">Fans might also like</string>
-    <string name="crash_log">SimpMusic crashed. Sorry for this problem.\nSend crash-log to developer</string>
-    <string name="crash">Crash</string>
-    <string name="send">Send</string>
-    <string name="mail_subject">Report Crash</string>
     <string name="delete_song_from_playlist">Delete this song from playlist</string>
     <string name="log_in">Log in</string>
-    <string name="log_in_to_YouTube">Log in to YouTube</string>
-    <string name="log_in_to_get_personally_data">Log in to get personally data</string>
     <string name="login_success">Login success</string>
     <string name="login_failed">Login failed</string>
     <string name="log_out">Log out from YouTube</string>
     <string name="logged_in">Logged in</string>
-    <string name="logged_out">Logged out</string>
     <string name="playlist">Playlist</string>
-    <string name="restart_app">Restart app to apply the change</string>
     <string name="balance_media_loudness">Balance media loudness</string>
     <string name="normalize_volume">Normalize Volume</string>
     <string name="audio">Audio</string>
@@ -175,7 +137,6 @@
     <string name="open_system_equalizer">Open system equalizer</string>
     <string name="use_your_system_equalizer">Use your system equalizer</string>
     <string name="version_format" translatable="false">v%1$s</string>
-    <string name="streaming_data_provider_piped">Streaming data provider (Piped)</string>
     <string name="itag">Itag</string>
     <string name="extract_source">Extract source</string>
     <string name="mime_type">Mime Type</string>
@@ -198,7 +159,6 @@
     <string name="check_for_update">Check for update</string>
     <string name="last_checked_at">Last checked at %1$s</string>
     <string name="checking">Checking</string>
-    <string name="sponsorblock_skip_segment">SponsorBlock: Skip %1$s segment</string>
     <string name="sponsor">Sponsor</string>
     <string name="self_promotion">Self Promotion</string>
     <string name="interaction">Interaction</string>
@@ -214,21 +174,10 @@
     <string name="what_segments_will_be_skipped">What segments will be skipped</string>
     <string name="save">Save</string>
     <string name="crop_cover">Crop cover</string>
-    <string name="saved">Saved</string>
     <string name="sponsor_block_intro">SponsorBlock is a crowd-sourced system for skipping annoying parts of YouTube videos.\nMore information: https://sponsor.ajay.app/\nIn SimpMusic, SponsorBlock is only available when the device is online</string>
     <string name="skip_sponsor_part_of_video">Skip sponsor part of video</string>
-    <string name="customactivityoncrash_error_activity_error_occurred_explanation">An unexpected error occurred. Sorry for the inconvenience.</string>
-    <string name="customactivityoncrash_error_activity_restart_app">Restart app</string>
     <string name="help_build_lyrics_database">Help SimpMusic lyrics build the lyrics database</string>
     <string name="help_build_lyrics_database_description">Send your saved lyrics to SimpMusic lyrics's database</string>
-    <string name="customactivityoncrash_error_activity_close_app">Close app</string>
-    <string name="customactivityoncrash_error_activity_error_details">Error details</string>
-    <string name="customactivityoncrash_error_activity_error_details_title">Error details</string>
-    <string name="customactivityoncrash_error_activity_error_details_close">Close</string>
-    <string name="customactivityoncrash_error_activity_error_details_copy">Copy to clipboard</string>
-    <string name="customactivityoncrash_error_activity_error_details_copied">Copied to clipboard</string>
-    <string name="customactivityoncrash_error_activity_error_details_clipboard_label">Error information</string>
-    <string name="no_update">Your version is the newest</string>
     <string name="sleep_timer">Sleep Timer - %1$s minute(s)</string>
     <string name="sleep_timer_end_of_song">Sleep Timer - End of song</string>
     <string name="sleep_timer_off">Sleep Timer</string>
@@ -238,14 +187,11 @@
     <string name="sleep_timer_set_error">Please set the correct format time</string>
     <string name="sleep_timer_warning">Remove sleep timer?</string>
     <string name="yes">Yes</string>
-    <string name="notification_channel_name" translatable="false">SimpMusic Playback Notification</string>
     <string name="welcome_back">Welcome back,</string>
     <string name="upload_your_listening_history_to_youtube_music_server_it_will_make_yt_music_recommendation_system_better_working_only_if_logged_in">Upload your listening history to YouTube Music server, it will make YT Music recommendation system better. Working only if logged in</string>
     <string name="send_back_listening_data_to_google">Send back listening data to Google</string>
-    <string name="videos_inArtist">Videos</string>
     <string name="your_youtube_playlists">Your YouTube Playlists</string>
     <string name="no_YouTube_playlists">No YouTube Playlists</string>
-    <string name="track">track(s)</string>
     <string name="save_to_local_playlist">Save to local playlist</string>
     <string name="added_local_playlist">Added Local Playlist</string>
     <string name="sync">Sync to YouTube Music</string>
@@ -255,8 +201,6 @@
     <string name="auto_created_by_youtube_music">Auto created by YouTube Music</string>
     <string name="start_radio">Start radio</string>
     <string name="saved_to_local_playlist">Saved to local playlist</string>
-    <string name="if_you_want_to_unsync_this_playlist_please_go_to_local_playlist">if you want to unsync this playlist, please go to local playlist</string>
-    <string name="log_in_to_get_YouTube_playlist">Log in to get YouTube Playlist</string>
     <string name="sync_playlist_warning">SimpMusic will create a YouTube Music Playlist automatically. Are you sure?</string>
     <string name="syncing">Syncing</string>
     <string name="unsync_playlist_warning">"Unsync this playlist? This playlist will not be removed from YouTube Music "</string>
@@ -270,10 +214,6 @@
     <string name="use_ai_translation">Use AI Lyric Translation</string>
     <string name="use_ai_translation_description">Enable lyrics translation using AI</string>
     <string name="translation_language">Translation Language</string>
-    <string name="follow_app_language">Follow app language</string>
-    <string name="email">Email</string>
-    <string name="password">Password</string>
-    <string name="please_enter_your_email_and_password">Please enter your email and password</string>
     <string name="translation_language_message">Type language code (Eg: en) (2 letters). If you want to set same with SimpMusic's language, please make edit box empty.</string>
     <string name="invalid_language_code">Invalid language code</string>
     <string name="lyrics_provider_youtube">Lyrics provided by YouTube</string>
@@ -289,35 +229,23 @@
     <string name="suggest">Suggestion</string>
     <string name="reload">Reload</string>
     <string name="sort_by">Sort by</string>
-    <string name="sort">Sort</string>
     <string name="older_first">Older First</string>
     <string name="newer_first">Newer First</string>
-    <string name="added_date">Added date</string>
     <string name="credit_app">A simple music app using YouTube Music for backend \n\nSimpMusic is an open source project to stream music from YouTube and YouTube Music without ads and tracking. SimpMusic provides many features:\n\n - Streaming music \n - Synced lyrics\n - Personalize data\n - etc… \n\nSimpMusic is always free and no ads\n\nBuild with ❤️ from Tuan Minh Nguyen Duc (maxrave-dev)</string>
     <string name="issue_tracker">Issue Tracker</string>
     <string name="copyright" translatable="false">©2023-2025 Tuan Minh Nguyen Duc (maxrave-dev)</string>
     <string name="featured_playlists">Featured Playlists</string>
     <string name="podcasts" translatable="false">Podcasts</string>
     <string name="featured_inArtist">Featured on</string>
-    <string name="audio_quality">Audio quality</string>
     <string name="play_video_for_video_track_instead_of_audio_only">Play video for video track instead of audio only</string>
     <string name="such_as_music_video_lyrics_video_podcasts_and_more">Such as Music Video, Lyrics Video, Podcasts, and more</string>
     <string name="radio_audio_only">Keep radio audio-only</string>
     <string name="radio_audio_only_description">Skip music videos, remixes and mashups that YouTube mixes into a radio. Playlists and albums are not affected</string>
     <string name="video_quality">Video Quality</string>
-    <plurals name="n_song">
-        <item quantity="one">%d song</item>
-        <item quantity="other">%d songs</item>
-    </plurals>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
-    <string name="play_video_instead_of_audio_warning">This action will delete player cache. Continue?</string>
-    <string name="quality_video">Video Quality</string>
     <string name="add_to_queue">Add to queue</string>
     <string name="added_to_queue">Added to queue</string>
     <string name="new_release">New release</string>
     <string name="music_video">Music video</string>
-    <string name="your_music_is_always_up_to_date">YOUR MUSIC IS ALWAYS UP-TO-DATE</string>
     <string name="youtube_account">YouTube Account</string>
     <string name="manage_your_youtube_accounts">Manage your YouTube Accounts</string>
     <string name="sync_follow_to_youtube">Sync Follow with YouTube</string>
@@ -392,16 +320,9 @@
     <string name="offline_mode">Offline mode</string>
     <string name="added_to_youtube_liked">Added to YouTube Liked</string>
     <string name="removed_from_youtube_liked">Removed from YouTube Liked</string>
-    <string name="home_limit">Fetch home data limit</string>
     <string name="no_album">No album</string>
-    <string name="app_widget_description">Player widget</string>
-    <string name="guide_miniplayer_content">Swipe to show skip and close button</string>
-    <string name="guide_suggest_content">Show suggested songs by AI based on your playlist</string>
-    <string name="guide_liked_title">Add to YouTube Liked Playlist</string>
     <string name="log_out_from_spotify">Log out from Spotify</string>
     <string name="delete">Delete</string>
-    <string name="top_videos">Top videos</string>
-    <string name="trending">Trending</string>
     <string name="new_singles">New singles</string>
     <string name="new_albums">New albums</string>
     <string name="notification">Notification</string>
@@ -411,9 +332,6 @@
     <string name="no_notification">No notification</string>
     <string name="created_at">Created at %1$s</string>
     <string name="unknown">Unknown</string>
-    <string name="repeat_one">Repeat One</string>
-    <string name="repeat_all">Repeat All</string>
-    <string name="repeat_off">Repeat Off</string>
     <string name="youtube_transcript">YouTube Transcript</string>
     <string name="user_interface">Interface</string>
     <string name="theme">Theme</string>
@@ -505,8 +423,6 @@
     <string name="sync_first">Sync this playlist to YouTube Music first</string>
     <string name="endless_queue">Endless queue</string>
     <string name="continue_playing">Continue Playing</string>
-    <string name="continue_playing_endless_subtitle">Automatically adds similar songs when the queue ends</string>
-    <string name="lyrics_sync_provider_footer" translatable="false">%1$s • %2$s</string>
     <string name="do_not_show_again">Do not show again</string>
     <string name="auto_check_for_update">Automatic check for update</string>
     <string name="auto_check_for_update_description">Checking for update when you open app</string>
@@ -531,16 +447,8 @@
     <string name="buying_me_a_coffee">buying me a coffee.</string>
     <string name="footguns_promo_title">Every trap I fell into</string>
     <string name="footguns_promo_message">SimpMusic cost me a lot of nights on Kotlin and Compose traps that no doc ever warned me about. I wrote every one of them down in kotlin-footguns, so you don't lose the same nights. If it saves even one of yours, a star would mean a lot to me.</string>
-    <string name="fade_audio_effect">Fade audio effect</string>
-    <string name="disabled">Disable</string>
-    <string name="fade_audio_effect_duration">Fade audio effect duration (ms) (Set to 0 for disable)</string>
-    <string name="duration">Duration</string>
-    <string name="invalid_number">Invalid number</string>
     <string name="shuffle_not_available">Shuffle endpoint is not available</string>
     <string name="radio_not_available">Radio Endpoint is not available</string>
-    <string name="visitor_data_retrieved">Visitor Data Retrieved</string>
-    <string name="data_sync_id_retrieved">DataSyncId retrieved</string>
-    <string name="retrieve_youtube_data">Retrieve YouTube Data</string>
     <string name="no_results_found">No results found</string>
     <string name="ai">AI</string>
     <string name="ai_provider">AI provider</string>
@@ -564,15 +472,10 @@
     <string name="download_this_song_video_file_to_your_device">Download this song/video file to your device</string>
     <string name="kill_service_on_exit">Kill service on exit</string>
     <string name="kill_service_on_exit_description">Stop background music player when exiting app</string>
-    <string name="desktop_player">Desktop player</string>
     <string name="crossfade">Crossfade (BETA)</string>
     <string name="crossfade_description">Smoothly transition between songs by fading out the current track while fading in the next one.</string>
-    <string name="crossfade_enabled">Enabled (%1$ds)</string>
-    <string name="crossfade_disabled">Disabled</string>
     <string name="crossfade_duration">Crossfade Duration</string>
-    <string name="set_crossfade_duration">Set crossfade duration in seconds (%1$ds)</string>
     <string name="crossfade_auto">Auto</string>
-    <string name="crossfade_auto_description">Automatically calculate duration based on BPM (requires 320kbps stream with BPM data)</string>
     <string name="crossfade_dj_mode">DJ-Style Transition</string>
     <string name="crossfade_dj_mode_description">Apply low-pass and high-pass filter sweeps during crossfade for a smoother, DJ-like transition (similar to Apple Music Automix).</string>
     <string name="auto_download_liked_songs">Download songs you like</string>
@@ -602,8 +505,6 @@
     <string name="keep_backups_format">Keep last %1$s backups</string>
     <string name="last_backup">Last backup</string>
     <string name="never">Never</string>
-    <string name="auto_backup_success">Auto backup completed successfully</string>
-    <string name="auto_backup_failed">Auto backup failed</string>
     <string name="no_playlist_found">No local playlists found, please create one first</string>
     <string name="list_all_cookies_of_this_page">List all cookies of this page</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
@@ -709,7 +610,6 @@
     <string name="upvote">Upvote</string>
     <string name="downvote">Downvote</string>
     <string name="vote_submitted">Thank you for voting this lyrics!</string>
-    <string name="vote_error">Failed to submit</string>
     <string name="open_app">Open SimpMusic</string>
     <string name="close_miniplayer">Close Mini-player</string>
     <string name="open_miniplayer">Open Mini-player</string>
@@ -720,8 +620,6 @@
     <string name="blog_notification_description">Get notified when a new blog post is published</string>
     <string name="simpmusic_charts">SimpMusic Charts</string>
     <string name="crossfading">Crossfading</string>
-    <string name="your_320kbps_url">Your 320kbps URL</string>
-    <string name="your_320kbps_url_description">Leave empty to auto-choose a working URL from the uptime checker.</string>
     <string name="search_for">Search for</string>
     <string name="synced_playlist_cannot_change_order">Synced playlist cannot change order</string>
     <string name="bpm">BPM</string>
@@ -806,7 +704,6 @@
     <string name="share_lyrics_share_failed">Could not share the image</string>
     <string name="share_lyrics_background">Background</string>
     <string name="share_lyrics_permission_denied">Storage permission is needed to save the image</string>
-    <string name="share_lyrics_no_lyrics">This song has no lyrics to share</string>
     <string name="wrapped" translatable="false">Wrapped</string>
     <string name="wrapped_year" translatable="false">Wrapped %1$s</string>
     <string name="wrapped_tap_to_begin">Tap to begin</string>

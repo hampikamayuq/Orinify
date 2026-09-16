@@ -727,31 +727,6 @@ class Ytmusic {
         }
     }
 
-    suspend fun nextCustom(
-        client: YouTubeClient,
-        videoId: String,
-    ) = httpClient.post("next") {
-        ytClient(client, setLogin = false)
-        setBody(
-            BrowseBody(
-                context = client.toContext(locale, visitorData),
-                browseId = null,
-                params = "wAEB",
-                enablePersistentPlaylistPanel = true,
-                isAudioOnly = true,
-                tunerSettingValue = "AUTOMIX_SETTING_NORMAL",
-                playlistId = "RDAMVM$videoId",
-                watchEndpointMusicSupportedConfigs =
-                    WatchEndpoint.WatchEndpointMusicSupportedConfigs(
-                        WatchEndpoint.WatchEndpointMusicSupportedConfigs.WatchEndpointMusicConfig(
-                            musicVideoType = "MUSIC_VIDEO_TYPE_ATV",
-                        ),
-                    ),
-            ),
-        )
-        parameter("alt", "json")
-    }
-
     suspend fun nextCtoken(
         client: YouTubeClient,
         continuation: String,

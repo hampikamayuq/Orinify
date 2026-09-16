@@ -850,16 +850,6 @@ class YouTube {
     }
 
     /**
-     * Get the related data of a song from YouTube Music
-     * @param videoId the videoId of song
-     * @return a [Result]<[NextResponse]> object
-     */
-    suspend fun nextCustom(videoId: String) =
-        runCatching {
-            ytMusic.nextCustom(WEB_REMIX, videoId).body<NextResponse>()
-        }
-
-    /**
      * Get Skip Segments from SponsorBlock
      * @param videoId the videoId of song
      * @return a [Result]<[List]<[SkipSegments]>> object

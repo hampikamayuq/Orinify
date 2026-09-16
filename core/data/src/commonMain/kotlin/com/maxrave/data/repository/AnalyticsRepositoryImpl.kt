@@ -1,7 +1,9 @@
 package com.maxrave.data.repository
 
-import com.maxrave.data.db.datasource.AnalyticsDatasource
+import DatabaseDao
 import com.maxrave.domain.data.entities.analytics.PlaybackEventEntity
+import com.maxrave.domain.extension.beforeXDays
+import com.maxrave.domain.extension.now
 import com.maxrave.domain.data.entities.analytics.query.TopPlayedAlbum
 import com.maxrave.domain.data.entities.analytics.query.TopPlayedArtist
 import com.maxrave.domain.data.entities.analytics.query.TopPlayedArtistTime
@@ -25,8 +27,16 @@ import kotlin.time.ExperimentalTime
 
 private const val TAG = "AnalyticsRepositoryImpl"
 
+/**
+ * Talks to [DatabaseDao] directly.
+ *
+ * There used to be an `AnalyticsDatasource` in between: 25 methods, every body a single
+ * `= databaseDao.<same name>(...)`, and this class its only consumer. The three `*LastXDays`
+ * methods were the only ones doing anything — turning a day count into a range — and that now
+ * lives here, which is the only thing this collapse had to carry across.
+ */
 internal class AnalyticsRepositoryImpl(
-    private val analyticsDatasource: AnalyticsDatasource,
+    private val databaseDao: DatabaseDao,
 ) : AnalyticsRepository {
     override suspend fun insertPlaybackEvent(
         videoId: String,
@@ -37,7 +47,7 @@ internal class AnalyticsRepositoryImpl(
     ): Flow<Long> =
         flow {
             emit(
-                analyticsDatasource.insertPlaybackEvent(
+                databaseDao.insertPlaybackWithArtists(
                     videoId,
                     channelIds,
                     albumBrowseId,
@@ -52,7 +62,7 @@ internal class AnalyticsRepositoryImpl(
         limit: Int,
     ): Flow<List<PlaybackEventEntity>> =
         flow {
-            emit(analyticsDatasource.getPlaybackEventsByOffset(offset, limit))
+            emit(databaseDao.getPlaybackEventsByOffset(offset, limit))
         }.flowOn(Dispatchers.IO)
 
     override suspend fun getPlaybackEventsByOffsetAndTimestamp(
@@ -61,19 +71,24 @@ internal class AnalyticsRepositoryImpl(
         cutoffTimestamp: LocalDateTime,
     ): Flow<List<PlaybackEventEntity>> =
         flow {
-            emit(analyticsDatasource.getPlaybackEventsByOffsetAndTimestamp(offset, limit, cutoffTimestamp))
+            emit(databaseDao.getPlaybackEventsByOffsetAndTimestamp(offset, limit, cutoffTimestamp))
         }.flowOn(Dispatchers.IO)
 
     override suspend fun deleteOldPlaybackEvents(cutoffTimestamp: LocalDateTime) =
         withContext(Dispatchers.IO) {
-            analyticsDatasource.deleteOldPlaybackEvents(cutoffTimestamp)
+            databaseDao.deleteOldPlaybackEvents(cutoffTimestamp)
         }
 
     // Query methods for analytics reports
 
     override suspend fun queryTopPlayedSongsLastXDays(x: Int): Flow<List<TopPlayedTracks>> =
         flow {
-            emit(analyticsDatasource.queryTopPlayedSongsLastXDays(x))
+            emit(
+                databaseDao.queryTopPlayedSongsInRange(
+                    startTimestamp = now().beforeXDays(x),
+                    endTimestamp = now(),
+                ),
+            )
         }.flowOn(Dispatchers.IO)
 
     override suspend fun queryTopPlayedSongsInRange(
@@ -82,7 +97,7 @@ internal class AnalyticsRepositoryImpl(
     ): Flow<List<TopPlayedTracks>> =
         flow {
             emit(
-                analyticsDatasource.queryTopPlayedSongsInRange(
+                databaseDao.queryTopPlayedSongsInRange(
                     startTimestamp,
                     endTimestamp,
                 ),
@@ -90,7 +105,7 @@ internal class AnalyticsRepositoryImpl(
         }.flowOn(Dispatchers.IO)
 
     override suspend fun queryAlreadyPlayed(videoIds: List<String>): List<String> =
-        withContext(Dispatchers.IO) { analyticsDatasource.queryAlreadyPlayed(videoIds) }
+        withContext(Dispatchers.IO) { databaseDao.queryAlreadyPlayed(videoIds) }
 
     override suspend fun queryRediscoverTracks(
         goneQuietSince: LocalDateTime,
@@ -98,12 +113,17 @@ internal class AnalyticsRepositoryImpl(
         limit: Int,
     ): Flow<List<TopPlayedTracks>> =
         flow {
-            emit(analyticsDatasource.queryRediscoverTracks(goneQuietSince, minPlays, limit))
+            emit(databaseDao.queryRediscoverTracks(goneQuietSince, minPlays, limit))
         }.flowOn(Dispatchers.IO)
 
     override suspend fun queryTopArtistsLastXDays(x: Int): Flow<List<TopPlayedArtist>> =
         flow {
-            emit(analyticsDatasource.queryTopArtistsLastXDays(x))
+            emit(
+                databaseDao.queryTopArtistsInRange(
+                    startTimestamp = now().beforeXDays(x),
+                    endTimestamp = now(),
+                ),
+            )
         }.flowOn(Dispatchers.IO)
 
     override suspend fun queryTopArtistsInRange(
@@ -112,7 +132,7 @@ internal class AnalyticsRepositoryImpl(
     ): Flow<List<TopPlayedArtist>> =
         flow {
             emit(
-                analyticsDatasource.queryTopArtistsInRange(
+                databaseDao.queryTopArtistsInRange(
                     startTimestamp,
                     endTimestamp,
                 ),
@@ -125,7 +145,7 @@ internal class AnalyticsRepositoryImpl(
     ): Flow<List<TopPlayedArtistTime>> =
         flow {
             emit(
-                analyticsDatasource.queryTopArtistsWithTimeInRange(
+                databaseDao.queryTopArtistsWithTimeInRange(
                     startTimestamp,
                     endTimestamp,
                 ),
@@ -134,7 +154,12 @@ internal class AnalyticsRepositoryImpl(
 
     override suspend fun queryTopAlbumsLastXDays(x: Int): Flow<List<TopPlayedAlbum>> =
         flow {
-            emit(analyticsDatasource.queryTopAlbumsLastXDays(x))
+            emit(
+                databaseDao.queryTopAlbumsInRange(
+                    startTimestamp = now().beforeXDays(x),
+                    endTimestamp = now(),
+                ),
+            )
         }.flowOn(Dispatchers.IO)
 
     override suspend fun queryTopAlbumsInRange(
@@ -143,7 +168,7 @@ internal class AnalyticsRepositoryImpl(
     ): Flow<List<TopPlayedAlbum>> =
         flow {
             emit(
-                analyticsDatasource.queryTopAlbumsInRange(
+                databaseDao.queryTopAlbumsInRange(
                     startTimestamp,
                     endTimestamp,
                 ),
@@ -152,17 +177,17 @@ internal class AnalyticsRepositoryImpl(
 
     override suspend fun getTotalPlaybackEventCount(): Flow<Long> =
         flow {
-            emit(analyticsDatasource.getTotalPlaybackEventCount())
+            emit(databaseDao.getTotalPlaybackEventCount())
         }.flowOn(Dispatchers.IO)
 
     override suspend fun getTotalEventArtistCount(): Flow<Long> =
         flow {
-            emit(analyticsDatasource.getTotalEventArtistCount())
+            emit(databaseDao.getTotalEventArtistCount())
         }.flowOn(Dispatchers.IO)
 
     override suspend fun getTotalListeningTimeInSeconds(): Flow<Long> =
         flow {
-            emit(analyticsDatasource.getTotalListeningTimeInSeconds())
+            emit(databaseDao.getTotalListeningTimeInSeconds())
         }.flowOn(Dispatchers.IO)
 
     override suspend fun getPlaybackEventCountInRange(
@@ -171,7 +196,7 @@ internal class AnalyticsRepositoryImpl(
     ): Flow<Long> =
         flow {
             emit(
-                analyticsDatasource.getPlaybackEventCountInRange(
+                databaseDao.getPlaybackEventCountInRange(
                     startTimestamp,
                     endTimestamp,
                 ),
@@ -184,7 +209,7 @@ internal class AnalyticsRepositoryImpl(
         endTimestamp: LocalDateTime,
     ): AnalyticsPeriodStats =
         withContext(Dispatchers.IO) {
-            val samples = analyticsDatasource.getPlaybackSamplesInRange(startTimestamp, endTimestamp)
+            val samples = databaseDao.getPlaybackSamplesInRange(startTimestamp, endTimestamp)
             if (samples.isEmpty()) return@withContext AnalyticsPeriodStats()
 
             // No timezone arithmetic here on purpose. PlaybackSample.timestamp is a LocalDateTime,
@@ -201,13 +226,13 @@ internal class AnalyticsRepositoryImpl(
             }
             val busiest = perDay.maxByOrNull { it.value }
 
-            val distinctTracks = analyticsDatasource.getDistinctTrackCountInRange(startTimestamp, endTimestamp)
-            val distinctAlbums = analyticsDatasource.getDistinctAlbumCountInRange(startTimestamp, endTimestamp)
-            val distinctArtists = analyticsDatasource.getDistinctArtistCountInRange(startTimestamp, endTimestamp)
-            val newArtists = analyticsDatasource.getNewArtistCountInRange(startTimestamp, endTimestamp)
-            val artistPlays = analyticsDatasource.getArtistPlayCountsInRange(startTimestamp, endTimestamp)
-            val decades = analyticsDatasource.getDecadeCountsInRange(startTimestamp, endTimestamp)
-            val datedPlays = analyticsDatasource.getDatedPlayCountInRange(startTimestamp, endTimestamp)
+            val distinctTracks = databaseDao.getDistinctTrackCountInRange(startTimestamp, endTimestamp)
+            val distinctAlbums = databaseDao.getDistinctAlbumCountInRange(startTimestamp, endTimestamp)
+            val distinctArtists = databaseDao.getDistinctArtistCountInRange(startTimestamp, endTimestamp)
+            val newArtists = databaseDao.getNewArtistCountInRange(startTimestamp, endTimestamp)
+            val artistPlays = databaseDao.getArtistPlayCountsInRange(startTimestamp, endTimestamp)
+            val decades = databaseDao.getDecadeCountsInRange(startTimestamp, endTimestamp)
+            val datedPlays = databaseDao.getDatedPlayCountInRange(startTimestamp, endTimestamp)
 
             AnalyticsPeriodStats(
                 plays = samples.size.toLong(),
