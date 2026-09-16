@@ -30,10 +30,10 @@ private const val TAG = "AnalyticsRepositoryImpl"
 /**
  * Talks to [DatabaseDao] directly.
  *
- * There used to be an `AnalyticsDatasource` in between: 25 methods, every body a single
- * `= databaseDao.<same name>(...)`, and this class its only consumer. The three `*LastXDays`
- * methods were the only ones doing anything — turning a day count into a range — and that now
- * lives here, which is the only thing this collapse had to carry across.
+ * There used to be an `AnalyticsDatasource` in between, with this class as its only consumer:
+ * 25 methods, of which 21 were a single `= databaseDao.<same name>(...)` and one the same with a
+ * rename. The three `*LastXDays` were the only ones that did anything — turning a day count into
+ * a range — and that is the one thing this collapse had to carry across; it lives here now.
  */
 internal class AnalyticsRepositoryImpl(
     private val databaseDao: DatabaseDao,
