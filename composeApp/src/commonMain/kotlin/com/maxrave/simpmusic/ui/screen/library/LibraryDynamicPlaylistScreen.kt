@@ -177,7 +177,21 @@ fun LibraryDynamicPlaylistScreen(
         parsed.topListRange()?.let { (start, end) -> analyticsViewModel.showRange(start, end) }
     }
 
-    LaunchedEffect(query) {
+    // Keyed on the SOURCE lists as well as the query. Keyed on `query` alone, a list that
+    // arrived after the user had already typed was never filtered — which is exactly what
+    // happens with You might like, the one list here that waits on the network: type a word
+    // while it loads, and the results land into a filtered copy that stays empty.
+    LaunchedEffect(
+        query,
+        favorite,
+        followed,
+        mostPlayed,
+        downloaded,
+        monthlyRecap,
+        rediscover,
+        mightLike,
+        analyticsUIState,
+    ) {
         tempFavorite = favorite.filter { it.matches(query) }
         tempFollowed = followed.filter { it.name.contains(query, ignoreCase = true) }
         tempMostPlayed = mostPlayed.filter { it.matches(query) }

@@ -43,12 +43,10 @@ import coil3.request.crossfade
 import com.maxrave.common.Config
 import com.maxrave.domain.data.entities.AlbumEntity
 import com.maxrave.domain.data.entities.ArtistEntity
-import com.maxrave.domain.data.entities.LocalPlaylistEntity
 import com.maxrave.domain.data.entities.PlaylistEntity
 import com.maxrave.domain.data.entities.PodcastsEntity
 import com.maxrave.domain.data.entities.SongEntity
 import com.maxrave.domain.data.model.browse.album.Track
-import com.maxrave.domain.data.model.searchResult.playlists.PlaylistsResult
 import com.maxrave.domain.data.type.LibraryType
 import com.maxrave.domain.data.type.PlaylistType
 import com.maxrave.domain.data.type.RecentlyType
@@ -58,7 +56,6 @@ import com.maxrave.domain.utils.toTrack
 import com.maxrave.simpmusic.ui.component.selection.SongSelectionState
 import com.maxrave.simpmusic.ui.navigation.destination.list.AlbumDestination
 import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
-import com.maxrave.simpmusic.ui.navigation.destination.list.LocalPlaylistDestination
 import com.maxrave.simpmusic.ui.navigation.destination.list.PlaylistDestination
 import com.maxrave.simpmusic.ui.navigation.destination.list.PodcastDestination
 import com.maxrave.simpmusic.ui.theme.typo
@@ -66,14 +63,11 @@ import com.maxrave.simpmusic.viewModel.LibraryViewModel
 import com.maxrave.simpmusic.viewModel.SharedViewModel
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.getString
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.most_played
-import simpmusic.composeapp.generated.resources.no_favorite_playlists
-import simpmusic.composeapp.generated.resources.no_playlists_downloaded
 import simpmusic.composeapp.generated.resources.radio
 import simpmusic.composeapp.generated.resources.recently_added
 import com.maxrave.domain.mediaservice.handler.PlaylistType as DomainPlaylistType
@@ -92,18 +86,11 @@ fun LibraryItem(
     var showBottomSheet by remember { mutableStateOf(false) }
     var songEntity by remember { mutableStateOf<SongEntity?>(null) }
     val title =
+        // No `else`: with the five never-constructed types gone this is exhaustive, so adding a
+        // row type later is a compile error rather than a heading over an empty shelf.
         when (state.type) {
             is LibraryItemType.RecentlyAdded -> stringResource(Res.string.recently_added)
             is LibraryItemType.CanvasSong -> stringResource(Res.string.most_played)
-            else -> return
-        }
-    val noPlaylistTitle =
-        when (state.type) {
-            LibraryItemType.DownloadedPlaylist -> stringResource(Res.string.no_playlists_downloaded)
-            LibraryItemType.FavoritePlaylist -> stringResource(Res.string.no_favorite_playlists)
-            is LibraryItemType.RecentlyAdded -> stringResource(Res.string.recently_added)
-            is LibraryItemType.CanvasSong -> stringResource(Res.string.most_played)
-            else -> return
         }
     Box {
         if (showBottomSheet) {
@@ -339,73 +326,6 @@ fun LibraryItem(
                                 }
                             }
                         }
-                    } else {
-                        if (state.data.isNotEmpty()) {
-                            LazyRow {
-                                items(items = state.data) { item ->
-                                    Box(modifier = Modifier.animateItem()) {
-                                        HomeItemContentPlaylist(
-                                            onClick = {
-                                                when (item) {
-                                                    is LocalPlaylistEntity -> {
-                                                        navController.navigate(
-                                                            LocalPlaylistDestination(
-                                                                item.id,
-                                                            ),
-                                                        )
-                                                    }
-
-                                                    is PlaylistsResult -> {
-                                                        navController.navigate(
-                                                            PlaylistDestination(
-                                                                item.browseId,
-                                                                isYourYouTubePlaylist = true,
-                                                            ),
-                                                        )
-                                                    }
-
-                                                    is AlbumEntity -> {
-                                                        navController.navigate(
-                                                            AlbumDestination(
-                                                                item.browseId,
-                                                            ),
-                                                        )
-                                                    }
-
-                                                    is PlaylistEntity -> {
-                                                        navController.navigate(
-                                                            PlaylistDestination(
-                                                                item.id,
-                                                            ),
-                                                        )
-                                                    }
-
-                                                    is PodcastsEntity -> {
-                                                        navController.navigate(
-                                                            PodcastDestination(
-                                                                podcastId = item.podcastId,
-                                                            ),
-                                                        )
-                                                    }
-                                                }
-                                            },
-                                            data = item as? PlaylistType ?: return@items,
-                                            thumbSize = 125.dp,
-                                        )
-                                    }
-                                }
-                            }
-                        } else {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .height(130.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(noPlaylistTitle, style = typo().bodyMedium)
-                            }
-                        }
                     }
                 } else {
                     Box(
@@ -423,24 +343,15 @@ fun LibraryItem(
     }
 }
 
+/**
+ * The two rows Library actually draws.
+ *
+ * It used to carry five more — YouTubePlaylist, LocalPlaylist, FavoritePlaylist,
+ * DownloadedPlaylist and FavoritePodcasts — that nothing ever constructed, and that [LibraryItem]
+ * returned early for anyway. Those tabs are drawn by `GridLibraryPlaylist` instead.
+ */
 sealed class LibraryItemType {
     data object CanvasSong : LibraryItemType()
-
-    data class YouTubePlaylist(
-        val isLoggedIn: Boolean,
-        val onReload: () -> Unit = {},
-    ) : LibraryItemType()
-
-    data class LocalPlaylist(
-        // Create new local playlist
-        val onAddClick: (String) -> Unit,
-    ) : LibraryItemType()
-
-    data object FavoritePlaylist : LibraryItemType()
-
-    data object DownloadedPlaylist : LibraryItemType()
-
-    data object FavoritePodcasts : LibraryItemType()
 
     data class RecentlyAdded(
         val playingVideoId: String,
