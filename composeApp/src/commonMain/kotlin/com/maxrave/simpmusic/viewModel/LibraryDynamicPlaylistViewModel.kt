@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
@@ -184,11 +183,15 @@ class LibraryDynamicPlaylistViewModel(
                     limit = REDISCOVER_QUERY_LIMIT,
                 ).collectLatest { rows ->
                     _listRediscoverSong.value =
-                        rows
-                            // Resolved then capped, never the other way round: a row whose song
-                            // has since been swept from the library would otherwise leave a gap in
-                            // the list. Same shape as the recap loader below.
-                            .mapNotNull { songRepository.getSongById(it.videoId).lastOrNull() }
+                        songRepository
+                            // One query for the whole ranking, not one per row. The batch keeps
+                            // the input order and drops ids it cannot resolve, which is exactly
+                            // the contract the per-row `mapNotNull` had — so this is still
+                            // resolved THEN capped, and a row whose song has since been swept
+                            // from the library still leaves no gap in the list.
+                            .getSongsByListVideoId(rows.map { it.videoId })
+                            .firstOrNull()
+                            .orEmpty()
                             .take(REDISCOVER_LIMIT)
                 }
         }
@@ -258,12 +261,14 @@ class LibraryDynamicPlaylistViewModel(
                     endTimestamp = lastDay.atTime(23, 59, 59),
                 ).collectLatest { rows ->
                     _listMonthlyRecapSong.value =
-                        rows
-                            // Capped after resolving, not before: a row whose song row is gone
-                            // would otherwise leave a "top 50" 49 long. The query already stops at
-                            // 100, so this reaches at most that far — the same shape as
-                            // `WrappedViewModel.resolveTop`.
-                            .mapNotNull { songRepository.getSongById(it.videoId).lastOrNull() }
+                        songRepository
+                            // One query, as in the rediscover loader above. Capped after
+                            // resolving, not before: a row whose song row is gone would otherwise
+                            // leave a "top 50" 49 long. The query already stops at 100, so this
+                            // reaches at most that far.
+                            .getSongsByListVideoId(rows.map { it.videoId })
+                            .firstOrNull()
+                            .orEmpty()
                             .take(MONTHLY_RECAP_LIMIT)
                 }
         }

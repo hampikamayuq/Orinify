@@ -240,11 +240,19 @@ class AnalyticsViewModel(
             analyticsRepository
                 .queryTopPlayedSongsInRange(startTimestamp = start, endTimestamp = end)
                 .collect { topPlayedTracks ->
+                    // One query for the whole ranking rather than one per row: the query returns
+                    // up to 100, and each `getSongById` is its own flow, dispatcher hop and
+                    // statement. Paired back up through a map because the ranking row carries the
+                    // play count and the song row does not.
+                    val songs =
+                        songRepository
+                            .getSongsByListVideoId(topPlayedTracks.map { it.videoId })
+                            .firstOrNull()
+                            .orEmpty()
+                            .associateBy { it.videoId }
                     topPlayedTracks
-                        .mapNotNull {
-                            val song = songRepository.getSongById(it.videoId).lastOrNull() ?: return@mapNotNull null
-                            it to song
-                        }.let { pairs ->
+                        .mapNotNull { row -> songs[row.videoId]?.let { row to it } }
+                        .let { pairs ->
                             _analyticsUIState.update { it.copy(topTracks = LocalResource.Success(pairs)) }
                         }
                 }
@@ -302,11 +310,17 @@ class AnalyticsViewModel(
                     offset = 0,
                     limit = 5,
                 ).collect { events ->
+                    // Same batch as the top tracks above. Only five rows here, so this is about
+                    // not leaving the per-row shape lying around to be copied, not about speed.
+                    val songs =
+                        songRepository
+                            .getSongsByListVideoId(events.map { it.videoId })
+                            .firstOrNull()
+                            .orEmpty()
+                            .associateBy { it.videoId }
                     events
-                        .mapNotNull { event ->
-                            val song = songRepository.getSongById(event.videoId).lastOrNull() ?: return@mapNotNull null
-                            event to song
-                        }.let {
+                        .mapNotNull { event -> songs[event.videoId]?.let { event to it } }
+                        .let {
                             if (it.isNotEmpty()) {
                                 _analyticsUIState.update { state ->
                                     state.copy(

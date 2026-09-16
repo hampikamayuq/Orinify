@@ -41,7 +41,7 @@ import com.maxrave.domain.data.entities.analytics.PlaybackEventEntity
         YourYouTubePlaylistList::class, PlaybackEventEntity::class, EventArtistEntity::class,
         AutoEqEntryEntity::class, AutoEqIndexMetaEntity::class, AutoEqCurveEntity::class
     ],
-    version = 25,
+    version = 26,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 2, to = 3), AutoMigration(
@@ -87,6 +87,14 @@ import com.maxrave.domain.data.entities.analytics.PlaybackEventEntity
         AutoMigration(24, 25),
         AutoMigration(23, 25),
         AutoMigration(22, 25),
+        // 26 indexes `playback_event`, which had none at all while `event_artist`, its own
+        // child, carried three. Two `CREATE INDEX`es and no schema change, so Room generates the
+        // migration itself and no existing row is read or rewritten. See the entity for why the
+        // wide one is `(timestamp, videoId, listenedSecond)` and not just `(timestamp)` — the
+        // short version is that the short index makes year-long ranges SLOWER than no index.
+        AutoMigration(25, 26),
+        AutoMigration(24, 26),
+        AutoMigration(23, 26),
     ],
 )
 @TypeConverters(Converters::class)
