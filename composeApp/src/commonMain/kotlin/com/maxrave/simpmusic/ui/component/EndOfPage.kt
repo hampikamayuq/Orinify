@@ -17,6 +17,8 @@ import com.maxrave.simpmusic.utils.VersionManager
 import org.jetbrains.compose.resources.stringResource
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.app_name
+import simpmusic.composeapp.generated.resources.end_of_page_credit
+import simpmusic.composeapp.generated.resources.maxrave_dev
 import simpmusic.composeapp.generated.resources.version_format
 
 @Composable
@@ -30,11 +32,18 @@ fun EndOfPage(withoutCredit: Boolean = false) {
     ) {
         if (!withoutCredit) {
             Text(
-                "@${now().year} " + stringResource(Res.string.app_name) + " " +
-                    stringResource(
-                        Res.string.version_format,
-                        VersionManager.getVersionName(),
-                    ) + "\nmaxrave-dev",
+                // One resource holding the whole line, placeholders and line break included. It was
+                // assembled here out of four pieces joined with " " and "\n", which a translator can
+                // only ever translate a word of — the order of year, name, version and author and
+                // where the line breaks are all live in this file's Kotlin, out of their reach, and
+                // several locales need a different order. The "©" is also a "©": it was typed "@".
+                stringResource(
+                    Res.string.end_of_page_credit,
+                    now().year.toString(),
+                    stringResource(Res.string.app_name),
+                    stringResource(Res.string.version_format, VersionManager.getVersionName()),
+                    stringResource(Res.string.maxrave_dev),
+                ),
                 style = typo().bodySmall,
                 textAlign = TextAlign.Center,
                 modifier =

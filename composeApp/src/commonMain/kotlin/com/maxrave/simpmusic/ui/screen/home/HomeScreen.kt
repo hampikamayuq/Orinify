@@ -185,11 +185,14 @@ import simpmusic.composeapp.generated.resources.good_night
 import simpmusic.composeapp.generated.resources.let_s_pick_a_playlist_for_you
 import simpmusic.composeapp.generated.resources.let_s_start_with_a_radio
 import simpmusic.composeapp.generated.resources.log_in_warning
+import simpmusic.composeapp.generated.resources.notification
 import simpmusic.composeapp.generated.resources.party
 import simpmusic.composeapp.generated.resources.quick_picks
+import simpmusic.composeapp.generated.resources.recently
 import simpmusic.composeapp.generated.resources.relax
 import simpmusic.composeapp.generated.resources.romance
 import simpmusic.composeapp.generated.resources.sad
+import simpmusic.composeapp.generated.resources.settings
 import simpmusic.composeapp.generated.resources.sleep
 import simpmusic.composeapp.generated.resources.top_artists
 import simpmusic.composeapp.generated.resources.warning
@@ -847,15 +850,30 @@ fun HomeTopAppBar(navController: NavController) {
             }
         },
         actions = {
-            RippleIconButton(imageVector = SimpIcons.Notifications, tint = MaterialTheme.colorScheme.onBackground) {
+            // All four carry a contentDescription. Without one they announced as four identical
+            // unnamed "Button"s in a row, on the app's opening screen — RippleIconButton used to
+            // hardcode null and offer no way to pass a label.
+            RippleIconButton(
+                imageVector = SimpIcons.Notifications,
+                tint = MaterialTheme.colorScheme.onBackground,
+                contentDescription = stringResource(Res.string.notification),
+            ) {
                 navController.navigate(NotificationDestination)
             }
-            RippleIconButton(imageVector = SimpIcons.History, tint = MaterialTheme.colorScheme.onBackground) {
+            RippleIconButton(
+                imageVector = SimpIcons.History,
+                tint = MaterialTheme.colorScheme.onBackground,
+                contentDescription = stringResource(Res.string.recently),
+            ) {
                 navController.navigate(RecentlySongsDestination)
             }
             // Fourth button, immediately before Settings — the position the design canvas fixes.
             ListenTogetherIconButton { navController.navigate(ListenTogetherDestination) }
-            RippleIconButton(imageVector = SimpIcons.Settings, tint = MaterialTheme.colorScheme.onBackground) {
+            RippleIconButton(
+                imageVector = SimpIcons.Settings,
+                tint = MaterialTheme.colorScheme.onBackground,
+                contentDescription = stringResource(Res.string.settings),
+            ) {
                 navController.navigate(SettingsDestination)
             }
         },

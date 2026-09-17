@@ -19,6 +19,12 @@ fun RippleIconButton(
     modifier: Modifier = Modifier,
     fillMaxSize: Boolean = false,
     tint: Color = Color.White,
+    // The icon is the button's ONLY content, so with no description TalkBack has nothing to read
+    // and every one of these announces as a bare "Button" — the four on the Home top bar
+    // (notifications, history, listen together, settings) were indistinguishable by ear.
+    // Defaulted to null so the ~45 existing call sites keep compiling; each one names its own
+    // action as it is revisited, and a decorative icon beside its own label legitimately stays null.
+    contentDescription: String? = null,
     onClick: () -> Unit,
 ) {
     IconButton(
@@ -27,7 +33,7 @@ fun RippleIconButton(
     ) {
         Icon(
             imageVector,
-            null,
+            contentDescription,
             tint = tint,
             modifier = if (fillMaxSize) Modifier.fillMaxSize().padding(4.dp) else Modifier,
         )
@@ -39,6 +45,9 @@ fun PlayPauseButton(
     isPlaying: Boolean,
     modifier: Modifier = Modifier,
     tint: Color = Color.White,
+    // Same reason as above, and this one changes meaning with its state: a caller passes the label
+    // for what the tap will DO ("Play" / "Pause"), which is the part an icon swap cannot announce.
+    contentDescription: String? = null,
     onClick: () -> Unit,
 ) {
     RippleIconButton(
@@ -49,6 +58,7 @@ fun PlayPauseButton(
         },
         modifier = modifier,
         tint = tint,
+        contentDescription = contentDescription,
         onClick = onClick,
     )
 }
