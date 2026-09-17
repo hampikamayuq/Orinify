@@ -2826,7 +2826,8 @@ fun SettingScreen(
     if (showColorPickerDialog) {
         val presetColors =
             listOf(
-                "FF8ECAE6",
+                // First swatch is the app's own accent, so "reset to brand" is the default pick.
+                "FFAD85FD",
                 "FF4C82EF",
                 "FF9B72CF",
                 "FFEF6C9B",

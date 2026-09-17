@@ -2513,7 +2513,12 @@ fun SleepTimerBottomSheet(
                     Text(
                         text = stringResource(Res.string.set),
                         style = typo().labelSmall,
-                        color = rememberSurfaceDarkColors().content,
+                        // `onPrimary`, not the sheet's light content colour: this button paints
+                        // its container with the brand accent, which is a LIGHT violet (HCT tone
+                        // 64). A near-white label on it was 1.8:1 under the old blue seed and is
+                        // still only 2.7:1 under this one — the tone gap to `onPrimary` is what
+                        // makes the pair legible.
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.padding(vertical = 4.dp),
                     )
                 }

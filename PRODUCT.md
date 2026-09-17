@@ -72,8 +72,11 @@ limit. Android only in practice.
 - **Mark:** a violet headphone-and-play glyph on a `#3B1E8A → #7C3AED` gradient, in
   `ic_launcher_foreground.xml` and its three sibling surfaces.
 - **Deep link scheme:** `orinify://`.
-- **Open:** the launcher icon is violet and the in-app accent is still upstream's
-  `seed = #8ECAE6`, a light blue. Icon and interface do not agree on the brand colour.
+- **Accent:** `seed = #AD85FD` — the icon's hue at HCT tone 64. Closed the icon/interface
+  disagreement. The tone is set by the ~50 places `seed` is used LITERALLY over AMOLED black,
+  not by the generated scheme: `PaletteStyle.TonalSpot` reads only the seed's hue, so the icon's
+  own `#7C3AED` would have produced a byte-identical palette while dropping every literal accent
+  to 3.7:1, under WCAG AA. Tone 64 gives 7.6:1.
 
 ## Evidence on Hand
 

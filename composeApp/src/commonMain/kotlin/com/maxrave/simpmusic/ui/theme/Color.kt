@@ -5,10 +5,28 @@ import androidx.compose.ui.graphics.Color
 // ===== Brand =====
 
 /**
- * Brand seed color. The whole Material 3 ColorScheme is generated from this
- * color at runtime — see [AppTheme].
+ * Brand seed color: the Orinify violet. The whole Material 3 ColorScheme is generated from this
+ * color at runtime — see [AppTheme] — and it is also used literally at ~50 call sites as the app
+ * accent (Analytics figures and charts, the Apple Music header subtitle, selected rows and chips).
+ * Those two jobs are what fixes the value, and they read different parts of it.
+ *
+ * It is the hue of the launcher icon's gradient end (`#7C3AED` in `ic_launcher_background.xml`,
+ * HCT hue 301.9), lifted to tone 64 at the highest chroma sRGB holds there.
+ *
+ * Why not `#7C3AED` itself:
+ *  - The generated scheme would be identical. `PaletteStyle.TonalSpot` builds its primary palette
+ *    as `TonalPalette.fromHueAndChroma(seedHue, 36.0)` and takes `primary` at tone 80 (dark) /
+ *    40 (light), so it reads the seed's HUE and discards its chroma and tone. `#7C3AED` and this
+ *    value both yield `primary = #D2BCFD` dark / `#67548E` light, byte for byte; the gradient's
+ *    other stop `#3B1E8A` is 5° off in hue and yields `#CCBDFF`, the same colour to the eye.
+ *  - The literal uses would not be identical. `#7C3AED` is HCT tone 43: 3.7:1 against the AMOLED
+ *    black this app pins `background`/`surface` to, below WCAG AA. At tone 64 the same hue gives
+ *    7.6:1 — AAA — close to the 11.7:1 the old blue seed gave, so no accent site loses legibility.
+ *
+ * Light theme is unaffected by the lift for the same reason: `primary` resolves to `#67548E`,
+ * 6.2:1 on the `#FAFAFA` page background, matching what the previous seed produced.
  */
-val seed = Color(0xFF8ECAE6)
+val seed = Color(0xFFAD85FD)
 
 // ===== Semantic colors (not derivable from the color scheme) =====
 
