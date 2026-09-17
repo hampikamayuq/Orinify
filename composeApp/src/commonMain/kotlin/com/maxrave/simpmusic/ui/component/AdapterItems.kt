@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -44,6 +46,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -129,20 +133,28 @@ fun HomeItem(
     Column {
         Row(
             modifier =
-                if (channelId != null) {
-                    Modifier
-                        .focusable(true)
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable {
-                            navController.navigate(
-                                ArtistDestination(
-                                    channelId = channelId,
-                                ),
-                            )
-                        }
-                } else {
-                    Modifier
-                },
+                // 48dp floor because this row IS the touch target when the shelf names an artist:
+                // with no avatar and no subtitle it is a single headlineMedium line, ~30dp, under
+                // the platform minimum. Applied to both branches so headers do not change height
+                // from shelf to shelf depending on whether YouTube sent a channelId.
+                Modifier
+                    .heightIn(min = 48.dp)
+                    .then(
+                        if (channelId != null) {
+                            Modifier
+                                .focusable(true)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    navController.navigate(
+                                        ArtistDestination(
+                                            channelId = channelId,
+                                        ),
+                                    )
+                                }
+                        } else {
+                            Modifier
+                        },
+                    ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AnimatedVisibility(
@@ -158,7 +170,10 @@ fun HomeItem(
                             .diskCacheKey(data.thumbnail?.lastOrNull()?.url)
                             .crossfade(550)
                             .build(),
-                    contentDescription = "",
+                    // null, not "": this avatar repeats the shelf title beside it, so it is
+                    // decorative. "" is the ambiguous value — it still describes a node, just
+                    // with nothing to say — while null takes it out of the accessibility tree.
+                    contentDescription = null,
                     placeholder = rememberHolderPainter(),
                     error = rememberHolderPainter(),
                     modifier =
@@ -192,7 +207,16 @@ fun HomeItem(
             state = lazyListState,
             flingBehavior = snapperFlingBehavior,
         ) {
-            items(data.contents) { temp ->
+            // Keyed so a card's state follows its content instead of its slot. The index is
+            // part of the key because Content's three ids are all nullable and YouTube does
+            // repeat a video across shelf entries: a duplicate key is a runtime crash in
+            // LazyList, so identity is paired with the one value guaranteed unique.
+            itemsIndexed(
+                items = data.contents,
+                key = { index, item ->
+                    "$index:${item?.videoId ?: item?.playlistId ?: item?.browseId.orEmpty()}"
+                },
+            ) { _, temp ->
                 if (temp != null) {
                     val browseId = temp.browseId
                     val playlistId = temp.playlistId
@@ -306,6 +330,39 @@ fun HomeItem(
     }
 }
 
+/**
+ * Content height every shelf card reserves, so titles and subtitles line up across a row
+ * whether a title wraps or not.
+ *
+ * Measured from [typo] rather than written down as a number: none of its styles declares a
+ * `lineHeight`, so the font's own metric decides and it moves with the system font-size setting.
+ * The `thumbSize + 76.dp` this replaces (restated as a bare `236.dp` at three more call sites,
+ * where a caller passing a different thumbSize silently desynced them) was that measurement taken
+ * once against a two-line title: it left ~32dp of dead space under every card whose title fits on
+ * one line, and would have clipped a two-line title at a large font scale.
+ */
+@Composable
+private fun rememberShelfCardMinHeight(thumbHeight: Dp): Dp {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val titleStyle = typo().titleSmall
+    val subtitleStyle = typo().bodySmall
+    return remember(measurer, density, thumbHeight, titleStyle, subtitleStyle) {
+        val textPx =
+            measurer.measure(TWO_LINE_PROBE, titleStyle).size.height +
+                measurer.measure(ONE_LINE_PROBE, subtitleStyle).size.height
+        thumbHeight + SHELF_CARD_TITLE_TOP_PADDING + with(density) { textPx.toDp() }
+    }
+}
+
+private const val ONE_LINE_PROBE = "A"
+private const val TWO_LINE_PROBE = "A\nA"
+
+// The gap between a card's thumbnail and its title. Named because every card applies it AND
+// rememberShelfCardMinHeight has to add the same number back: a floor that disagrees with the
+// padding under it is exactly the dead space this helper exists to remove.
+private val SHELF_CARD_TITLE_TOP_PADDING = 8.dp
+
 @Composable
 fun HomeItemContentPlaylist(
     onClick: () -> Unit,
@@ -327,7 +384,7 @@ fun HomeItemContentPlaylist(
             modifier =
                 Modifier
                     .padding(10.dp)
-                    .heightIn(min = thumbSize + 76.dp),
+                    .heightIn(min = rememberShelfCardMinHeight(thumbSize)),
         ) {
             val thumb =
                 when (data) {
@@ -464,7 +521,7 @@ fun HomeItemContentPlaylist(
                     Modifier
                         .width(thumbSize)
                         .wrapContentHeight(align = Alignment.CenterVertically)
-                        .padding(top = 8.dp),
+                        .padding(top = SHELF_CARD_TITLE_TOP_PADDING),
             )
             Text(
                 text =
@@ -546,15 +603,17 @@ fun HomeItemContentPlaylist(
                 minLines = 1,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                // No basicMarquee on a card caption. Without a `spacing` it paints a SECOND copy
+                // of the string a third of the container away, so the card showed
+                // [tail of copy 1][gap][head of copy 2] and read as text bleeding in from the
+                // neighbouring card; velocity is a constant dp/s, so cards of different string
+                // lengths drifted out of step. It also made the Ellipsis above inert (marquee
+                // measures at infinite width, so nothing ever overflows) and, after its default
+                // 3 iterations, parked the text clipped with no ellipsis and unreadable for good.
                 modifier =
                     Modifier
                         .width(thumbSize)
-                        .wrapContentHeight(align = Alignment.CenterVertically)
-                        .basicMarquee(
-                            initialDelayMillis = 2000,
-                            repeatDelayMillis = 2000,
-                            velocity = 25.dp,
-                        ),
+                        .wrapContentHeight(align = Alignment.CenterVertically),
             )
         }
     }
@@ -643,8 +702,7 @@ fun QuickPicksItem(
                                 modifier =
                                     Modifier
                                         .size(20.dp)
-                                        .padding(end = 4.dp)
-                                        .weight(1f),
+                                        .padding(end = 4.dp),
                             )
                         }
                     }
@@ -694,7 +752,7 @@ fun HomeItemSong(
             modifier =
                 Modifier
                     .padding(10.dp)
-                    .heightIn(min = 236.dp),
+                    .heightIn(min = rememberShelfCardMinHeight(160.dp)),
         ) {
             val thumb =
                 data.thumbnails.lastOrNull()?.url?.let {
@@ -736,7 +794,7 @@ fun HomeItemSong(
                     Modifier
                         .width(160.dp)
                         .wrapContentHeight(align = Alignment.CenterVertically)
-                        .padding(top = 8.dp),
+                        .padding(top = SHELF_CARD_TITLE_TOP_PADDING),
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 AnimatedVisibility(visible = data.isExplicit == true) {
@@ -744,8 +802,7 @@ fun HomeItemSong(
                         modifier =
                             Modifier
                                 .size(20.dp)
-                                .padding(end = 4.dp)
-                                .weight(1f),
+                                .padding(end = 4.dp),
                     )
                 }
                 Text(
@@ -761,15 +818,13 @@ fun HomeItemSong(
                     minLines = 1,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    // Static and ellipsised, for the reason spelled out on the
+                    // HomeItemContentPlaylist caption.
                     modifier =
                         Modifier
                             .width(160.dp)
                             .wrapContentHeight(align = Alignment.CenterVertically)
-                            .basicMarquee(
-                                initialDelayMillis = 2000,
-                                repeatDelayMillis = 2000,
-                                velocity = 25.dp,
-                            ).padding(vertical = 3.dp),
+                            .padding(vertical = 3.dp),
                 )
             }
         }
@@ -799,7 +854,7 @@ fun HomeItemVideo(
             modifier =
                 Modifier
                     .padding(10.dp)
-                    .heightIn(min = 236.dp),
+                    .heightIn(min = rememberShelfCardMinHeight(160.dp)),
         ) {
             val thumb = data.thumbnails.lastOrNull()?.url
             Logger.w("AsyncImage", "HomeItemSong: $thumb")
@@ -835,7 +890,7 @@ fun HomeItemVideo(
                     Modifier
                         .width(284.5.dp)
                         .wrapContentHeight(align = Alignment.CenterVertically)
-                        .padding(top = 8.dp),
+                        .padding(top = SHELF_CARD_TITLE_TOP_PADDING),
             )
             Text(
                 text =
@@ -850,15 +905,13 @@ fun HomeItemVideo(
                 minLines = 1,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                // Static and ellipsised, for the reason spelled out on the
+                // HomeItemContentPlaylist caption.
                 modifier =
                     Modifier
                         .width(284.5.dp)
                         .wrapContentHeight(align = Alignment.CenterVertically)
-                        .basicMarquee(
-                            initialDelayMillis = 2000,
-                            repeatDelayMillis = 2000,
-                            velocity = 25.dp,
-                        ).padding(vertical = 2.dp),
+                        .padding(vertical = 2.dp),
             )
         }
     }
@@ -885,7 +938,7 @@ fun HomeItemArtist(
             modifier =
                 Modifier
                     .padding(10.dp)
-                    .heightIn(min = 236.dp),
+                    .heightIn(min = rememberShelfCardMinHeight(160.dp)),
         ) {
             val thumb = data.thumbnails.lastOrNull()?.url
             Logger.w("AsyncImage", "HomeItemSong: $thumb")
@@ -921,7 +974,7 @@ fun HomeItemArtist(
                     Modifier
                         .width(160.dp)
                         .wrapContentHeight(align = Alignment.CenterVertically)
-                        .padding(top = 8.dp),
+                        .padding(top = SHELF_CARD_TITLE_TOP_PADDING),
             )
             Text(
                 text = data.description?.takeIf { it.isNotBlank() }.orEmpty(),
@@ -930,15 +983,12 @@ fun HomeItemArtist(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
+                // Static and ellipsised, for the reason spelled out on the
+                // HomeItemContentPlaylist caption.
                 modifier =
                     Modifier
                         .width(160.dp)
-                        .wrapContentHeight(align = Alignment.CenterVertically)
-                        .basicMarquee(
-                            initialDelayMillis = 2000,
-                            repeatDelayMillis = 2000,
-                            velocity = 25.dp,
-                        ),
+                        .wrapContentHeight(align = Alignment.CenterVertically),
             )
         }
     }
@@ -958,19 +1008,27 @@ fun MoodMomentAndGenreHomeItem(
         onClick = onClick,
         shape = RoundedCornerShape(5.dp),
         modifier =
+            // The padding comes BEFORE the size. Written after it, it inset the card itself
+            // rather than the space around it: the declared 160x50 was the footprint and the
+            // clickable surface was 16dp smaller on both axes — 144x34, under the 48dp touch
+            // minimum. The 8dp is now the gap to the neighbouring card, and the floor is the
+            // minimum itself instead of a height the padding then ate into.
             Modifier
+                .padding(8.dp)
                 .width(160.dp)
-                .height(50.dp)
-                .padding(8.dp),
+                .heightIn(min = 48.dp),
     ) {
-        Row {
+        Row(Modifier.fillMaxHeight()) {
             Box(
                 // `solid.leftStripeColor` straight from the API (full ARGB). This used to be
                 // generateRandomColor(), which — being outside remember — rolled a new colour on
                 // every recomposition, so the stripes flickered while scrolling.
+                //
+                // Height follows the card: a fixed 64.dp was taller than the card it sits in and
+                // was silently clipped, so the stripe stopped meaning anything.
                 Modifier
                     .width(10.dp)
-                    .height(64.dp)
+                    .fillMaxHeight()
                     .background(Color(stripeColor)),
             )
             Text(
@@ -978,6 +1036,11 @@ fun MoodMomentAndGenreHomeItem(
                 style = typo().titleSmall,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface,
+                // The card is a fixed box the text cannot grow, so an unbounded genre name was
+                // cut mid-glyph with nothing to say it had been. Two lines of titleSmall is what
+                // fits inside the 48dp floor.
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
                 modifier =
                     Modifier
                         .fillMaxWidth()
