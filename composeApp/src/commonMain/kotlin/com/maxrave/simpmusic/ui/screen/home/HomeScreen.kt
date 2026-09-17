@@ -20,6 +20,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -108,6 +110,7 @@ import com.maxrave.simpmusic.getPlatform
 import com.maxrave.simpmusic.ui.component.CenterLoadingBox
 import com.maxrave.simpmusic.ui.component.Chip
 import com.maxrave.simpmusic.ui.component.DropdownButton
+import com.maxrave.simpmusic.extension.copy
 import com.maxrave.simpmusic.ui.component.EndOfPage
 import com.maxrave.simpmusic.ui.component.HomeItem
 import com.maxrave.simpmusic.ui.component.HomeItemContentPlaylist
@@ -215,6 +218,7 @@ private val listOfHomeChip =
 @ExperimentalFoundationApi
 @Composable
 fun HomeScreen(
+    innerPadding: PaddingValues,
     onScrolling: (onTop: Boolean) -> Unit = {},
     viewModel: HomeViewModel =
         koinViewModel(),
@@ -470,6 +474,14 @@ fun HomeScreen(
                     }
                     LazyColumn(
                         state = scrollState,
+                        // `top = 0` on purpose, and it is the only part of this that differs from
+                        // the sibling tabs: the first shelf draws its artwork gradient edge to edge
+                        // UNDER the transparent top bar, so a top inset here would cut it off at a
+                        // hard seam. The bottom is what was missing — without it Home was the one
+                        // destination drawing beneath the mini player and the system navigation
+                        // bar, which is what hid the second shelf's card titles while leaving their
+                        // subtitles visible.
+                        contentPadding = innerPadding.copy(top = 0.dp),
                         verticalArrangement = Arrangement.spacedBy(20.dp),
                     ) {
                         itemsIndexed(homeData, key = { _, item ->
@@ -737,10 +749,16 @@ fun HomeScreen(
                 Row(
                     modifier =
                         Modifier
-                            .horizontalScroll(chipRowState)
+                            // Inset before the scroll: a cutout eats into the row's own bounds, so
+                            // without this the first and last chip sit under it in landscape.
+                            .windowInsetsPadding(
+                                WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal),
+                            ).horizontalScroll(chipRowState)
                             .padding(vertical = 8.dp, horizontal = 15.dp)
                             .background(Color.Transparent),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    // 8dp, not 4: android.md asks for at least 8dp between touch targets, and
+                    // these chips are the primary filter of the screen.
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     listOfHomeChip.forEach { id ->
                         val isSelected =
@@ -792,10 +810,11 @@ fun HomeTopAppBar(navController: NavController) {
             date.hour
         }
     TopAppBar(
-        windowInsets =
-            TopAppBarDefaults.windowInsets.exclude(
-                TopAppBarDefaults.windowInsets.only(WindowInsetsSides.Start),
-            ),
+        // The Start inset used to be excluded outright. `TopAppBarDefaults.windowInsets` is
+        // `safeDrawing.only(Horizontal + Top)`, so that also threw away `displayCutout` — putting
+        // the title under a left-edge cutout in landscape, and under the cutout in RTL. On a phone
+        // in portrait the Start inset is 0, which is why the exclusion looked free.
+        windowInsets = TopAppBarDefaults.windowInsets,
         title = {
             Column {
                 Text(
