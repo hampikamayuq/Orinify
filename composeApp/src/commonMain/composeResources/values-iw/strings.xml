@@ -153,7 +153,7 @@
     <string name="categories_sponsor_block">בחר התנהגות של דילוג על קטע</string>
     <string name="what_segments_will_be_skipped">על אילו קטעים ידלגו</string>
     <string name="save">שמור</string>
-    <string name="sponsor_block_intro">חסימת חסות היא מערכת ממקור המונים לדילוג על חלקים מעצבנים בסרטוני יוטיוב.\nמידע נוסף: https://sponsor.ajay.app/\n ב-SimpMusic, חסימת חסות זמין רק כאשר המכשיר מחובר לאינטרנט</string>
+    <string name="sponsor_block_intro">חסימת חסות היא מערכת ממקור המונים לדילוג על חלקים מעצבנים בסרטוני יוטיוב.\nמידע נוסף: https://sponsor.ajay.app/\n ב-Orinify, חסימת חסות זמין רק כאשר המכשיר מחובר לאינטרנט</string>
     <string name="skip_sponsor_part_of_video">דלג על חלק נותני החסות בסרטון</string>
     <string name="sleep_timer">טיימר שינה - %1$s דקות</string>
     <string name="sleep_timer_off">טיימר שינה</string>
@@ -177,7 +177,7 @@
     <string name="auto_created_by_youtube_music">נוצר אוטומטית על ידי יוטיוב מיוזיק</string>
     <string name="start_radio">הפעל רדיו</string>
     <string name="saved_to_local_playlist">נשמר ברשימת השמעה מקומית</string>
-    <string name="sync_playlist_warning">SimpMusic תיצור רשימת השמעה של יוטיוב מיוזיק באופן אוטומטי. האם אתה בטוח?</string>
+    <string name="sync_playlist_warning">Orinify תיצור רשימת השמעה של יוטיוב מיוזיק באופן אוטומטי. האם אתה בטוח?</string>
     <string name="syncing">מסנכרן</string>
     <string name="unsync_playlist_warning">"לבטל את הסנכרון של הפלייליסט הזה? הפלייליסט הזה לא יוסר מיוטיוב מיוזיק "</string>
     <string name="unsyncing">מבטל סנכרון</string>
@@ -188,7 +188,7 @@
     <string name="backup_create_failed">יצירת הגיבוי נכשלה</string>
     <string name="main_lyrics_provider">ספק מילים ראשי</string>
     <string name="translation_language">שפת התרגום</string>
-    <string name="translation_language_message">הקלד קוד שפה (למשל: en) (2 אותיות). אם אתה רוצה להגדיר אותו דבר עם השפה של SimpMusic, אנא הפוך את תיבת העריכה לריקה.</string>
+    <string name="translation_language_message">הקלד קוד שפה (למשל: en) (2 אותיות). אם אתה רוצה להגדיר אותו דבר עם השפה של Orinify, אנא הפוך את תיבת העריכה לריקה.</string>
     <string name="invalid_language_code">קוד שפה לא חוקי</string>
     <string name="lyrics_provider_youtube">מילים מסופקות על ידי יוטיוב</string>
     <string name="limit_player_cache">הגבל את מטמון הנגן</string>
@@ -232,7 +232,7 @@ SimpMusic תמיד בחינם וללא פרסומות\n\nבונה מ ❤️מ-Tu
     <string name="enable_spotify_lyrics">אפשר ספוטיפיי מילים</string>
     <string name="spotify_lyrícs_info">עוד מילים ללא תרגום</string>
     <string name="enable_canvas">הפעל את קנבס</string>
-    <string name="canvas_info">הצג את ספוטיפיי קנבס ב-SimpMusic</string>
+    <string name="canvas_info">הצג את ספוטיפיי קנבס ב-Orinify</string>
     <string name="spotify_lyrics_provider">מילים מסופקות על ידי ספוטיפיי</string>
     <string name="offline_mode">מצב לא מקוון</string>
     <string name="added_to_youtube_liked">נוסף ליוטיוב 'אהבתי'</string>

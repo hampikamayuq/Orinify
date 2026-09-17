@@ -158,10 +158,10 @@
     <string name="categories_sponsor_block">Изберете поведение за прескачане на сегмент</string>
     <string name="what_segments_will_be_skipped">Кой сегмент ще бъде прескочен</string>
     <string name="save">Запази</string>
-    <string name="sponsor_block_intro">SponsorBlock е система за прескачане на досадни части от YouTube видеа.\nЗа повече информация: https://sponsor.ajay.app/\nIn SimpMusic, SponsorBlock е наличен когато устройството е на линия</string>
+    <string name="sponsor_block_intro">SponsorBlock е система за прескачане на досадни части от YouTube видеа.\nЗа повече информация: https://sponsor.ajay.app/\nIn Orinify, SponsorBlock е наличен когато устройството е на линия</string>
     <string name="skip_sponsor_part_of_video">Прескачане на спонсорираната част</string>
-    <string name="help_build_lyrics_database">Помогнете на SimpMusic лирики да построи датабазата за лирики</string>
-    <string name="help_build_lyrics_database_description">Пратете вашите запазени лирики към датабазата на SimpMusic лирики</string>
+    <string name="help_build_lyrics_database">Помогнете на Orinify лирики да построи датабазата за лирики</string>
+    <string name="help_build_lyrics_database_description">Пратете вашите запазени лирики към датабазата на Orinify лирики</string>
     <string name="sleep_timer">Таймер за сън - %1$s минута(и)</string>
     <string name="sleep_timer_off">Таймер за сън</string>
     <string name="sleep_minutes">Обратно броене (в минути)</string>
@@ -184,7 +184,7 @@
     <string name="auto_created_by_youtube_music">Автоматично създадено от YouTube Music</string>
     <string name="start_radio">Стартирай радио</string>
     <string name="saved_to_local_playlist">Запазено в локален плейлист</string>
-    <string name="sync_playlist_warning">SimpMusic ще създаде YouTube Music Playlist автоматично. Сигурни ли сте?</string>
+    <string name="sync_playlist_warning">Orinify ще създаде YouTube Music Playlist автоматично. Сигурни ли сте?</string>
     <string name="syncing">Синхронизиране</string>
     <string name="unsync_playlist_warning">"Разсинхронизиране на този плейлист? Този плейлист ще бъде премахнат от YouTube Music "</string>
     <string name="unsyncing">Разсинхронизиране</string>
@@ -197,7 +197,7 @@
     <string name="use_ai_translation">Използвай AI (изкуствен интелект) лирически преводач</string>
     <string name="use_ai_translation_description">Включи превеждане на лирики с AI (изкуствен интелект)</string>
     <string name="translation_language">Език на превода</string>
-    <string name="translation_language_message">Въведете код на език (Напр: bg) (2 букви). Оставете празно ако искате да използвате езика на SimpMusic.</string>
+    <string name="translation_language_message">Въведете код на език (Напр: bg) (2 букви). Оставете празно ако искате да използвате езика на Orinify.</string>
     <string name="invalid_language_code">Невалиден код на език</string>
     <string name="lyrics_provider_youtube">Текст предоставен от YouTube</string>
     <string name="lyrics_provider_betterlyrics">Лирики придоставени от BetterLyrics</string>
@@ -244,7 +244,7 @@
     <string name="enable_spotify_lyrics">Включи Spotify Lyrics</string>
     <string name="spotify_lyrícs_info">Повече текстове без превод</string>
     <string name="enable_canvas">Включване на Canvas</string>
-    <string name="canvas_info">Покажи Spotify Canvas в SimpMusic</string>
+    <string name="canvas_info">Покажи Spotify Canvas в Orinify</string>
     <string name="spotify_lyrics_provider">Текст предоставен от Spotify</string>
     <string name="offline_mode">Режим офлайн</string>
     <string name="added_to_youtube_liked">Добавено в YouTube харесани</string>
@@ -283,7 +283,7 @@
     <string name="loading">Зареждане</string>
     <string name="updating">Актуализиране</string>
     <string name="go_to_log_in_page">Отиди на страницата за вход</string>
-    <string name="log_in_warning">YouTube Music вече изисква да сте вписани за да стриймвате музика, Piped понякога също не работи. Трябва да влезете в YouTube по-добро преживяване със SimpMusic.</string>
+    <string name="log_in_warning">YouTube Music вече изисква да сте вписани за да стриймвате музика, Piped понякога също не работи. Трябва да влезете в YouTube по-добро преживяване със Orinify.</string>
     <string name="spotify_canvas_cache">Spotify кеш на изображенията</string>
     <string name="clear_canvas_cache">Изстрий кеша на изображенията</string>
     <string name="proxy">Прокси</string>
@@ -318,8 +318,8 @@
     <string name="other_version">Друга версия</string>
     <string name="later">По-късно</string>
     <string name="give_a_star">Оцени</string>
-    <string name="enjoying_simpmusic">Доволни от SimpMusic</string>
-    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">Оценете SimpMusic в GitHub или оставете ревю ако сте доволни</string>
+    <string name="enjoying_simpmusic">Доволни от Orinify</string>
+    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">Оценете Orinify в GitHub или оставете ревю ако сте доволни</string>
     <string name="if_you_love_my_work_consider">"Ако сте доволни от работата ми, моля помислете да "</string>
     <string name="buying_me_a_coffee">ме почерпите кафе.</string>
     <string name="shuffle_not_available">Разбъркването не е налично</string>

@@ -166,8 +166,8 @@
     <string name="save">Speichern</string>
     <string name="sponsor_block_intro">SponsorBlock ist ein Community-Basiertes System, um unerwünschte Teile von YouTube Videos zu überspringen. Mehr darüber: https://sponsor.ajay.app SponsorBlock ist nur dann verfügbar, wenn du online bist</string>
     <string name="skip_sponsor_part_of_video">Gesponserten Teil des Videos überspringen</string>
-    <string name="help_build_lyrics_database">Hilf SimpMusic-Lyrics beim Aufbau der Songtext-Datenbank</string>
-    <string name="help_build_lyrics_database_description">Sende deine gespeicherten Songtexte an die SimpMusic-Lyrics-Datenbank</string>
+    <string name="help_build_lyrics_database">Hilf Orinify-Lyrics beim Aufbau der Songtext-Datenbank</string>
+    <string name="help_build_lyrics_database_description">Sende deine gespeicherten Songtexte an die Orinify-Lyrics-Datenbank</string>
     <string name="sleep_timer">Sleep-Timer - %1$s Minute(n)</string>
     <string name="sleep_timer_end_of_song">Sleep-Timer - Ende des Liedes</string>
     <string name="sleep_timer_off">Sleep-Timer</string>
@@ -191,7 +191,7 @@
     <string name="auto_created_by_youtube_music">Automatisch erstellt von YouTube Music</string>
     <string name="start_radio">Radio starten</string>
     <string name="saved_to_local_playlist">In lokaler Playlist gespeichert</string>
-    <string name="sync_playlist_warning">SimpMusic erstellt automatisch eine YouTube Music-Playlist. Bist du dir sicher?</string>
+    <string name="sync_playlist_warning">Orinify erstellt automatisch eine YouTube Music-Playlist. Bist du dir sicher?</string>
     <string name="syncing">Synchronisierung</string>
     <string name="unsync_playlist_warning">"Synchronisierung dieser Playlist aufheben? Diese Playlist wird nicht aus YouTube Music entfernt"</string>
     <string name="unsyncing">Synchronisierung wird aufgehoben</string>
@@ -204,7 +204,7 @@
     <string name="use_ai_translation">KI-Songtext-Übersetzung verwenden</string>
     <string name="use_ai_translation_description">Songtext-Übersetzung mit Hilfe von KI aktivieren</string>
     <string name="translation_language">Übersetzungssprache</string>
-    <string name="translation_language_message">Gebe den Sprachcode ein (z. B. de) (2 Buchstaben). Wenn du die Sprache SimpMusic nutzen möchtest, lasse dieses Feld leer.</string>
+    <string name="translation_language_message">Gebe den Sprachcode ein (z. B. de) (2 Buchstaben). Wenn du die Sprache Orinify nutzen möchtest, lasse dieses Feld leer.</string>
     <string name="invalid_language_code">Ungültiger Sprachcode</string>
     <string name="lyrics_provider_youtube">Songtexte von YouTube</string>
     <string name="lyrics_provider_betterlyrics">Liedtexte zur Verfügung gestellt von BetterLyrics</string>
@@ -249,7 +249,7 @@
     <string name="equalizer_autoeq_unavailable">Konnte AutoEq nicht erreichen. Überprüfe deine Verbindung und versuche es erneut.</string>
     <string name="equalizer_autoeq_empty">Keine Kopfhörer die diesem Namen entsprechen</string>
     <string name="equalizer_autoeq_failed">Das Profil konnte nicht geladen werden – beim ersten Mal ist eine Verbindung erforderlich.</string>
-    <string name="sync_follow_to_youtube_description">Das Abonnieren eines Künstler in SimpMusic abonniert auch seinen Kanal auf Ihrem YouTube/YTM-Konto</string>
+    <string name="sync_follow_to_youtube_description">Das Abonnieren eines Künstler in Orinify abonniert auch seinen Kanal auf Ihrem YouTube/YTM-Konto</string>
     <string name="sync_follow_failed">YouTube-Abonnement konnte nicht aktualisiert werden</string>
     <string name="subscribed_on_youtube">Auf YouTube/YTM abonniert </string>
     <string name="unsubscribed_on_youtube">Auf YouTube/YTM deabonniert </string>
@@ -270,7 +270,7 @@
     <string name="enable_spotify_lyrics">Spotify Songtexte nutzen</string>
     <string name="spotify_lyrícs_info">Mehr Lyrics ohne Übersetzung</string>
     <string name="enable_canvas">Canvas nutzen</string>
-    <string name="canvas_info">Zeige Spotify Canvas in SimpMusic</string>
+    <string name="canvas_info">Zeige Spotify Canvas in Orinify</string>
     <string name="enable_animated_artwork">Animiertes Cover</string>
     <string name="animated_artwork_info">Spiele das animierte Cover des Albums anstelle eines Canvas ab. Es ist kein Konto erforderlich. Bei Alben ohne animiertes Cover wird weiterhin das Standbild angezeigt.</string>
     <string name="spotify_lyrics_provider">Songtexte bereitgestellt von Spotify</string>
@@ -330,7 +330,7 @@
     <string name="loading">Wird geladen</string>
     <string name="updating">Updating</string>
     <string name="go_to_log_in_page">Zur Anmeldeseite</string>
-    <string name="log_in_warning">YouTube Music erfordert jetzt das Einloggen um Musik zu streamen, Piped Instance kann manchmal nicht funktionieren. Du solltest dich bei YouTube anmelden, um ein besseres Erlebnis mit SimpMusic zu bekommen.</string>
+    <string name="log_in_warning">YouTube Music erfordert jetzt das Einloggen um Musik zu streamen, Piped Instance kann manchmal nicht funktionieren. Du solltest dich bei YouTube anmelden, um ein besseres Erlebnis mit Orinify zu bekommen.</string>
     <string name="spotify_canvas_cache">Spotify Canvas-Cache</string>
     <string name="clear_canvas_cache">Leere Canvas-Cache</string>
     <string name="listening_history">Hörverlauf</string>
@@ -376,8 +376,8 @@
     <string name="other_version">Andere Version</string>
     <string name="later">später</string>
     <string name="give_a_star">Gebe einen Stern</string>
-    <string name="enjoying_simpmusic">Spaß an SimpMusic</string>
-    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">Wenn dir SimpMusic gefällt, gib SimpMusic einen Stern auf Github oder lasse eine Rezension da</string>
+    <string name="enjoying_simpmusic">Spaß an Orinify</string>
+    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">Wenn dir Orinify gefällt, gib Orinify einen Stern auf Github oder lasse eine Rezension da</string>
     <string name="if_you_love_my_work_consider">"Wenn Dumeine Arbeit liebst, denk darüber nach "</string>
     <string name="buying_me_a_coffee">Mir einen Kaffee zu kaufen.</string>
     <string name="shuffle_not_available">Shuffle Endpunkt ist nicht verfügbar</string>
@@ -422,14 +422,14 @@
     <string name="contributor_name">Name des Mitwirkenden</string>
     <string name="contributor_email">E-Mail des Mitwirkenden</string>
     <string name="anonymous">Anonym</string>
-    <string name="simpmusic_lyrics">SimpMusic-Lyrics</string>
-    <string name="lyrics_provider_simpmusic">Songtexte von SimpMusic-Lyrics bereitgestellt</string>
+    <string name="simpmusic_lyrics">Orinify-Lyrics</string>
+    <string name="lyrics_provider_simpmusic">Songtexte von Orinify-Lyrics bereitgestellt</string>
     <string name="backup_in_progress">Backup wird erstellt</string>
     <string name="restore_in_progress">Backup wird wiederhergestellt</string>
     <string name="backup_downloaded">Backup der heruntergeladenen Daten</string>
     <string name="backup_downloaded_description">Backup aller heruntergeladenen Songs</string>
     <string name="auto_backup">Automatisches Backup</string>
-    <string name="auto_backup_description">Sichere deine Daten automatisch in den Downloads/SimpMusic Ordner</string>
+    <string name="auto_backup_description">Sichere deine Daten automatisch in den Downloads/Orinify Ordner</string>
     <string name="backup_frequency">Backup-Häufigkeit</string>
     <string name="daily">Täglich</string>
     <string name="weekly">Wöchentlich</string>
@@ -467,8 +467,8 @@
     <string name="intro_login_to_lastfm">Melde dich an, um zu scrobbeln, was du hörst</string>
     <string name="enable_scrobbling">Scrobbling aktivieren</string>
     <string name="scrobbling_info">Sende das, was du dir Anhörst, an dein Last.fm Profil</string>
-    <string name="lastfm_login_step_1">Öffnen die Last.fm Seite und gewähre SimpMusic Zugriff auf dein Konto.</string>
-    <string name="lastfm_login_step_2">SimpMusic öffnet sich wieder eigenständig, sobald Du den Zugriff gewährt hast.</string>
+    <string name="lastfm_login_step_1">Öffnen die Last.fm Seite und gewähre Orinify Zugriff auf dein Konto.</string>
+    <string name="lastfm_login_step_2">Orinify öffnet sich wieder eigenständig, sobald Du den Zugriff gewährt hast.</string>
     <string name="lastfm_open_authorize_page">Last.fm öffnen</string>
     <string name="lastfm_login_failed">Anmeldung bei Last.fm fehlgeschlagen. Bitte versuche es erneut.</string>
     <string name="lastfm_paste_callback_title">Ist nicht automatisch zurückgekehrt?</string>
@@ -542,7 +542,7 @@
     <string name="upvote">Positiv bewerten</string>
     <string name="downvote">Negativ bewerten</string>
     <string name="vote_submitted">Danke für die Abstimmung über diesen Songtext!</string>
-    <string name="open_app">SimpMusic öffnen</string>
+    <string name="open_app">Orinify öffnen</string>
     <string name="close_miniplayer">Mini-Player schließen</string>
     <string name="open_miniplayer">Mini-Player öffnen</string>
     <string name="quit_app">App beenden</string>
@@ -550,7 +550,7 @@
     <string name="local_tracking_description">Zeichne den Wiedergabeverlauf in der lokalen Datenbank auf</string>
     <string name="blog_notification_title">Benachrichtigungen zu Blogbeiträgen</string>
     <string name="blog_notification_description">Werde benachrichtigt wenn ein neuer Blog-Beitrag veröffentlicht wird</string>
-    <string name="simpmusic_charts">SimpMusic Charts</string>
+    <string name="simpmusic_charts">Orinify Charts</string>
     <string name="crossfading">Crossfading (überblenden)</string>
     <string name="search_for">Suchen nach</string>
     <string name="synced_playlist_cannot_change_order">Die Reihenfolge der synchronisierten Playlist kann nicht verändert werden</string>
@@ -565,13 +565,13 @@
     <string name="import_data">Playlists importieren</string>
     <string name="import_playlists_from_other_apps">Playlisten von einer anderen App importieren</string>
     <string name="import_data_intro">Mit der Importfunktion kannst Du Playlists einlesen, die aus Spotify oder einer anderen YT Music-Client-App konvertiert wurden. Konvertierungstool: https://www.simpmusic.org/tools 
-In SimpMusic können nur Playlist-Dateien in unserem eigenen Format importiert werden</string>
+In Orinify können nur Playlist-Dateien in unserem eigenen Format importiert werden</string>
     <string name="import_reading_file">Datei wird gelesen…</string>
     <string name="import_progress_songs">%1$d von %2$d Songs</string>
     <string name="import_result">%1$d Playlisten erstellt und %2$d Songs importiert.</string>
     <string name="import_result_skipped">%1$d Einträge wurden übersprungen, da der entsprechende Titel in der Datei fehlte.</string>
     <string name="import_failed">Import fehlgeschlagen</string>
-    <string name="import_invalid_file">Diese Datei ist keine gültige SimpMusic Importdatei. Konvertiere zuerst deine Bibliothek auf simpmusic.org.</string>
+    <string name="import_invalid_file">Diese Datei ist keine gültige Orinify Importdatei. Konvertiere zuerst deine Bibliothek auf simpmusic.org.</string>
     <string name="analytics">Statistiken</string>
     <string name="select_all">Alles auswählen</string>
     <string name="n_selected">%1$d ausgewählt</string>
@@ -640,7 +640,7 @@ In SimpMusic können nur Playlist-Dateien in unserem eigenen Format importiert w
     <string name="wrapped_share">Teilen</string>
     <string name="wrapped_save">Speichern</string>
     <string name="wrapped_opening_title">Dein Jahr in Musik</string>
-    <string name="wrapped_opening_lead">Du hast SimpMusic geöffnet am</string>
+    <string name="wrapped_opening_lead">Du hast Orinify geöffnet am</string>
     <string name="wrapped_opening_days">%1$s von %2$s Tagen</string>
     <string name="wrapped_opening_tracks">%1$s Songs wurden abgespielt.</string>
     <string name="wrapped_minutes_title">So viel Zeit hast du dieses Jahr mit Musik hören verbracht</string>

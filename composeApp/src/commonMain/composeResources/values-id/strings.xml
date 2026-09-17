@@ -165,10 +165,10 @@
     <string name="what_segments_will_be_skipped">Segmen apa saja yang akan dilewati</string>
     <string name="save">Simpan</string>
     <string name="crop_cover">Potong cover</string>
-    <string name="sponsor_block_intro">SponsorBlock adalah sistem yang bersumber dari banyak orang untuk melewatkan bagian video YouTube yang mengganggu.\nInformasi lebih lanjut: https://sponsor.ajay.app/\nDi SimpMusic, SponsorBlock hanya tersedia saat perangkat online</string>
+    <string name="sponsor_block_intro">SponsorBlock adalah sistem yang bersumber dari banyak orang untuk melewatkan bagian video YouTube yang mengganggu.\nInformasi lebih lanjut: https://sponsor.ajay.app/\nDi Orinify, SponsorBlock hanya tersedia saat perangkat online</string>
     <string name="skip_sponsor_part_of_video">Lewati bagian sponsor dari video</string>
-    <string name="help_build_lyrics_database">Bantu SimpMusic membangun basis data lirik</string>
-    <string name="help_build_lyrics_database_description">Kirim lirik yang telah Anda simpan ke basis data lirik SimpMusic</string>
+    <string name="help_build_lyrics_database">Bantu Orinify membangun basis data lirik</string>
+    <string name="help_build_lyrics_database_description">Kirim lirik yang telah Anda simpan ke basis data lirik Orinify</string>
     <string name="sleep_timer">Pengatur Waktu Tidur - %1$s menit</string>
     <string name="sleep_timer_end_of_song">Pewaktu Tidur - Akhir lagu</string>
     <string name="sleep_timer_off">Waktu Tidur</string>
@@ -192,7 +192,7 @@
     <string name="auto_created_by_youtube_music">Dibuat otomatis oleh YouTube Music</string>
     <string name="start_radio">Mulai radio</string>
     <string name="saved_to_local_playlist">Disimpan ke daftar putar lokal</string>
-    <string name="sync_playlist_warning">SimpMusic akan membuat Daftar Putar YouTube Music secara otomatis. Apakah Anda yakin?</string>
+    <string name="sync_playlist_warning">Orinify akan membuat Daftar Putar YouTube Music secara otomatis. Apakah Anda yakin?</string>
     <string name="syncing">Sinkronisasi</string>
     <string name="unsync_playlist_warning">"Batalkan sinkronisasi daftar putar ini? Daftar putar ini tidak akan dihapus dari YouTube Music "</string>
     <string name="unsyncing">Membatalkan sinkronisasi</string>
@@ -205,7 +205,7 @@
     <string name="use_ai_translation">Gunakan Terjemahan Lirik AI</string>
     <string name="use_ai_translation_description">Aktifkan terjemahan lirik menggunakan AI</string>
     <string name="translation_language">Bahasa Terjemahan</string>
-    <string name="translation_language_message">Ketik kode bahasa (Misalnya: en) (2 huruf). Jika Anda ingin mengatur bahasa yang sama dengan bahasa SimpMusic, silakan kosongkan kotak edit.</string>
+    <string name="translation_language_message">Ketik kode bahasa (Misalnya: en) (2 huruf). Jika Anda ingin mengatur bahasa yang sama dengan bahasa Orinify, silakan kosongkan kotak edit.</string>
     <string name="invalid_language_code">Kode bahasa tidak sah</string>
     <string name="lyrics_provider_youtube">Lirik disediakan oleh YouTube</string>
     <string name="lyrics_provider_betterlyrics">Lirik disediakan oleh BetterLyrics</string>
@@ -256,7 +256,7 @@
     <string name="enable_spotify_lyrics">Aktifkan Lirik Spotify</string>
     <string name="spotify_lyrícs_info">Lirik lainnya tanpa terjemahan</string>
     <string name="enable_canvas">Aktifkan Kanvas</string>
-    <string name="canvas_info">Tampilkan Kanvas Spotify di SimpMusic</string>
+    <string name="canvas_info">Tampilkan Kanvas Spotify di Orinify</string>
     <string name="spotify_lyrics_provider">Lirik disediakan oleh Spotify</string>
     <string name="offline_mode">Mode Offline</string>
     <string name="added_to_youtube_liked">Ditambahkan ke Disukai di YouTube</string>
@@ -304,7 +304,7 @@
     <string name="loading">Memuat</string>
     <string name="updating">Memperbarui</string>
     <string name="go_to_log_in_page">Pergi ke halaman masuk</string>
-    <string name="log_in_warning">YouTube Music sekarang mengharuskan Anda masuk untuk melakukan streaming musik, Piped Instance terkadang tidak dapat berfungsi juga. Anda harus masuk ke YouTube untuk mendapatkan pengalaman yang lebih baik dengan SimpMusic.</string>
+    <string name="log_in_warning">YouTube Music sekarang mengharuskan Anda masuk untuk melakukan streaming musik, Piped Instance terkadang tidak dapat berfungsi juga. Anda harus masuk ke YouTube untuk mendapatkan pengalaman yang lebih baik dengan Orinify.</string>
     <string name="spotify_canvas_cache">Tembolok Kanvas Spotify</string>
     <string name="clear_canvas_cache">Hapus tembolok kanvas</string>
     <string name="clear_listening_history_confirm">Statistik mendengarkan dan sumber daya yang tidak terpakai Anda akan dihapus. Tindakan ini tidak dapat dibatalkan — harap buat cadangan terlebih dahulu.</string>
@@ -345,8 +345,8 @@
     <string name="other_version">Versi lainnya</string>
     <string name="later">Nanti</string>
     <string name="give_a_star">Berikan bintang</string>
-    <string name="enjoying_simpmusic">Menikmati SimpMusic</string>
-    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">Jika Anda menikmati penggunaan SimpMusic, beri bintang pada SimpMusic di GitHub atau tinggalkan ulasan di sana</string>
+    <string name="enjoying_simpmusic">Menikmati Orinify</string>
+    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">Jika Anda menikmati penggunaan Orinify, beri bintang pada Orinify di GitHub atau tinggalkan ulasan di sana</string>
     <string name="if_you_love_my_work_consider">"Jika Anda menyukai karya saya, pertimbangkan "</string>
     <string name="buying_me_a_coffee">membelikanku secangkir kopi.</string>
     <string name="shuffle_not_available">Titik akhir shuffle tidak tersedia</string>
@@ -386,14 +386,14 @@
     <string name="contributor_name">Nama kontributor</string>
     <string name="contributor_email">Email kontributor</string>
     <string name="anonymous">Anonim</string>
-    <string name="simpmusic_lyrics">Lirik SimpMusic</string>
-    <string name="lyrics_provider_simpmusic">Lirik disediakan oleh SimpMusic Lyrics</string>
+    <string name="simpmusic_lyrics">Lirik Orinify</string>
+    <string name="lyrics_provider_simpmusic">Lirik disediakan oleh Orinify Lyrics</string>
     <string name="backup_in_progress">Pencadangan sedang berlangsung</string>
     <string name="restore_in_progress">Pemulihan sedang berlangsung</string>
     <string name="backup_downloaded">Cadangkan data yang diunduh</string>
     <string name="backup_downloaded_description">Cadangkan semua data lagu yang diunduh</string>
     <string name="auto_backup">Pencadangan otomatis</string>
-    <string name="auto_backup_description">Cadangkan data Anda secara otomatis ke folder Unduhan/SimpMusic</string>
+    <string name="auto_backup_description">Cadangkan data Anda secara otomatis ke folder Unduhan/Orinify</string>
     <string name="backup_frequency">Frekuensi pencadangan</string>
     <string name="daily">Harian</string>
     <string name="weekly">Mingguan</string>
@@ -450,7 +450,7 @@
     <string name="upvote">Beri jempol</string>
     <string name="downvote">Beri nilai buruk</string>
     <string name="vote_submitted">Terima kasih telah menilai lirik ini!</string>
-    <string name="open_app">Buka SimpMusic</string>
+    <string name="open_app">Buka Orinify</string>
     <string name="close_miniplayer">Tutup pemutar Mini</string>
     <string name="open_miniplayer">Buka pemutar Mini</string>
     <string name="quit_app">Keluar aplikasi</string>
@@ -458,7 +458,7 @@
     <string name="local_tracking_description">Catat riwayat mendengarkan Anda ke basis data lokal</string>
     <string name="blog_notification_title">Pemberitahuan postingan blog</string>
     <string name="blog_notification_description">Dapatkan pemberitahuan saat ada postingan blog baru yang diterbitkan</string>
-    <string name="simpmusic_charts">Tangga lagu SimpMusic</string>
+    <string name="simpmusic_charts">Tangga lagu Orinify</string>
     <string name="crossfading">Memudar</string>
     <string name="search_for">Pencarian</string>
     <string name="synced_playlist_cannot_change_order">Daftar putar yang disinkronkan tidak dapat mengubah urutan</string>

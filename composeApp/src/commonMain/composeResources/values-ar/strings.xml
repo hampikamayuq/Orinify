@@ -154,7 +154,7 @@
     <string name="categories_sponsor_block">حدد سلوك تخطي الجزء</string>
     <string name="what_segments_will_be_skipped">ما هي الأجزاء التي سيتم تخطيها</string>
     <string name="save">حفظ</string>
-    <string name="sponsor_block_intro">SponsorBlock هو نظام جماهيري لتخطي الأجزاء المزعجة من مقاطع فيديو YouTube.\nللمزيد من المعلومات: https://sponsor.ajay.app/\n في SimpMusic، يتوفر SponsorBlock فقط عندما يكون الجهاز متصلاً بالإنترنت</string>
+    <string name="sponsor_block_intro">SponsorBlock هو نظام جماهيري لتخطي الأجزاء المزعجة من مقاطع فيديو YouTube.\nللمزيد من المعلومات: https://sponsor.ajay.app/\n في Orinify، يتوفر SponsorBlock فقط عندما يكون الجهاز متصلاً بالإنترنت</string>
     <string name="skip_sponsor_part_of_video">تخطي جزء الراعي من الفيديو</string>
     <string name="help_build_lyrics_database">ساعدنا لتقوية قاعدة البيانات الخاصة بكلمات الأغاني</string>
     <string name="help_build_lyrics_database_description">أرسل كلمات الأغاني المسجلة إلى قاعدة البيانات</string>
@@ -180,7 +180,7 @@
     <string name="auto_created_by_youtube_music">تم إنشاؤها تلقائيًّا بواسطة YouTube Music</string>
     <string name="start_radio">تشغيل الراديو</string>
     <string name="saved_to_local_playlist">حفظ إلى قوائم التشغيل المحلية</string>
-    <string name="sync_playlist_warning">SimpMusic سينشئ قائمة تشغيل YouTube Music تلقائيًّا. هل أنت متأكد؟</string>
+    <string name="sync_playlist_warning">Orinify سينشئ قائمة تشغيل YouTube Music تلقائيًّا. هل أنت متأكد؟</string>
     <string name="syncing">المزامنة جارية</string>
     <string name="unsync_playlist_warning">"إلغاء مزامنة قائمة التشغيل هذه؟ لن تتم إزالة قائمة التشغيل هذه من YouTube Music "</string>
     <string name="unsyncing">إلغاء المزامنة</string>
@@ -193,7 +193,7 @@
     <string name="use_ai_translation">استخدم الذكاء الاصطناعي لترجمة كلمات الأغنية</string>
     <string name="use_ai_translation_description">فعل خاصية تَرْجَمَة كلمات الأغاني باستخدام الذكاء الاصطناعي</string>
     <string name="translation_language">لغة التّرجمة</string>
-    <string name="translation_language_message">أدخل كود اللغة (مثال: en) (من حرفين بالإنجليزية). إذا كنت تريد ضبط نفس اللغة مع لغة SimpMusic، فيرجى جعل مربع التحرير فارغًا.</string>
+    <string name="translation_language_message">أدخل كود اللغة (مثال: en) (من حرفين بالإنجليزية). إذا كنت تريد ضبط نفس اللغة مع لغة Orinify، فيرجى جعل مربع التحرير فارغًا.</string>
     <string name="invalid_language_code">رمز اللغة غير صحيح</string>
     <string name="lyrics_provider_youtube">كلمات الأغاني المقدمة من YouTube</string>
     <string name="limit_player_cache">الحد الأقصى لذاكرة التخزين المؤقت للمشغل</string>
@@ -238,7 +238,7 @@
     <string name="enable_spotify_lyrics">تمكين كلمات أغاني Spotify</string>
     <string name="spotify_lyrícs_info">المزيد من كلمات الأغاني بدون ترجمة</string>
     <string name="enable_canvas">تمكين Canvas</string>
-    <string name="canvas_info">إظهار Spotify Canvas في SimpMusic</string>
+    <string name="canvas_info">إظهار Spotify Canvas في Orinify</string>
     <string name="spotify_lyrics_provider">كلمات الأغاني المقدمة من Spotify</string>
     <string name="offline_mode">وضع غير متصل</string>
     <string name="added_to_youtube_liked">تمت الإضافة إلى إعجابات YouTube</string>
@@ -275,6 +275,6 @@
     <string name="go_to_log_in_page">الذهاب إلى صفحة تسجيل الدخول</string>
     <string name="proxy_host"></string>
     <string name="download_speed">سرعة التحميل %1$s </string>
-    <string name="import_invalid_file">هذا الملف ليس ملف استيراد SimpMusic صالح. حول مكتبتك علي simpmusic.org أولا.</string>
+    <string name="import_invalid_file">هذا الملف ليس ملف استيراد Orinify صالح. حول مكتبتك علي simpmusic.org أولا.</string>
     <!-- Listen Together -->
 </resources>

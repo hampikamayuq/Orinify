@@ -163,10 +163,10 @@
     <string name="categories_sponsor_block">Wybierz zachowanie pomijania segmentów</string>
     <string name="what_segments_will_be_skipped">Jakie segmenty zostaną pominięte</string>
     <string name="save">Zapisz</string>
-    <string name="sponsor_block_intro">SponsorBlock to społecznie rozwijany system pomijania irytujących fragmentów filmów w serwisie YouTube.\nWięcej informacji: https://sponsor.ajay.app/\nW SimpMusic funkcja SponsorBlock jest dostępna tylko wtedy, gdy urządzenie jest w trybie online</string>
+    <string name="sponsor_block_intro">SponsorBlock to społecznie rozwijany system pomijania irytujących fragmentów filmów w serwisie YouTube.\nWięcej informacji: https://sponsor.ajay.app/\nW Orinify funkcja SponsorBlock jest dostępna tylko wtedy, gdy urządzenie jest w trybie online</string>
     <string name="skip_sponsor_part_of_video">Pomiń część filmu sponsora</string>
-    <string name="help_build_lyrics_database">Pomóż zbudować bazę tekstów piosenek SimpMusic</string>
-    <string name="help_build_lyrics_database_description">Wyślij swoje zapisane teksty do bazy danych tekstów piosenek SimpMusic</string>
+    <string name="help_build_lyrics_database">Pomóż zbudować bazę tekstów piosenek Orinify</string>
+    <string name="help_build_lyrics_database_description">Wyślij swoje zapisane teksty do bazy danych tekstów piosenek Orinify</string>
     <string name="sleep_timer">Wyłącznik czasowy - %1$s minut (y)</string>
     <string name="sleep_timer_off">Wyłącznik czasowy</string>
     <string name="sleep_minutes">Czas odliczania (minuty)</string>
@@ -189,7 +189,7 @@
     <string name="auto_created_by_youtube_music">Automatycznie utworzone przez muzykę YouTube</string>
     <string name="start_radio">Włącz radio</string>
     <string name="saved_to_local_playlist">Zapisz do lokalnej playlisty</string>
-    <string name="sync_playlist_warning">SimpMusic automatycznie utworzy listę odtwarzania muzyki YouTube. Jesteś pewny?</string>
+    <string name="sync_playlist_warning">Orinify automatycznie utworzy listę odtwarzania muzyki YouTube. Jesteś pewny?</string>
     <string name="syncing">Synchronizuję</string>
     <string name="unsync_playlist_warning">"Odsynchronizować tą playlistę? Ta playlista nie zostanie usunięta z YouTube Music "</string>
     <string name="unsyncing">Odsynchronizowanie</string>
@@ -202,7 +202,7 @@
     <string name="use_ai_translation">Użyj tłumaczenia tekstu AI</string>
     <string name="use_ai_translation_description">Włącz tłumaczenie tekstów za pomocą AI</string>
     <string name="translation_language">Język tłumaczenia</string>
-    <string name="translation_language_message">Wpisz kod języka (Eg: en) (2 litery). Jeśli chcesz ustawić ten sam język SimpMusic, proszę ustawić pole edycji puste.</string>
+    <string name="translation_language_message">Wpisz kod języka (Eg: en) (2 litery). Jeśli chcesz ustawić ten sam język Orinify, proszę ustawić pole edycji puste.</string>
     <string name="invalid_language_code">Niepoprawny kod języka</string>
     <string name="lyrics_provider_youtube">Teksty piosenek dostarczone przez YouTube</string>
     <string name="lyrics_provider_betterlyrics">Tekst dostarczony przez BetterLyrics</string>
@@ -249,7 +249,7 @@
     <string name="enable_spotify_lyrics">Włącz teksty piosenek Spotify</string>
     <string name="spotify_lyrícs_info">Więcej tekstu bez tłumaczenia</string>
     <string name="enable_canvas">Włącz Canvas</string>
-    <string name="canvas_info">Pokaż Spotify Canvas w SimpMusic</string>
+    <string name="canvas_info">Pokaż Spotify Canvas w Orinify</string>
     <string name="spotify_lyrics_provider">Tekst piosenki dostarczony przez Spotify</string>
     <string name="offline_mode">Tryb offline</string>
     <string name="added_to_youtube_liked">Dodano do polubień YouTube</string>
@@ -296,7 +296,7 @@
     <string name="loading">Ładowanie</string>
     <string name="updating">Aktualizowanie</string>
     <string name="go_to_log_in_page">Przejdź do strony logowania</string>
-    <string name="log_in_warning">YouTube Music wymaga teraz zalogowania się do strumieniowania muzyki. Instancja Piped może również przestać działać. Należy zalogować się do YouTube, aby uzyskać lepsze doświadczenia z SimpMusic.</string>
+    <string name="log_in_warning">YouTube Music wymaga teraz zalogowania się do strumieniowania muzyki. Instancja Piped może również przestać działać. Należy zalogować się do YouTube, aby uzyskać lepsze doświadczenia z Orinify.</string>
     <string name="spotify_canvas_cache">Pamięć podręczna Spotify Canvas</string>
     <string name="clear_canvas_cache">Wyczyść pamięć podręczną Canvas</string>
     <string name="proxy">Proxy</string>
@@ -335,8 +335,8 @@
     <string name="other_version">Inne wersje</string>
     <string name="later">Później</string>
     <string name="give_a_star">Daj gwiazdkę</string>
-    <string name="enjoying_simpmusic">Ciesz się SimpMusic</string>
-    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">Jeśli lubisz używać SimpMusic, zostaw gwiazdkę na GitHub lub zostaw recenzję na</string>
+    <string name="enjoying_simpmusic">Ciesz się Orinify</string>
+    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">Jeśli lubisz używać Orinify, zostaw gwiazdkę na GitHub lub zostaw recenzję na</string>
     <string name="if_you_love_my_work_consider">"Jeśli kochasz moją pracę, rozważ "</string>
     <string name="buying_me_a_coffee">postawienie mi kawy.</string>
     <string name="shuffle_not_available">Punkt końcowy losowania nie jest dostępny</string>
@@ -370,14 +370,14 @@
     <string name="contributor_name">Nazwa kontrybutora</string>
     <string name="contributor_email">E-mail kontrybutora</string>
     <string name="anonymous">Anonimowy</string>
-    <string name="simpmusic_lyrics">Teksty SimpMusic</string>
-    <string name="lyrics_provider_simpmusic">Tekst dostarczony przez Teksty SimpMusic</string>
+    <string name="simpmusic_lyrics">Teksty Orinify</string>
+    <string name="lyrics_provider_simpmusic">Tekst dostarczony przez Teksty Orinify</string>
     <string name="backup_in_progress">Kopia zapasowa w toku</string>
     <string name="restore_in_progress">Przywracanie w toku</string>
     <string name="backup_downloaded">Utwórz kopię zapasową pobranych danych</string>
     <string name="backup_downloaded_description">Utwórz kopię zapasową wszystkich pobranych utworów</string>
     <string name="auto_backup">Automatyczna kopia zapasowa</string>
-    <string name="auto_backup_description">Automatycznie wykonaj kopię zapasową swoich danych do folderu Pobrane/SimpMusic</string>
+    <string name="auto_backup_description">Automatycznie wykonaj kopię zapasową swoich danych do folderu Pobrane/Orinify</string>
     <string name="backup_frequency">Częstotliwość kopii zapasowych</string>
     <string name="daily">Codziennie</string>
     <string name="weekly">Tygodniowo</string>
@@ -434,7 +434,7 @@
     <string name="upvote">Głos za</string>
     <string name="downvote">Głos przeciw</string>
     <string name="vote_submitted">Dziękujemy za głosowanie nad tym tekstem!</string>
-    <string name="open_app">Otwórz SimpMusic</string>
+    <string name="open_app">Otwórz Orinify</string>
     <string name="close_miniplayer">Zamknij mini odtwarzacz</string>
     <string name="open_miniplayer">Otwórz mini odtwarzacz</string>
     <string name="quit_app">Zamknij aplikację</string>

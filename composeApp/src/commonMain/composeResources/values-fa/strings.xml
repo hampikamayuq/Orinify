@@ -161,11 +161,11 @@
     <string name="what_segments_will_be_skipped">کدام بخش‌ها رد خواهند شد</string>
     <string name="save">نگه‌داری</string>
     <string name="sponsor_block_intro">SponsorBlock یک سامانه جمع‌سپاری شده برای رد کردن بخش‌های
-    آزاردهنده ویدیوهای یوتیوب است.\nریزگان بیشتر: https://sponsor.ajay.app/\nدر SimpMusic،
+    آزاردهنده ویدیوهای یوتیوب است.\nریزگان بیشتر: https://sponsor.ajay.app/\nدر Orinify،
     SponsorBlock فقط زمانی موجود است که دستگاه آنلاین باشد</string>
     <string name="skip_sponsor_part_of_video">رد کردن بخش حامی ویدیو</string>
-    <string name="help_build_lyrics_database">به SimpMusic کمک کنید تا پایگاه داده متن ترانه را بسازد</string>
-    <string name="help_build_lyrics_database_description">متن ترانه‌های ذخیره شده خود را به پایگاه داده متن SimpMusic ارسال کنید</string>
+    <string name="help_build_lyrics_database">به Orinify کمک کنید تا پایگاه داده متن ترانه را بسازد</string>
+    <string name="help_build_lyrics_database_description">متن ترانه‌های ذخیره شده خود را به پایگاه داده متن Orinify ارسال کنید</string>
     <string name="sleep_timer">زمان‌سنج خواب - %1$s دقیقه(ها)</string>
     <string name="sleep_timer_off">زمان‌سنج خواب</string>
     <string name="sleep_minutes">زمان شمارش معکوس (دقیقه)</string>
@@ -188,7 +188,7 @@
     <string name="auto_created_by_youtube_music">به‌طور خودکار توسط یوتیوب موزیک ایجاد شده</string>
     <string name="start_radio">رادیو را شروع کنید</string>
     <string name="saved_to_local_playlist">به فهرست پخش محلی نگه‌داری شد</string>
-    <string name="sync_playlist_warning">SimpMusic به‌طور خودکار یک فهرست پخش یوتیوب موزیک ایجاد خواهد
+    <string name="sync_playlist_warning">Orinify به‌طور خودکار یک فهرست پخش یوتیوب موزیک ایجاد خواهد
     کرد. آیا مطمئن هستید؟</string>
     <string name="syncing">در حال همگام‌سازی</string>
     <string name="unsync_playlist_warning">"آیا این فهرست پخش را از همگام‌سازی خارج کنید؟ این فهرست پخش
@@ -204,7 +204,7 @@
     <string name="use_ai_translation_description">فعال کردن ترجمه متن ترانه با استفاده از هوش مصنوعی</string>
     <string name="translation_language">زبان ترجمه</string>
     <string name="translation_language_message">کد زبان را وارد کنید (مثلاً: en) (2 حرف). اگر
-    می‌خواهید همان زبان SimpMusic باشد، لطفاً کادر ویرایش را خالی بگذارید.</string>
+    می‌خواهید همان زبان Orinify باشد، لطفاً کادر ویرایش را خالی بگذارید.</string>
     <string name="invalid_language_code">کد زبان نامعتبر است</string>
     <string name="lyrics_provider_youtube">متن ترانه ارائه شده توسط یوتیوب</string>
     <string name="limit_player_cache">محدود کردن نهان‌گاه(Cache) پخش‌کننده</string>
@@ -251,7 +251,7 @@
     <string name="enable_spotify_lyrics">به‌کارگیری متن ترانه اسپاتیفای</string>
     <string name="spotify_lyrícs_info">متن‌های بیشتری بدون ترجمه</string>
     <string name="enable_canvas">به‌کارگیری بوم</string>
-    <string name="canvas_info">نمایش بوم اسپاتیفای در SimpMusic</string>
+    <string name="canvas_info">نمایش بوم اسپاتیفای در Orinify</string>
     <string name="spotify_lyrics_provider">متن ترانه ارائه شده توسط اسپاتیفای</string>
     <string name="offline_mode">حالت آفلاین</string>
     <string name="added_to_youtube_liked">به فهرست پسندیده‌های یوتیوب افزوده شد</string>
@@ -290,7 +290,7 @@
     <string name="loading">درحال بارگذاری</string>
     <string name="updating">در حال بروز رسانی</string>
     <string name="go_to_log_in_page">به صفحه ورود به سیستم بروید</string>
-    <string name="log_in_warning">YouTube Music اکنون از شما می خواهد که برای پخش موسیقی وارد شوید، Piped Instance گاهی اوقات نیز نمی تواند کار کند. برای کسب تجربه بهتر با SimpMusic باید وارد YouTube شوید.</string>
+    <string name="log_in_warning">YouTube Music اکنون از شما می خواهد که برای پخش موسیقی وارد شوید، Piped Instance گاهی اوقات نیز نمی تواند کار کند. برای کسب تجربه بهتر با Orinify باید وارد YouTube شوید.</string>
     <string name="spotify_canvas_cache">کش Spotify Canvas</string>
     <string name="clear_canvas_cache">پاکسازی کش canvas</string>
     <string name="proxy">پروکسی</string>
@@ -325,8 +325,8 @@
     <string name="other_version">نسخه دیگر</string>
     <string name="later">بعدا</string>
     <string name="give_a_star">ستاره بدید</string>
-    <string name="enjoying_simpmusic">از SimpMusic لذت می‌بری</string>
-    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">اگر از استفاده از SimpMusic لذت می‌برید، به SimpMusic در GitHub ستاره دهید یا نظر خود را درباره آن بنویسید</string>
+    <string name="enjoying_simpmusic">از Orinify لذت می‌بری</string>
+    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">اگر از استفاده از Orinify لذت می‌برید، به Orinify در GitHub ستاره دهید یا نظر خود را درباره آن بنویسید</string>
     <string name="if_you_love_my_work_consider">"اگر از کار من خوشتان می‌آید، لطفاً "</string>
     <string name="buying_me_a_coffee">یک قهوه برایم بخرید.</string>
     <string name="shuffle_not_available">نقطه پایانی مختلط در دسترس نیست</string>
@@ -360,8 +360,8 @@
     <string name="contributor_name">اسم مشارکت کننده</string>
     <string name="contributor_email">ایمیل مشارکت کننده</string>
     <string name="anonymous">ناشناس</string>
-    <string name="simpmusic_lyrics">متن ترانه‌های SimpMusic</string>
-    <string name="lyrics_provider_simpmusic">متن ترانه‌ها ارائه شده توسط سرویس متن ترانه‌های SimpMusic</string>
+    <string name="simpmusic_lyrics">متن ترانه‌های Orinify</string>
+    <string name="lyrics_provider_simpmusic">متن ترانه‌ها ارائه شده توسط سرویس متن ترانه‌های Orinify</string>
     <string name="backup_in_progress">پشتیبان گیری در حال انجام است</string>
     <!-- Listen Together -->
 </resources>

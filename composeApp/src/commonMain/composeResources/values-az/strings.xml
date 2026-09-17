@@ -151,7 +151,7 @@
     <string name="categories_sponsor_block">Bölüm ötürmə davranışın seç</string>
     <string name="what_segments_will_be_skipped">Hansı bölümlər ötürüləcək</string>
     <string name="save">Saxla</string>
-    <string name="sponsor_block_intro">SponsorBlock YouTube videolarının yorucu hissələrini ötürmək üçün toplu mənbə sistemidir.\nƏtraflı məlumat: https://sponsor.ajay.app/\nSimpMusic-də SponsorBlock ancaq cihaz onlayndısa əlçatandır</string>
+    <string name="sponsor_block_intro">SponsorBlock YouTube videolarının yorucu hissələrini ötürmək üçün toplu mənbə sistemidir.\nƏtraflı məlumat: https://sponsor.ajay.app/\nOrinify-də SponsorBlock ancaq cihaz onlayndısa əlçatandır</string>
     <string name="skip_sponsor_part_of_video">Videonun sponsor hissəsini ötür</string>
     <string name="sleep_timer">Yuxu Taymeri - %1$s dəqiqə</string>
     <string name="sleep_timer_off">Yuxu Taymeri</string>
@@ -175,7 +175,7 @@
     <string name="auto_created_by_youtube_music">YouTube Music-dən birbaşa yaradılıb</string>
     <string name="start_radio">Radionu başlat</string>
     <string name="saved_to_local_playlist">Yerli pleylistə köçürüldü</string>
-    <string name="sync_playlist_warning">SimpMusic birbaşa YouTube Musiqi Pleylistini yaradacaq. Əminsiniz?</string>
+    <string name="sync_playlist_warning">Orinify birbaşa YouTube Musiqi Pleylistini yaradacaq. Əminsiniz?</string>
     <string name="syncing">Sinxronlaşdırılır</string>
     <string name="unsync_playlist_warning">"Bu pleylist sinxronizasiya edilsin? Bu pleylist YouTube Music-dən silinməyəcək "</string>
     <string name="unsyncing">Sinxronizasiyasız</string>
@@ -186,7 +186,7 @@
     <string name="backup_create_failed">Nüsxə yaratmaq alınmadı</string>
     <string name="main_lyrics_provider">Əsas Lirika Təminatçısı</string>
     <string name="translation_language">Tərcümə Dili</string>
-    <string name="translation_language_message">Dil kodun yaz (Məsələn: en) (2 hərf). SimpMusic dili ilə eynisini qurmaq istəyirsinizsə, düzəliş qutusun boş saxlayın.</string>
+    <string name="translation_language_message">Dil kodun yaz (Məsələn: en) (2 hərf). Orinify dili ilə eynisini qurmaq istəyirsinizsə, düzəliş qutusun boş saxlayın.</string>
     <string name="invalid_language_code">Yanlış dil kodu</string>
     <string name="lyrics_provider_youtube">Lirika YouTube tərəfindən təmin edilib</string>
     <string name="limit_player_cache">Oynadıcı Keşkəsinə Hədd Qoy</string>
@@ -228,7 +228,7 @@
     <string name="enable_spotify_lyrics">Spotify Lirikasını Aktivləşdir</string>
     <string name="spotify_lyrícs_info">Tərcüməsiz daha çox lirika</string>
     <string name="enable_canvas">Canvas-ı Aktivləşdir</string>
-    <string name="canvas_info">SimpMusic-də Spotify Canvas-ı Göstər</string>
+    <string name="canvas_info">Orinify-də Spotify Canvas-ı Göstər</string>
     <string name="spotify_lyrics_provider">Lirika Spotify tərəfindən təmin edilib</string>
     <string name="offline_mode">Oflayn rejim</string>
     <string name="added_to_youtube_liked">YouTube Bəyənməyə Əlavə Edildi</string>
@@ -267,7 +267,7 @@
     <string name="loading">Yüklənilir</string>
     <string name="updating">Yenilənir</string>
     <string name="go_to_log_in_page">Giriş səhifəsinə keç</string>
-    <string name="log_in_warning">YouTube Music indi musiqi yayımı üçün daxil olmanızı tələb edir, Piped Serveri də hərdən işləyə bilməz. SimpMusic ilə daha yaxşı təcrübə əldə etmək üçün YouTube-a daxil olmalısınız.</string>
+    <string name="log_in_warning">YouTube Music indi musiqi yayımı üçün daxil olmanızı tələb edir, Piped Serveri də hərdən işləyə bilməz. Orinify ilə daha yaxşı təcrübə əldə etmək üçün YouTube-a daxil olmalısınız.</string>
     <string name="spotify_canvas_cache">Spotify Canvas Keşkəsi</string>
     <string name="clear_canvas_cache">Canvas keşkəsin təmizlə</string>
     <string name="proxy">Proksi</string>

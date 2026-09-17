@@ -164,7 +164,7 @@
     <string name="auto_created_by_youtube_music">Automatisch gemaakt door YouTube Muziek</string>
     <string name="start_radio">Radio starten</string>
     <string name="saved_to_local_playlist">Opgeslagen in lokale afspeellijst</string>
-    <string name="sync_playlist_warning">SimpMusic maakt automatisch een YouTube-afspeellijst aan. Weet je het zeker?</string>
+    <string name="sync_playlist_warning">Orinify maakt automatisch een YouTube-afspeellijst aan. Weet je het zeker?</string>
     <string name="syncing">Synchroniseren</string>
     <string name="unsync_playlist_warning">"Deze afspeellijst de-synchroniseren? Deze afspeellijst zal niet verwijderd worden van YouTube Muziek "</string>
     <!-- Listen Together -->

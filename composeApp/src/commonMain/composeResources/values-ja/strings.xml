@@ -161,10 +161,10 @@
     <string name="categories_sponsor_block">スキップするシーンを選択</string>
     <string name="what_segments_will_be_skipped">スキップしたいシーンを選択</string>
     <string name="save">保存</string>
-    <string name="sponsor_block_intro">SponsorBlock は、YouTube 動画の余分なシーンをスキップするための、クラウドソースのシステムです。\n詳細: https://sponsor.ajay.app/\nSimpMusic では、SponsorBlock は端末がネットに接続中の場合にのみ利用できます。</string>
+    <string name="sponsor_block_intro">SponsorBlock は、YouTube 動画の余分なシーンをスキップするための、クラウドソースのシステムです。\n詳細: https://sponsor.ajay.app/\nOrinify では、SponsorBlock は端末がネットに接続中の場合にのみ利用できます。</string>
     <string name="skip_sponsor_part_of_video">動画の協賛シーンなどをスキップします</string>
-    <string name="help_build_lyrics_database">SimpMusicの歌詞データベースの構築を手伝う</string>
-    <string name="help_build_lyrics_database_description">保存した歌詞をSimpMusicの歌詞データベースに送信します</string>
+    <string name="help_build_lyrics_database">Orinifyの歌詞データベースの構築を手伝う</string>
+    <string name="help_build_lyrics_database_description">保存した歌詞をOrinifyの歌詞データベースに送信します</string>
     <string name="sleep_timer">スリープタイマー - %1$s 分</string>
     <string name="sleep_timer_off">スリープタイマー</string>
     <string name="sleep_minutes">カウントダウン（分）</string>
@@ -187,7 +187,7 @@
     <string name="auto_created_by_youtube_music">YouTube Music により自動作成</string>
     <string name="start_radio">ラジオを再生</string>
     <string name="saved_to_local_playlist">端末内の再生リストに保存しました</string>
-    <string name="sync_playlist_warning">SimpMusic は YouTube ミュージックの再生リストを自動で作成します。よろしいですか？</string>
+    <string name="sync_playlist_warning">Orinify は YouTube ミュージックの再生リストを自動で作成します。よろしいですか？</string>
     <string name="syncing">同期中</string>
     <string name="unsync_playlist_warning">"この再生リストの同期を解除しますか？この再生リストはYouTubeミュージックから削除されません "</string>
     <string name="unsyncing">同期を解除中</string>
@@ -200,7 +200,7 @@
     <string name="use_ai_translation">AIによる歌詞翻訳を使用</string>
     <string name="use_ai_translation_description">AIを使用した歌詞の翻訳を有効にします</string>
     <string name="translation_language">翻訳言語</string>
-    <string name="translation_language_message">言語コードを入力してください (2文字、例: en)。SimpMusic の言語と同じに設定にするには、編集欄を空にしてください。</string>
+    <string name="translation_language_message">言語コードを入力してください (2文字、例: en)。Orinify の言語と同じに設定にするには、編集欄を空にしてください。</string>
     <string name="invalid_language_code">無効な言語コードです</string>
     <string name="lyrics_provider_youtube">歌詞の提供元 YouTube</string>
     <string name="limit_player_cache">プレイヤーのキャッシュを制限</string>
@@ -245,7 +245,7 @@
     <string name="enable_spotify_lyrics">Spotifyの歌詞を有効化</string>
     <string name="spotify_lyrícs_info">翻訳機能なしで歌詞を表示</string>
     <string name="enable_canvas">キャンバスを有効にする</string>
-    <string name="canvas_info">SpotifyのキャンバスをSimpMusicで表示</string>
+    <string name="canvas_info">SpotifyのキャンバスをOrinifyで表示</string>
     <string name="spotify_lyrics_provider">歌詞の提供元 Spotify</string>
     <string name="offline_mode">オフラインモード</string>
     <string name="added_to_youtube_liked">YouTubeの高評価に追加しました</string>
@@ -284,7 +284,7 @@
     <string name="loading">読み込み中</string>
     <string name="updating">更新中</string>
     <string name="go_to_log_in_page">ログインページに移動</string>
-    <string name="log_in_warning">YouTube Music は現在、音楽をストリーミングするためにログインが必要です。また、Pipedインスタンスは頻繁に動作しないことがあります。SimpMusicをより良い体験にするために、YouTubeにログインすることをお勧めします。</string>
+    <string name="log_in_warning">YouTube Music は現在、音楽をストリーミングするためにログインが必要です。また、Pipedインスタンスは頻繁に動作しないことがあります。Orinifyをより良い体験にするために、YouTubeにログインすることをお勧めします。</string>
     <string name="spotify_canvas_cache">Spotify Canvas キャッシュ</string>
     <string name="clear_canvas_cache">Canvas のキャッシュを消去</string>
     <string name="proxy">プロキシ</string>
@@ -319,8 +319,8 @@
     <string name="other_version">他のバージョン</string>
     <string name="later">また今度</string>
     <string name="give_a_star">星マークを押す</string>
-    <string name="enjoying_simpmusic">SimpMusicを楽しんでください</string>
-    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">SimpMusicで楽しんでいたら、GitHubで星マークを押すか、ここにレビューを投稿してください:</string>
+    <string name="enjoying_simpmusic">Orinifyを楽しんでください</string>
+    <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">Orinifyで楽しんでいたら、GitHubで星マークを押すか、ここにレビューを投稿してください:</string>
     <string name="if_you_love_my_work_consider">"私のアプリを気に入ったら、"</string>
     <string name="buying_me_a_coffee">コーヒーを一杯ご馳走してください。</string>
     <string name="shuffle_not_available">シャッフルのエンドポイントは利用できません</string>
@@ -358,14 +358,14 @@
     <string name="contributor_name">貢献者名</string>
     <string name="contributor_email">貢献者のメールアドレス</string>
     <string name="anonymous">匿名</string>
-    <string name="simpmusic_lyrics">SimpMusic Lyrics</string>
-    <string name="lyrics_provider_simpmusic">SimpMusic Lyricsが提供する歌詞</string>
+    <string name="simpmusic_lyrics">Orinify Lyrics</string>
+    <string name="lyrics_provider_simpmusic">Orinify Lyricsが提供する歌詞</string>
     <string name="backup_in_progress">バックアップ中</string>
     <string name="restore_in_progress">復元中</string>
     <string name="backup_downloaded">ダウンロードしたデータをバックアップする</string>
     <string name="backup_downloaded_description">ダウンロードしたすべての曲のデータをバックアップします</string>
     <string name="auto_backup">自動バックアップ</string>
-    <string name="auto_backup_description">Downloads/SimpMusic フォルダにデータを自動的にバックアップします</string>
+    <string name="auto_backup_description">Downloads/Orinify フォルダにデータを自動的にバックアップします</string>
     <string name="no_playlist_found">ローカルプレイリストが見つかりませんでした。最初に作成してください</string>
     <string name="list_all_cookies_of_this_page">このページのすべてのクッキーを一覧表示</string>
     <string name="copied_to_clipboard">クリップボードにコピーしました</string>
@@ -393,7 +393,7 @@
     <string name="combine_local_and_youtube_liked_songs_description">YouTubeの高評価のみを使用する (オフライン時はサポートしていません)</string>
     <string name="local_tracking_title">再生履歴をローカルに保存</string>
     <string name="local_tracking_description">再生履歴をローカルデータベースに記録しま す</string>
-    <string name="simpmusic_charts">SimpMusic チャート</string>
+    <string name="simpmusic_charts">Orinify チャート</string>
     <string name="crossfading">クロスフェード</string>
     <!-- Listen Together -->
 </resources>
