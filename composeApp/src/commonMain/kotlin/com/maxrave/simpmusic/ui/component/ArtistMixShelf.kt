@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -42,6 +45,7 @@ import org.jetbrains.compose.resources.stringResource
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.artist_mix
 import simpmusic.composeapp.generated.resources.artist_mixes
+import simpmusic.composeapp.generated.resources.loading
 
 /**
  * One radio per artist the listener plays most, as a horizontal shelf.
@@ -79,7 +83,7 @@ fun ArtistMixShelf(
                 Modifier
                     .fillMaxWidth()
                     .padding(top = 15.dp, start = 10.dp, end = 10.dp)
-                    .height(35.dp)
+                    .heightIn(min = 35.dp)
                     .wrapContentHeight(align = Alignment.CenterVertically),
         )
         Crossfade(targetState = isLoading && artists.isEmpty(), label = "ArtistMixLoading") { loading ->
@@ -111,13 +115,17 @@ private fun ArtistMixItem(
     isResolving: Boolean,
     onClick: () -> Unit,
 ) {
+    // On the clickable, not the overlay: the clickable merges its descendants and a child's
+    // stateDescription does not survive that merge.
+    val loadingLabel = stringResource(Res.string.loading)
     Column(
         modifier =
             Modifier
                 .width(140.dp)
                 .padding(horizontal = 8.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .clickable(onClick = onClick),
+                .clickable(onClick = onClick)
+                .then(if (isResolving) Modifier.semantics { stateDescription = loadingLabel } else Modifier),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
@@ -135,7 +143,9 @@ private fun ArtistMixItem(
                         .build(),
                 placeholder = rememberHolderPainter(),
                 error = rememberHolderPainter(),
-                contentDescription = artist.name,
+                // The name is the Text below, inside the same clickable; naming it here too
+                // reads it twice.
+                contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize().clip(CircleShape),
             )

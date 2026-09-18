@@ -112,7 +112,7 @@ import simpmusic.composeapp.generated.resources.you
 // ANIMATOR_DURATION_SCALE = 0, see rememberReduceMotion). Its documented off switch is
 // `iterations = 0`, which leaves the text static so the Ellipsis on each caller takes over.
 @Composable
-private fun marqueeIterations(default: Int): Int = if (rememberReduceMotion()) 0 else default
+internal fun marqueeIterations(default: Int): Int = if (rememberReduceMotion()) 0 else default
 
 @Composable
 fun HomeItem(

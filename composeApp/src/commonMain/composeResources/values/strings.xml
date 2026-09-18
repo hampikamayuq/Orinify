@@ -14,7 +14,7 @@
     <string name="na_na">NA:NA</string>
     <string name="favorite">Favorite</string>
     <string name="followed">Followed</string>
-    <string name="most_played">Most Played</string>
+    <string name="most_played">Most played</string>
     <string name="rediscover">Rediscover</string>
     <string name="rediscover_subtitle">You used to play these a lot</string>
     <string name="might_like">You might like</string>
@@ -23,11 +23,11 @@
     <string name="artist_mixes">Artist mixes</string>
     <string name="artist_mix">Mix</string>
     <string name="artist_mix_unavailable">Could not start this mix</string>
-    <string name="favorite_playlists">Favorite Playlists</string>
+    <string name="favorite_playlists">Favorite playlists</string>
     <string name="no_favorite_playlists">No favorite playlists</string>
-    <string name="downloaded_playlists">Downloaded Playlists</string>
+    <string name="downloaded_playlists">Downloaded playlists</string>
     <string name="no_playlists_downloaded">No playlists downloaded</string>
-    <string name="your_playlists">Your Local Playlists</string>
+    <string name="your_playlists">Your playlists</string>
     <string name="no_playlists_added">No playlists added</string>
     <string name="recently_added">Recently Added</string>
     <string name="search_for_songs_artists_albums_playlists_and_more">Search for songs, artists, albums, playlists, and more</string>
@@ -190,7 +190,7 @@
     <string name="welcome_back">Welcome back,</string>
     <string name="upload_your_listening_history_to_youtube_music_server_it_will_make_yt_music_recommendation_system_better_working_only_if_logged_in">Upload your listening history to YouTube Music server, it will make YT Music recommendation system better. Working only if logged in</string>
     <string name="send_back_listening_data_to_google">Send back listening data to Google</string>
-    <string name="your_youtube_playlists">Your YouTube Playlists</string>
+    <string name="your_youtube_playlists">Your YouTube playlists</string>
     <string name="no_YouTube_playlists">No YouTube Playlists</string>
     <string name="save_to_local_playlist">Save to local playlist</string>
     <string name="added_local_playlist">Added Local Playlist</string>
@@ -462,7 +462,7 @@
     <string name="default_models">Default models are "gemini-2.0-flash" and "gpt-4o"</string>
     <string name="invalid">Invalid</string>
     <string name="custom_model_id_messages">Please enter the exactly model ID from your AI provider.</string>
-    <string name="favorite_podcasts">Favorite Podcasts</string>
+    <string name="favorite_podcasts">Favorite podcasts</string>
     <string name="no_favorite_podcasts">No favorite podcasts</string>
     <string name="your_sp_dc_param_of_spotify_cookie">Your sp_dc param of Spotify cookie</string>
     <string name="your_youtube_cookie">Your YouTube Cookie</string>
@@ -619,7 +619,7 @@
     <string name="local_tracking_description">Log your listening history to local database</string>
     <string name="blog_notification_title">Blog post notifications</string>
     <string name="blog_notification_description">Get notified when a new blog post is published</string>
-    <string name="simpmusic_charts">Orinify Charts</string>
+    <string name="simpmusic_charts">Charts</string>
     <string name="crossfading">Crossfading</string>
     <string name="search_for">Search for</string>
     <string name="synced_playlist_cannot_change_order">Synced playlist cannot change order</string>
@@ -767,7 +767,7 @@
     <string name="wrapped_recap_month">Recap %1$s</string>
     <string name="wrapped_recap_month_year">Recap %1$s %2$s</string>
     <string name="wrapped_recap_subtitle">Your top songs that month</string>
-    <string name="wrapped_recap_empty">No month has enough listening yet</string>
+    <string name="wrapped_recap_empty">Nothing played this year yet</string>
     <string name="month_full_jan">January</string>
     <string name="month_full_feb">February</string>
     <string name="month_full_mar">March</string>
@@ -780,4 +780,13 @@
     <string name="month_full_oct">October</string>
     <string name="month_full_nov">November</string>
     <string name="month_full_dec">December</string>
+    <string name="recently_played">Recently played</string>
+    <string name="recently_played_subtitle">From your own listening history</string>
+    <string name="recently_played_empty">Nothing played yet</string>
+    <string name="see_all">See all</string>
+    <string name="chart_website">Open the charts website</string>
+    <string name="load_failed">Could not load this</string>
+    <string name="explicit">Explicit</string>
+    <string name="pinned">Pinned</string>
+    <string name="listen_together_live">Listen Together, room active</string>
 </resources>

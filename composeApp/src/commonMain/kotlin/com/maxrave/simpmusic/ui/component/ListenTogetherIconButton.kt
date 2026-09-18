@@ -16,7 +16,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.maxrave.domain.repository.ListenTogetherRepository
 import com.maxrave.simpmusic.ui.icon.Groups
 import com.maxrave.simpmusic.ui.icon.SimpIcons
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.listen_together
+import simpmusic.composeapp.generated.resources.listen_together_live
 
 /**
  * The Listen Together entry in a top app bar, carrying a dot while a room is running.
@@ -36,6 +40,10 @@ fun ListenTogetherIconButton(onClick: () -> Unit) {
         RippleIconButton(
             imageVector = SimpIcons.Groups,
             tint = MaterialTheme.colorScheme.onBackground,
+            // The dot below is decorative on top of this name; the state it signals rides here,
+            // because the clickable merges its descendants and a child's text would not survive.
+            contentDescription =
+                stringResource(if (room.inRoom) Res.string.listen_together_live else Res.string.listen_together),
             onClick = onClick,
         )
         if (room.inRoom) {

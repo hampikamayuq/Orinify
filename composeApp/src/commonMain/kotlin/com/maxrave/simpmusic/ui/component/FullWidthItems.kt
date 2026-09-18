@@ -54,6 +54,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -97,6 +100,9 @@ import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.add_to_queue
 import simpmusic.composeapp.generated.resources.album
 import simpmusic.composeapp.generated.resources.artists
+import simpmusic.composeapp.generated.resources.downloaded
+import simpmusic.composeapp.generated.resources.more
+import simpmusic.composeapp.generated.resources.pinned
 import simpmusic.composeapp.generated.resources.playlist
 import simpmusic.composeapp.generated.resources.podcasts
 import simpmusic.composeapp.generated.resources.radio
@@ -135,10 +141,14 @@ fun SongFullWidthItems(
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
     val songRepository: SongRepository = koinInject<SongRepository>()
-    val downloadState by songRepository
-        .getSongAsFlow(songEntity?.videoId ?: track?.videoId ?: "")
-        .mapNotNull { it?.downloadState }
-        .collectAsState(initial = DownloadState.STATE_NOT_DOWNLOADED)
+    // Built once per id: this row recomposes on every swipe frame and selection toggle, and a
+    // fresh flow each time re-subscribes Room for nothing.
+    val downloadVideoId = songEntity?.videoId ?: track?.videoId ?: ""
+    val downloadStateFlow =
+        remember(downloadVideoId) {
+            songRepository.getSongAsFlow(downloadVideoId).mapNotNull { it?.downloadState }
+        }
+    val downloadState by downloadStateFlow.collectAsState(initial = DownloadState.STATE_NOT_DOWNLOADED)
     val offsetX = remember { Animatable(initialValue = 0f) }
     var heightDp by remember { mutableStateOf(0.dp) }
 
@@ -174,7 +184,11 @@ fun SongFullWidthItems(
                     .offset { IntOffset(offsetX.value.roundToInt(), 0) }
                     .background(
                         if (isSelected) seed.copy(alpha = 0.18f) else Color.Transparent,
-                    ).combinedClickable(
+                    )
+                    // Only while selecting: an unconditional `selected = false` makes every song
+                    // row in the app announce "not selected".
+                    .then(if (selectionMode) Modifier.semantics { selected = isSelected } else Modifier)
+                    .combinedClickable(
                         onClick = {
                             if (selectionMode) {
                                 onSelectToggle?.invoke(itemVideoId)
@@ -310,13 +324,14 @@ fun SongFullWidthItems(
                         text = track?.title ?: songEntity?.title ?: "",
                         style = typo().titleSmall,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         color = contentColor,
                         modifier =
                             Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight(align = Alignment.CenterVertically)
                                 .basicMarquee(
-                                    iterations = Int.MAX_VALUE,
+                                    iterations = marqueeIterations(Int.MAX_VALUE),
                                     animationMode = MarqueeAnimationMode.Immediately,
                                 ).focusable(),
                     )
@@ -333,7 +348,7 @@ fun SongFullWidthItems(
                                 Icon(
                                     imageVector = SimpIcons.DownloadForOffline,
                                     tint = contentColor,
-                                    contentDescription = "",
+                                    contentDescription = stringResource(Res.string.downloaded),
                                     modifier = Modifier.size(16.dp).padding(2.dp),
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
@@ -359,13 +374,14 @@ fun SongFullWidthItems(
                                 ) ?: "",
                             style = typo().bodySmall,
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             color = subtitleColor,
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
                                     .wrapContentHeight(align = Alignment.CenterVertically)
                                     .basicMarquee(
-                                        iterations = Int.MAX_VALUE,
+                                        iterations = marqueeIterations(Int.MAX_VALUE),
                                         animationMode = MarqueeAnimationMode.Immediately,
                                     ).focusable(),
                         )
@@ -377,7 +393,12 @@ fun SongFullWidthItems(
                 // Hidden while selecting: the per-item menu moves up to the selection app bar,
                 // so one tap cannot mean both "act on this song" and "pick this song".
                 if (onMoreClickListener != null && !selectionMode) {
-                    RippleIconButton(imageVector = SimpIcons.MoreVert, fillMaxSize = false, tint = contentColor) {
+                    RippleIconButton(
+                        imageVector = SimpIcons.MoreVert,
+                        fillMaxSize = false,
+                        tint = contentColor,
+                        contentDescription = stringResource(Res.string.more),
+                    ) {
                         if (itemVideoId.isNotBlank()) onMoreClickListener.invoke(itemVideoId)
                     }
                 }
@@ -463,13 +484,14 @@ fun SuggestItems(
                     text = track.title,
                     style = typo().titleSmall,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = contentColor,
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .wrapContentHeight(align = Alignment.CenterVertically)
                             .basicMarquee(
-                                iterations = Int.MAX_VALUE,
+                                iterations = marqueeIterations(Int.MAX_VALUE),
                                 animationMode = MarqueeAnimationMode.Immediately,
                             ).focusable(),
                 )
@@ -480,13 +502,14 @@ fun SuggestItems(
                         ) ?: "",
                     style = typo().bodySmall,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = subtitleColor,
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .wrapContentHeight(align = Alignment.CenterVertically)
                             .basicMarquee(
-                                iterations = Int.MAX_VALUE,
+                                iterations = marqueeIterations(Int.MAX_VALUE),
                                 animationMode = MarqueeAnimationMode.Immediately,
                             ).focusable(),
                 )
@@ -615,13 +638,14 @@ fun PlaylistFullWidthItems(
                     text = title,
                     style = typo().titleSmall,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = contentColor,
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .wrapContentHeight(align = Alignment.CenterVertically)
                             .basicMarquee(
-                                iterations = Int.MAX_VALUE,
+                                iterations = marqueeIterations(Int.MAX_VALUE),
                                 animationMode = MarqueeAnimationMode.Immediately,
                             ).focusable(),
                 )
@@ -630,7 +654,9 @@ fun PlaylistFullWidthItems(
                     if (shouldPin) {
                         Image(
                             imageVector = SimpIcons.PushPin,
-                            contentDescription = null,
+                            // The pin is the only thing that marks this row as pinned, so it is
+                            // not decorative: without a name the state is lost to TalkBack.
+                            contentDescription = stringResource(Res.string.pinned),
                             colorFilter = ColorFilter.tint(if (forceDark) Color.Cyan else MaterialTheme.colorScheme.primary),
                             modifier =
                                 Modifier
@@ -642,13 +668,14 @@ fun PlaylistFullWidthItems(
                         text = "$firstSubtitle ${if (secondSubtitle.isNotEmpty()) " • $secondSubtitle" else ""}",
                         style = typo().bodySmall,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         color = subtitleColor,
                         modifier =
                             Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight(align = Alignment.CenterVertically)
                                 .basicMarquee(
-                                    iterations = Int.MAX_VALUE,
+                                    iterations = marqueeIterations(Int.MAX_VALUE),
                                     animationMode = MarqueeAnimationMode.Immediately,
                                 ).focusable(),
                     )
@@ -659,13 +686,14 @@ fun PlaylistFullWidthItems(
                         text = thirdRowSubtitle,
                         style = typo().bodySmall,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         color = subtitleColor,
                         modifier =
                             Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight(align = Alignment.CenterVertically)
                                 .basicMarquee(
-                                    iterations = Int.MAX_VALUE,
+                                    iterations = marqueeIterations(Int.MAX_VALUE),
                                     animationMode = MarqueeAnimationMode.Immediately,
                                 ).focusable(),
                     )
@@ -737,13 +765,14 @@ fun ArtistFullWidthItems(
                     text = name,
                     style = typo().titleSmall,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = contentColor,
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .wrapContentHeight(align = Alignment.CenterVertically)
                             .basicMarquee(
-                                iterations = Int.MAX_VALUE,
+                                iterations = marqueeIterations(Int.MAX_VALUE),
                                 animationMode = MarqueeAnimationMode.Immediately,
                             ).focusable(),
                 )
@@ -752,13 +781,14 @@ fun ArtistFullWidthItems(
                     text = stringResource(Res.string.artists),
                     style = typo().bodySmall,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     color = subtitleColor,
                     modifier =
                         Modifier
                             .fillMaxWidth()
                             .wrapContentHeight(align = Alignment.CenterVertically)
                             .basicMarquee(
-                                iterations = Int.MAX_VALUE,
+                                iterations = marqueeIterations(Int.MAX_VALUE),
                                 animationMode = MarqueeAnimationMode.Immediately,
                             ).focusable(),
                 )
