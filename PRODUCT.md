@@ -36,10 +36,16 @@ Every YouTube Music client can play what YouTube suggests. This one builds lists
 - **You might like** — radio seeded from the top of the last 90 days, minus everything
   already in the history. The only list here that touches the network.
 - **Artist mixes** — one radio per artist by play count over 90 days.
+- **Recently played** — the history itself, newest first, one row per track; the spine of
+  the Library tab and the one list no stock client can show.
 - Wrapped, monthly recap playlists, and the Analytics tab, all from the same table.
 
 Neither the upstream nor a stock client can copy this without collecting the history
 server-side. The mechanism is that the history is local and stays local.
+
+The two tabs split the history by direction: **Home is forward-looking** (Rediscover, You
+might like, Artist mixes) and **Library is what you keep and what you did** (playlists,
+favorites, downloads, Recently played, Wrapped). A list belongs on one tab, never both.
 
 ## Operating Context
 
