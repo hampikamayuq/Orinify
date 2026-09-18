@@ -3,6 +3,7 @@ package com.maxrave.simpmusic.ui.component
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
@@ -28,7 +29,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -73,6 +73,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -91,7 +94,6 @@ import com.maxrave.simpmusic.expect.ui.rememberBackdrop
 import com.maxrave.simpmusic.extension.KeepScreenOn
 import com.maxrave.simpmusic.extension.formatDuration
 import com.maxrave.simpmusic.extension.getScreenSizeInfo
-import com.maxrave.simpmusic.extension.hsvToColor
 import com.maxrave.simpmusic.getPlatform
 import com.maxrave.simpmusic.ui.component.lyrics.ShareLyricsSheet
 import com.maxrave.simpmusic.ui.component.lyrics.toShareLyricsLines
@@ -125,9 +127,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.close_player
 import simpmusic.composeapp.generated.resources.crossfading
+import simpmusic.composeapp.generated.resources.mini_player
+import simpmusic.composeapp.generated.resources.more
+import simpmusic.composeapp.generated.resources.mute
+import simpmusic.composeapp.generated.resources.queue
+import simpmusic.composeapp.generated.resources.seek_bar
 import simpmusic.composeapp.generated.resources.share_lyrics
+import simpmusic.composeapp.generated.resources.song_info
 import simpmusic.composeapp.generated.resources.unavailable
+import simpmusic.composeapp.generated.resources.unmute
+import simpmusic.composeapp.generated.resources.volume
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -285,21 +296,27 @@ fun FullscreenLyricsContent(
                 )
             }
         } else {
-            // Crossfade: RGB rainbow color cycling when transitioning between tracks
-            val infiniteTransition = rememberInfiniteTransition(label = "crossfadeRainbow")
-            val rainbowHue by infiniteTransition.animateFloat(
-                initialValue = 0f,
-                targetValue = 360f,
-                animationSpec =
-                    infiniteRepeatable(
-                        animation = tween(1000, easing = LinearEasing),
-                        repeatMode = RepeatMode.Restart,
-                    ),
-                label = "rainbowHue",
-            )
-            val rainbowColor = hsvToColor(rainbowHue, 1f, 1f)
+            // Crossfade: the seek bar breathes between the accent and its faded self, the same sweep
+            // the Now Playing shell runs. Created only while crossfading — an infinite transition
+            // read in composition recomposes this page every frame for as long as it exists.
+            val crossfadeSweep: Color =
+                if (timelineState.isCrossfading) {
+                    val sweep by rememberInfiniteTransition(label = "crossfadeSweep").animateColor(
+                        initialValue = seed,
+                        targetValue = seed.copy(alpha = 0.4f),
+                        animationSpec =
+                            infiniteRepeatable(
+                                animation = tween(1000, easing = LinearEasing),
+                                repeatMode = RepeatMode.Reverse,
+                            ),
+                        label = "crossfadeSweepColor",
+                    )
+                    sweep
+                } else {
+                    Color.White
+                }
             val sliderTrackColor by animateColorAsState(
-                targetValue = if (timelineState.isCrossfading) rainbowColor else Color.White,
+                targetValue = crossfadeSweep,
                 animationSpec = tween(300),
                 label = "sliderCrossfadeColor",
             )
@@ -352,6 +369,8 @@ fun FullscreenLyricsContent(
                                     .diskCachePolicy(CachePolicy.ENABLED)
                                     .diskCacheKey(screenDataState.thumbnailURL)
                                     .build(),
+                            placeholder = rememberHolderPainter(),
+                            error = rememberHolderPainter(),
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier =
@@ -372,10 +391,11 @@ fun FullscreenLyricsContent(
                                 style = typo().labelSmall,
                                 color = Color.White,
                                 maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                                 modifier =
                                     Modifier
                                         .basicMarquee(
-                                            iterations = Int.MAX_VALUE,
+                                            iterations = marqueeIterations(Int.MAX_VALUE),
                                             animationMode = MarqueeAnimationMode.Immediately,
                                         ).focusable(),
                             )
@@ -418,12 +438,7 @@ fun FullscreenLyricsContent(
                                     style = typo().bodySmall,
                                     color = Color.White.copy(alpha = 0.7f),
                                     maxLines = 1,
-                                    modifier =
-                                        Modifier
-                                            .basicMarquee(
-                                                iterations = Int.MAX_VALUE,
-                                                animationMode = MarqueeAnimationMode.Immediately,
-                                            ).focusable(),
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                             }
                         }
@@ -459,7 +474,7 @@ fun FullscreenLyricsContent(
                         ) {
                             Icon(
                                 imageVector = SimpIcons.MoreVert,
-                                contentDescription = "",
+                                contentDescription = stringResource(Res.string.more),
                                 tint = Color.White,
                             )
                         }
@@ -549,6 +564,8 @@ fun FullscreenLyricsContent(
                                     }
                                 }
                             }
+                            // Resolved here: a semantics block is not composable.
+                            val seekBarLabel = stringResource(Res.string.seek_bar)
                             CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
                                 Slider(
                                     // Fraction, not 0..100 — see the note in NowPlayingScreen:
@@ -566,7 +583,7 @@ fun FullscreenLyricsContent(
                                             .padding(top = 3.dp)
                                             .align(
                                                 Alignment.TopCenter,
-                                            ),
+                                            ).semantics { contentDescription = seekBarLabel },
                                     track = { sliderState ->
                                         SliderDefaults.Track(
                                             modifier =
@@ -683,17 +700,19 @@ fun FullscreenLyricsContent(
                                 ) {
                                     // List Bottom Buttons
                                     Box(
+                                        // 48dp targets around 24dp glyphs; the side padding shrinks
+                                        // by the 12dp ring so the glyphs stay where the 24dp
+                                        // buttons drew them.
                                         modifier =
                                             Modifier
-                                                .height(32.dp)
+                                                .height(48.dp)
                                                 .fillMaxWidth()
-                                                .padding(horizontal = 40.dp),
+                                                .padding(horizontal = 28.dp),
                                     ) {
                                         IconButton(
                                             modifier =
                                                 Modifier
-                                                    .size(24.dp)
-                                                    .aspectRatio(1f)
+                                                    .size(48.dp)
                                                     .align(Alignment.CenterStart)
                                                     .clip(
                                                         CircleShape,
@@ -703,7 +722,12 @@ fun FullscreenLyricsContent(
                                                 showControlButtons = true
                                             },
                                         ) {
-                                            Icon(imageVector = SimpIcons.Info, tint = Color.White, contentDescription = "")
+                                            Icon(
+                                                imageVector = SimpIcons.Info,
+                                                tint = Color.White,
+                                                contentDescription = stringResource(Res.string.song_info),
+                                                modifier = Modifier.size(24.dp),
+                                            )
                                         }
                                         Row(
                                             Modifier.align(Alignment.CenterEnd),
@@ -712,8 +736,7 @@ fun FullscreenLyricsContent(
                                             IconButton(
                                                 modifier =
                                                     Modifier
-                                                        .size(24.dp)
-                                                        .aspectRatio(1f)
+                                                        .size(48.dp)
                                                         .clip(
                                                             CircleShape,
                                                         ),
@@ -725,7 +748,8 @@ fun FullscreenLyricsContent(
                                                 Icon(
                                                     imageVector = SimpIcons.QueueMusic,
                                                     tint = Color.White,
-                                                    contentDescription = "",
+                                                    contentDescription = stringResource(Res.string.queue),
+                                                    modifier = Modifier.size(24.dp),
                                                 )
                                             }
                                         }
@@ -1008,12 +1032,12 @@ private fun FullscreenLyricsDesktopChrome(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onDismiss) {
-                Icon(imageVector = SimpIcons.Close, contentDescription = "", tint = Color.White)
+                Icon(imageVector = SimpIcons.Close, contentDescription = stringResource(Res.string.close_player), tint = Color.White)
             }
             IconButton(onClick = { toggleMiniPlayer() }) {
                 Icon(
                     imageVector = SimpIcons.PictureInPictureAlt,
-                    contentDescription = "Mini Player",
+                    contentDescription = stringResource(Res.string.mini_player),
                     tint = Color.White,
                 )
             }
@@ -1049,9 +1073,11 @@ private fun FullscreenLyricsDesktopChrome(
                             SimpIcons.VolumeOff
                         },
                     tint = Color.White,
-                    contentDescription = if (controllerState.volume > 0f) "Mute" else "Unmute",
+                    contentDescription =
+                        stringResource(if (controllerState.volume > 0f) Res.string.mute else Res.string.unmute),
                 )
             }
+            val volumeLabel = stringResource(Res.string.volume)
             CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
                 Slider(
                     value = volumeValue,
@@ -1066,7 +1092,10 @@ private fun FullscreenLyricsDesktopChrome(
                         volumeValue = it
                     },
                     valueRange = 0f..1f,
-                    modifier = Modifier.width(CHROME_VOLUME_SLIDER_WIDTH),
+                    modifier =
+                        Modifier
+                            .width(CHROME_VOLUME_SLIDER_WIDTH)
+                            .semantics { contentDescription = volumeLabel },
                     track = { sliderState ->
                         SliderDefaults.Track(
                             modifier =

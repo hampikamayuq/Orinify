@@ -557,7 +557,12 @@ fun LyricsView(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = tailPadding),
         ) {
-            items(displayLines.lines.size) { index ->
+            // Keyed, because interlude rows are INSERTED into this list and shift every index after
+            // them; the index suffix keeps two lines with one timestamp from colliding.
+            items(
+                count = displayLines.lines.size,
+                key = { index -> "${displayLines.lines[index].startTimeMs}:$index" },
+            ) { index ->
                 val line = displayLines.lines.getOrNull(index)
                 // A dots line stands for silence, so it has nothing to translate or romanize. Worth
                 // saying out loud for the translation: that map matches by TIME, and the silence

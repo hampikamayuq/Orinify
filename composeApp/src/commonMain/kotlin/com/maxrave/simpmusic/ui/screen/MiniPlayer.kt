@@ -94,6 +94,12 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -127,6 +133,7 @@ import com.maxrave.simpmusic.ui.component.PlayerControlLayout
 import com.maxrave.simpmusic.ui.component.QueueBottomSheet
 import com.maxrave.simpmusic.ui.component.liquidGlass
 import com.maxrave.simpmusic.ui.component.rememberHolderPainter
+import com.maxrave.simpmusic.ui.component.marqueeIterations
 import com.maxrave.simpmusic.ui.icon.Close
 import com.maxrave.simpmusic.ui.icon.PictureInPictureAlt
 import com.maxrave.simpmusic.ui.icon.QueueMusic
@@ -148,12 +155,20 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.close_player
 import simpmusic.composeapp.generated.resources.crossfading
+import simpmusic.composeapp.generated.resources.mini_player
+import simpmusic.composeapp.generated.resources.mute
+import simpmusic.composeapp.generated.resources.queue
+import simpmusic.composeapp.generated.resources.unmute
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Duration.Companion.seconds
 
 private const val TAG = "MiniPlayer"
+
+// Vertical pull that closes the Android card (and stops playback).
+private const val CLOSE_DRAG_THRESHOLD_PX = 120f
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -226,22 +241,17 @@ fun MiniPlayer(
         remember {
             mutableStateOf<SongEntity?>(null)
         }
-    val (liked, setLiked) =
-        remember {
-            mutableStateOf(false)
+    // Read off the states collected above — they used to be mirrored into local MutableStates by
+    // a second collector of the same flows.
+    val liked = controllerState.isLiked
+    val isPlaying = controllerState.isPlaying
+    val progress =
+        if (timelineState.total > 0L && timelineState.current >= 0L) {
+            timelineState.current.toFloat() / timelineState.total
+        } else {
+            0f
         }
-    val (isPlaying, setIsPlaying) =
-        remember {
-            mutableStateOf(false)
-        }
-    val (progress, setProgress) =
-        remember {
-            mutableFloatStateOf(0f)
-        }
-    val (isCrossfading, setIsCrossfading) =
-        remember {
-            mutableStateOf(false)
-        }
+    val loading = timelineState.loading
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -260,10 +270,6 @@ fun MiniPlayer(
 
     val offsetX = remember { Animatable(initialValue = 0f) }
     val offsetY = remember { Animatable(0f) }
-
-    var loading by rememberSaveable {
-        mutableStateOf(true)
-    }
 
     var bitmap by remember {
         mutableStateOf<ImageBitmap?>(null)
@@ -284,42 +290,17 @@ fun MiniPlayer(
             }
     }
 
-    LaunchedEffect(key1 = true) {
-        val job1 =
-            launch {
-                sharedViewModel.nowPlayingState.collect { item ->
-                    if (item != null) {
-                        setSongEntity(item.songEntity)
-                    }
-                }
+    // Keeps the last non-null song so the card does not blank while the player is between items.
+    LaunchedEffect(Unit) {
+        sharedViewModel.nowPlayingState.collect { item ->
+            if (item != null) {
+                setSongEntity(item.songEntity)
             }
-        val job2 =
-            launch {
-                sharedViewModel.controllerState.collectLatest { state ->
-                    setLiked(state.isLiked)
-                    setIsPlaying(state.isPlaying)
-                    setIsCrossfading(state.isCrossfading)
-                }
-            }
-        val job4 =
-            launch {
-                sharedViewModel.timeline.collect { timeline ->
-                    loading = timeline.loading
-                    val prog =
-                        if (timeline.total > 0L && timeline.current >= 0L) {
-                            timeline.current.toFloat() / timeline.total
-                        } else {
-                            0f
-                        }
-                    setProgress(prog)
-                }
-            }
-        job1.join()
-        job2.join()
-        job4.join()
+        }
     }
 
     if (getPlatform() == Platform.Android) {
+        val closePlayerLabel = stringResource(Res.string.close_player)
         // One shape for both the Card and the clip below. They must not diverge: the clip wraps
         // the Card's own background draw, so the larger radius wins and silently becomes the
         // visible one.
@@ -344,7 +325,24 @@ fun MiniPlayer(
                         Modifier
                             .clip(miniPlayerShape)
                             .offset { IntOffset(0, offsetY.value.roundToInt()) }
-                            .clickable(
+                            // The card is one tap target whose only text is the track, so it
+                            // announces what it opens; the swipe-down close has no visible
+                            // control, so it is exposed as an explicit action too.
+                            .semantics {
+                                contentDescription =
+                                    listOfNotNull(
+                                        songEntity?.title?.takeIf { it.isNotBlank() },
+                                        songEntity?.artistName?.connectArtists()?.takeIf { it.isNotBlank() },
+                                    ).joinToString(" · ")
+                                role = Role.Button
+                                customActions =
+                                    listOf(
+                                        CustomAccessibilityAction(closePlayerLabel) {
+                                            onClose()
+                                            true
+                                        },
+                                    )
+                            }.clickable(
                                 onClick = onClick,
                             ).pointerInput(Unit) {
                                 detectVerticalDragGestures(
@@ -355,7 +353,6 @@ fun MiniPlayer(
                                             coroutineScope.launch {
                                                 change.consume()
                                                 offsetY.animateTo(offsetY.value + 2 * dragAmount)
-                                                Logger.w("MiniPlayer", "Dragged ${offsetY.value}")
                                             }
                                         }
                                     },
@@ -365,9 +362,10 @@ fun MiniPlayer(
                                         }
                                     },
                                     onDragEnd = {
-                                        Logger.w("MiniPlayer", "Drag Ended")
                                         coroutineScope.launch {
-                                            if (offsetY.value > 70) {
+                                            // Stops playback, so it wants a deliberate pull, not a
+                                            // brushed scroll.
+                                            if (offsetY.value > CLOSE_DRAG_THRESHOLD_PX) {
                                                 onClose()
                                             }
                                             offsetY.animateTo(0f)
@@ -401,11 +399,9 @@ fun MiniPlayer(
                                                 coroutineScope.launch {
                                                     change.consume()
                                                     offsetX.animateTo(offsetX.value + dragAmount * 2)
-                                                    Logger.w("MiniPlayer", "Dragged ${offsetX.value}")
                                                 }
                                             },
                                             onDragCancel = {
-                                                Logger.w("MiniPlayer", "Drag Cancelled")
                                                 coroutineScope.launch {
                                                     if (offsetX.value > 200) {
                                                         sharedViewModel.onUIEvent(UIEvent.Previous)
@@ -416,7 +412,6 @@ fun MiniPlayer(
                                                 }
                                             },
                                             onDragEnd = {
-                                                Logger.w("MiniPlayer", "Drag Ended")
                                                 coroutineScope.launch {
                                                     if (offsetX.value > 200) {
                                                         sharedViewModel.onUIEvent(UIEvent.Previous)
@@ -497,13 +492,14 @@ fun MiniPlayer(
                                             style = typo().labelSmall,
                                             color = textColor,
                                             maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
                                             modifier =
                                                 Modifier
                                                     .fillMaxWidth()
                                                     .wrapContentHeight(
                                                         align = Alignment.CenterVertically,
                                                     ).basicMarquee(
-                                                        iterations = Int.MAX_VALUE,
+                                                        iterations = marqueeIterations(Int.MAX_VALUE),
                                                         animationMode = MarqueeAnimationMode.Immediately,
                                                     ).focusable(),
                                         )
@@ -521,16 +517,14 @@ fun MiniPlayer(
                                                 text = (songEntity?.artistName?.connectArtists() ?: ""),
                                                 style = typo().bodySmall,
                                                 maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
                                                 color = textColor,
                                                 modifier =
                                                     Modifier
                                                         .weight(1f)
                                                         .wrapContentHeight(
                                                             align = Alignment.CenterVertically,
-                                                        ).basicMarquee(
-                                                            iterations = Int.MAX_VALUE,
-                                                            animationMode = MarqueeAnimationMode.Immediately,
-                                                        ).focusable(),
+                                                        ),
                                             )
                                         }
                                     }
@@ -776,7 +770,7 @@ fun MiniPlayer(
                                         .wrapContentHeight(
                                             align = Alignment.CenterVertically,
                                         ).basicMarquee(
-                                            iterations = Int.MAX_VALUE,
+                                            iterations = marqueeIterations(Int.MAX_VALUE),
                                             animationMode = MarqueeAnimationMode.Immediately,
                                         ).focusable(),
                             )
@@ -914,7 +908,7 @@ fun MiniPlayer(
                         Icon(
                             imageVector = SimpIcons.QueueMusic,
                             tint = textColor,
-                            contentDescription = "",
+                            contentDescription = stringResource(Res.string.queue),
                         )
                     }
                     // Desktop mini player button (JVM only)
@@ -923,7 +917,7 @@ fun MiniPlayer(
                             Icon(
                                 imageVector = SimpIcons.PictureInPictureAlt,
                                 tint = textColor,
-                                contentDescription = "Mini Player",
+                                contentDescription = stringResource(Res.string.mini_player),
                             )
                         }
                     }
@@ -979,7 +973,8 @@ fun MiniPlayer(
                                         SimpIcons.VolumeOff
                                     },
                                 tint = textColor,
-                                contentDescription = if (controllerState.volume > 0f) "Mute" else "Unmute",
+                                contentDescription =
+                                    stringResource(if (controllerState.volume > 0f) Res.string.mute else Res.string.unmute),
                             )
                         }
                         // Releasing the mouse above the popup — which is what happens when you drag
@@ -1113,7 +1108,7 @@ fun MiniPlayer(
                         }
                     }
                     IconButton(onClick = { onClose() }) {
-                        Icon(SimpIcons.Close, "", tint = textColor)
+                        Icon(SimpIcons.Close, stringResource(Res.string.close_player), tint = textColor)
                     }
                 }
             }

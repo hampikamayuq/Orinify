@@ -12,6 +12,10 @@ import androidx.compose.ui.unit.dp
 import com.maxrave.simpmusic.ui.icon.Pause
 import com.maxrave.simpmusic.ui.icon.PlayArrow
 import com.maxrave.simpmusic.ui.icon.SimpIcons
+import org.jetbrains.compose.resources.stringResource
+import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.pause
+import simpmusic.composeapp.generated.resources.play
 
 @Composable
 fun RippleIconButton(
@@ -45,8 +49,9 @@ fun PlayPauseButton(
     isPlaying: Boolean,
     modifier: Modifier = Modifier,
     tint: Color = Color.White,
-    // Same reason as above, and this one changes meaning with its state: a caller passes the label
-    // for what the tap will DO ("Play" / "Pause"), which is the part an icon swap cannot announce.
+    // Same reason as above, and this one changes meaning with its state: the label is what the tap
+    // will DO ("Play" / "Pause"), which an icon swap cannot announce. Null resolves to that pair
+    // here, so a caller that passes nothing still gets a state-aware name instead of a bare "Button".
     contentDescription: String? = null,
     onClick: () -> Unit,
 ) {
@@ -58,7 +63,8 @@ fun PlayPauseButton(
         },
         modifier = modifier,
         tint = tint,
-        contentDescription = contentDescription,
+        contentDescription = contentDescription
+            ?: stringResource(if (isPlaying) Res.string.pause else Res.string.play),
         onClick = onClick,
     )
 }
