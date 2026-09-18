@@ -41,6 +41,8 @@ import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.IntSize
@@ -57,6 +59,7 @@ import com.kyant.backdrop.highlight.Highlight
 import com.kyant.backdrop.shadow.InnerShadow
 import com.kyant.backdrop.shadow.Shadow
 import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
+import com.maxrave.simpmusic.ui.theme.BottomChrome
 import com.maxrave.simpmusic.ui.theme.LocalIsDarkTheme
 import com.maxrave.simpmusic.ui.theme.typo
 import kotlinx.coroutines.CoroutineScope
@@ -72,8 +75,9 @@ import kotlin.math.sign
 
 private val CapsuleShape = RoundedCornerShape(percent = 50)
 private val TabWidth = 96.dp
-private val BarHeight = 64.dp
-private val BlobHeight = 56.dp
+// Shared with EndOfPage, which has to clear this bar, and with the flat bar, which mirrors it.
+private val BarHeight = BottomChrome.BottomBarHeight
+private val BlobHeight = BottomChrome.BottomBarButtonSize
 // Breathing room between the capsule edge and the pill on the first/last tab. The pill is a full
 // tab wide, so without this it sits flush against the capsule's rounded end.
 private val BarInset = 6.dp
@@ -304,6 +308,10 @@ private fun LiquidGlassTab(
             .width(width)
             .fillMaxHeight()
             .clip(CapsuleShape)
+            // The visible label below is the tab's accessible name (merged by clickable), so no
+            // contentDescription here — it would be read twice. What clickable does NOT expose is
+            // which tab is the current one; TalkBack needs `selected` for "selected, Home, tab".
+            .semantics { this.selected = selected }
             .clickable(
                 interactionSource = null,
                 indication = null,

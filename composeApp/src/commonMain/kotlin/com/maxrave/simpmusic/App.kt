@@ -89,6 +89,7 @@ import com.maxrave.simpmusic.ui.navigation.graph.AppNavigationGraph
 import com.maxrave.simpmusic.ui.screen.MiniPlayer
 import com.maxrave.simpmusic.ui.screen.player.NowPlayingScreen
 import com.maxrave.simpmusic.ui.screen.player.NowPlayingScreenContent
+import com.maxrave.simpmusic.ui.theme.BottomChrome
 import com.maxrave.simpmusic.ui.theme.AppTheme
 import com.maxrave.simpmusic.ui.theme.ForceDarkContent
 import com.maxrave.simpmusic.ui.theme.desktopPanelDark
@@ -465,7 +466,7 @@ fun App(
                             ) {
                                 MiniPlayer(
                                     Modifier
-                                        .height(56.dp)
+                                        .height(BottomChrome.MiniPlayerHeight)
                                         .fillMaxWidth()
                                         .padding(
                                             horizontal = 12.dp,
@@ -599,7 +600,7 @@ fun App(
                                 MiniPlayer(
                                     if (getPlatform() == Platform.Android) {
                                         Modifier
-                                            .height(56.dp)
+                                            .height(BottomChrome.MiniPlayerHeight)
                                             .fillMaxWidth(0.8f)
                                             .padding(
                                                 horizontal = 12.dp,

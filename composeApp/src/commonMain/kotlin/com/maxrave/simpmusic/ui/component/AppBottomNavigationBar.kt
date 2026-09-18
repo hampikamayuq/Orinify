@@ -19,12 +19,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.maxrave.simpmusic.extension.greyScale
+import com.maxrave.simpmusic.ui.theme.BottomChrome
 import com.maxrave.simpmusic.ui.navigation.destination.home.AnalyticsDestination
 import com.maxrave.simpmusic.ui.navigation.destination.home.HomeDestination
 import com.maxrave.simpmusic.ui.navigation.destination.library.LibraryDestination
@@ -130,7 +135,7 @@ fun AppBottomNavigationBar(
                 .fillMaxWidth()
                 .windowInsetsPadding(NavigationBarDefaults.windowInsets)
                 .padding(horizontal = 16.dp)
-                .padding(top = 4.dp, bottom = 8.dp),
+                .padding(top = 4.dp, bottom = BottomChrome.BottomBarBottomPadding),
     ) {
         BoxWithConstraints(Modifier.weight(1f, fill = false)) {
             // Every tab the same width, capped so two tabs on a wide screen do not stretch into
@@ -174,7 +179,10 @@ fun AppBottomNavigationBar(
                                     .width(tabWidth)
                                     .fillMaxHeight()
                                     .clip(RoundedCornerShape(FlatIndicatorHeight / 2))
-                                    .clickable { selectTab(screen) },
+                                    // The label Text below names the tab; `selected` is what tells
+                                    // TalkBack which one is current, and clickable alone never sets it.
+                                    .semantics { this.selected = selected }
+                                    .clickable(role = Role.Tab) { selectTab(screen) },
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
                         ) {
@@ -194,13 +202,19 @@ fun AppBottomNavigationBar(
         }
         Spacer(Modifier.size(12.dp))
         val searchSelected = selectedIndex == BottomNavScreen.Search.ordinal
+        // Icon-only button, so its name comes from semantics — the same tab as the capsule's to
+        // TalkBack, only drawn apart from them.
+        val searchLabel = stringResource(BottomNavScreen.Search.title)
         Box(
             modifier =
                 Modifier
                     .size(FlatIndicatorHeight)
                     .clip(CircleShape)
                     .background(if (searchSelected) indicatorColor else capsuleColor)
-                    .clickable { selectTab(BottomNavScreen.Search) },
+                    .semantics {
+                        contentDescription = searchLabel
+                        selected = searchSelected
+                    }.clickable(role = Role.Tab) { selectTab(BottomNavScreen.Search) },
             contentAlignment = Alignment.Center,
         ) {
             CompositionLocalProvider(
@@ -218,10 +232,11 @@ fun AppBottomNavigationBar(
 }
 
 // Mirrors the glass tab bar's geometry (TabWidth/BarHeight/BlobHeight/BarInset in
-// LiquidGlassTabBar.android.kt) so the two bars are one form in two materials.
+// LiquidGlassTabBar.android.kt) so the two bars are one form in two materials. The heights come
+// from BottomChrome, which EndOfPage also reads to clear the bar.
 private val FlatTabWidth = 96.dp
-private val FlatBarHeight = 64.dp
-private val FlatIndicatorHeight = 56.dp
+private val FlatBarHeight = BottomChrome.BottomBarHeight
+private val FlatIndicatorHeight = BottomChrome.BottomBarButtonSize
 private val CapsuleInset = 6.dp
 
 @Composable

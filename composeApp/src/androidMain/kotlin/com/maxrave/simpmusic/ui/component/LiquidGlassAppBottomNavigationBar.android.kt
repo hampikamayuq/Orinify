@@ -35,6 +35,10 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.ConstraintSet
@@ -55,12 +59,14 @@ import com.maxrave.simpmusic.ui.navigation.destination.library.LibraryDestinatio
 import com.maxrave.simpmusic.ui.navigation.destination.library.MixForYouDestination
 import com.maxrave.simpmusic.ui.navigation.destination.search.SearchDestination
 import com.maxrave.simpmusic.ui.screen.MiniPlayer
+import com.maxrave.simpmusic.ui.theme.BottomChrome
 import com.maxrave.simpmusic.ui.theme.LocalIsDarkTheme
 import com.maxrave.simpmusic.viewModel.SharedViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 import java.nio.IntBuffer
 import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.seconds
@@ -256,7 +262,7 @@ actual fun LiquidGlassAppBottomNavigationBar(
                 .padding(
                     WindowInsets.navigationBars.asPaddingValues(),
                 ).padding(
-                    bottom = 8.dp,
+                    bottom = BottomChrome.BottomBarBottomPadding,
                 ).imePadding(),
         animateChangesSpec = tween(300),
     ) {
@@ -309,10 +315,14 @@ actual fun LiquidGlassAppBottomNavigationBar(
                 }
                 Spacer(Modifier.size(12.dp))
                 // Search lives in its own circular glass FAB (Apple Music style).
+                // Icon-only, so the label has to come from semantics: it is the same tab as the
+                // others to TalkBack, just drawn apart from the capsule.
+                val searchLabel = stringResource(BottomNavScreen.Search.title)
+                val searchSelected = selectedIndex == BottomNavScreen.Search.ordinal
                 Box(
                     modifier =
                         Modifier
-                            .size(56.dp)
+                            .size(BottomChrome.BottomBarButtonSize)
                             .drawInteractiveGlass(
                                 LocalIsDarkTheme.current,
                                 backdrop,
@@ -320,7 +330,10 @@ actual fun LiquidGlassAppBottomNavigationBar(
                                 luminanceAnimation.value,
                                 CircleShape,
                                 searchFabInteraction,
-                            ).clickable { selectTab(BottomNavScreen.Search.ordinal) },
+                            ).semantics {
+                                contentDescription = searchLabel
+                                selected = searchSelected
+                            }.clickable(role = Role.Tab) { selectTab(BottomNavScreen.Search.ordinal) },
                     contentAlignment = Alignment.Center,
                 ) {
                     BottomNavScreen.Search.icon()
@@ -328,6 +341,10 @@ actual fun LiquidGlassAppBottomNavigationBar(
             } else {
                 val selectedScreen =
                     bottomNavScreens.find { it.ordinal == selectedIndex } ?: BottomNavScreen.Home
+                // Collapsed, the bar is one unlabeled circle showing the current tab's icon. Name it
+                // after that tab so TalkBack still says where the user is; tapping it only re-opens
+                // the bar, so it is a button, not a tab.
+                val collapsedLabel = stringResource(selectedScreen.title)
                 Box(
                     modifier =
                         Modifier
@@ -339,7 +356,8 @@ actual fun LiquidGlassAppBottomNavigationBar(
                                 luminanceAnimation.value,
                                 CircleShape,
                                 toolbarInteraction,
-                            ).clickable { isExpanded = true },
+                            ).semantics { contentDescription = collapsedLabel }
+                            .clickable(role = Role.Button) { isExpanded = true },
                     contentAlignment = Alignment.Center,
                 ) {
                     selectedScreen.icon()
@@ -350,7 +368,7 @@ actual fun LiquidGlassAppBottomNavigationBar(
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp)
-                .height(56.dp)
+                .height(BottomChrome.MiniPlayerHeight)
                 .layoutId("miniPlayer"),
             backdrop = backdrop,
             onClick = {
@@ -395,7 +413,7 @@ private fun decoupledConstraints(
             } else {
                 start.linkTo(parent.start)
                 end.linkTo(parent.end)
-                bottom.linkTo(toolbar.top, margin = 12.dp)
+                bottom.linkTo(toolbar.top, margin = BottomChrome.MiniPlayerToBarGap)
                 width = if (isMiniplayerShow) Dimension.matchParent else Dimension.wrapContent
             }
             visibility =

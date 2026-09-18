@@ -73,9 +73,9 @@
     <string name="more">Lisää</string>
     <string name="singles">Singlet</string>
     <string name="related_artists">Samankaltaisia artisteja</string>
-    <string name="let_s_start_with_a_radio">ALOITETAAN RADIOLLA</string>
-    <string name="let_s_pick_a_playlist_for_you">VALITAAN SOITTOLISTA SINULLE</string>
-    <string name="what_is_best_choice_today">PÄIVÄN PARAS VALINTA</string>
+    <string name="let_s_start_with_a_radio">Aloitetaan radiolla</string>
+    <string name="let_s_pick_a_playlist_for_you">Valitaan soittolista sinulle</string>
+    <string name="what_is_best_choice_today">Päivän paras valinta</string>
     <string name="chart">Lista</string>
     <string name="top_artists">Suosituimmat artistit</string>
     <string name="your_playlist">Soittolistasi</string>

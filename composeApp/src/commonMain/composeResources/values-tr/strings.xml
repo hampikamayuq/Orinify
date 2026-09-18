@@ -76,9 +76,9 @@
     <string name="more">Daha fazla</string>
     <string name="singles">Tekli</string>
     <string name="related_artists">Benzer sanatçılar</string>
-    <string name="let_s_start_with_a_radio">BİR RADYO İLE BAŞLAYALIM</string>
-    <string name="let_s_pick_a_playlist_for_you">HADİ SİZİN İÇİN BİR ÇALMA LİSTESİ SEÇELİM</string>
-    <string name="what_is_best_choice_today">BUGÜN EN İYİ SEÇİM NEDİR</string>
+    <string name="let_s_start_with_a_radio">Bir radyo ile başlayalım</string>
+    <string name="let_s_pick_a_playlist_for_you">Hadi sizin için bir çalma listesi seçelim</string>
+    <string name="what_is_best_choice_today">Bugün en iyi seçim nedir</string>
     <string name="chart">Çizelge</string>
     <string name="top_artists">En Çok Dinlenen Sanatçılar</string>
     <string name="your_playlist">Oynatma Listeniz</string>

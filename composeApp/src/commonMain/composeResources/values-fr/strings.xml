@@ -76,9 +76,9 @@
     <string name="more">Plus d'infos</string>
     <string name="singles">Singles</string>
     <string name="related_artists">Artistes Associés</string>
-    <string name="let_s_start_with_a_radio">COMMENÇONS PAR UNE RADIO !</string>
-    <string name="let_s_pick_a_playlist_for_you">CHOISISSONS UNE PLAYLIST POUR VOUS</string>
-    <string name="what_is_best_choice_today">QUEL EST LE MEILLEUR CHOIX AUJOURd'HUI ?</string>
+    <string name="let_s_start_with_a_radio">Commençons par une radio !</string>
+    <string name="let_s_pick_a_playlist_for_you">Choisissons une playlist pour vous</string>
+    <string name="what_is_best_choice_today">Quel est le meilleur choix aujourd'hui ?</string>
     <string name="chart">Classements</string>
     <string name="top_artists">Meilleurs Artistes</string>
     <string name="your_playlist">Vos playlists</string>
