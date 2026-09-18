@@ -60,6 +60,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -282,7 +283,15 @@ fun HomeScreen(
     }
     val animatedColor by animateColorAsState(topHeaderColor, tween(500))
     val mainHomeThumbnail by viewModel.mainHomeThumbnail.collectAsStateWithLifecycle()
-    val networkLoader = rememberNetworkLoader(HttpClient(CIO))
+    // `remember`, and the DisposableEffect below, because only the LOADER was remembered here:
+    // the argument was evaluated on every recomposition, and this composable reads the scroll
+    // offset, so it recomposed on every frame of a scroll. Each frame allocated an HTTP client
+    // with its own connection pool — jank on the one gesture this screen is made of.
+    val paletteHttpClient = remember { HttpClient(CIO) }
+    DisposableEffect(paletteHttpClient) {
+        onDispose { paletteHttpClient.close() }
+    }
+    val networkLoader = rememberNetworkLoader(paletteHttpClient)
     val dominantColorState =
         rememberDominantColorState(
             defaultColor = backgroundColor,
@@ -518,8 +527,15 @@ fun HomeScreen(
                                 )
                             }
                         }
-                        itemsIndexed(homeData, key = { _, item ->
-                            item.hashCode().toString() + (mainHomeThumbnail ?: "nothumb")
+                        // The key used to carry `mainHomeThumbnail`, which is DERIVED from this
+                        // same list — so the moment the artwork resolved, every key changed and
+                        // LazyList destroyed and rebuilt every row, losing each shelf's horizontal
+                        // scroll position. Nothing needed it: the gradient it was guarding is
+                        // driven by `animatedColor`, which is state and recomposes on its own.
+                        // Index first because two shelves can carry the same title and a duplicate
+                        // key is a runtime crash.
+                        itemsIndexed(homeData, key = { index, item ->
+                            "$index:${item.title}"
                         }) { index, item ->
                             Box {
                                 if (index == 0) {
