@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -73,7 +74,13 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -93,6 +100,7 @@ import com.maxrave.simpmusic.extension.smoothScrimBrush
 import com.maxrave.simpmusic.getPlatform
 import com.maxrave.simpmusic.ui.component.ExplicitBadge
 import com.maxrave.simpmusic.ui.component.heartBurst
+import com.maxrave.simpmusic.ui.component.marqueeIterations
 import com.maxrave.simpmusic.ui.component.rememberHeartBurstState
 import com.maxrave.simpmusic.ui.component.rememberHolderPainter
 import com.maxrave.simpmusic.ui.icon.AddCircleOutline
@@ -109,6 +117,7 @@ import com.maxrave.simpmusic.ui.icon.Shuffle
 import com.maxrave.simpmusic.ui.icon.SimpIcons
 import com.maxrave.simpmusic.ui.screen.player.content.expressive.ExpressiveTransportRow
 import com.maxrave.simpmusic.ui.screen.player.content.expressive.WavySeekBar
+import com.maxrave.simpmusic.ui.screen.player.content.expressive.labelRes
 import com.maxrave.simpmusic.ui.theme.seed
 import com.maxrave.simpmusic.ui.theme.typo
 import com.maxrave.simpmusic.viewModel.UIEvent
@@ -116,8 +125,19 @@ import kotlin.math.roundToLong
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringResource
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.add_to_playlist
+import simpmusic.composeapp.generated.resources.cast
+import simpmusic.composeapp.generated.resources.close_player
 import simpmusic.composeapp.generated.resources.crossfading
+import simpmusic.composeapp.generated.resources.favorite
+import simpmusic.composeapp.generated.resources.more
+import simpmusic.composeapp.generated.resources.no_lyrics_for_track
 import simpmusic.composeapp.generated.resources.now_playing_upper
+import simpmusic.composeapp.generated.resources.queue
+import simpmusic.composeapp.generated.resources.shuffle
+import simpmusic.composeapp.generated.resources.song_info
+import simpmusic.composeapp.generated.resources.unfavorite
+import simpmusic.composeapp.generated.resources.youtube_liked_music
 
 /**
  * The Material 3 Expressive ("Tonal pills") Now Playing style.
@@ -331,7 +351,7 @@ private fun NowPlayingM3ExpressiveLayout(
                     ) {
                         Icon(
                             imageVector = state.dismissIcon,
-                            contentDescription = "",
+                            contentDescription = stringResource(Res.string.close_player),
                         )
                     }
                     Column(
@@ -345,22 +365,20 @@ private fun NowPlayingM3ExpressiveLayout(
                         Text(
                             text = stringResource(Res.string.now_playing_upper),
                             style = typo().bodyMedium,
-                            color = Color.White,
+                            color = colorScheme.onSurface,
                         )
+                        // No marquee: the title already scrolls, a second moving line competes.
                         Text(
                             text = state.screenData.playlistName,
                             style = typo().labelMedium,
-                            color = Color.White,
+                            color = colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
                             maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .wrapContentHeight(align = Alignment.CenterVertically)
-                                    .basicMarquee(
-                                        iterations = Int.MAX_VALUE,
-                                        animationMode = MarqueeAnimationMode.Immediately,
-                                    ).focusable(),
+                                    .wrapContentHeight(align = Alignment.CenterVertically),
                         )
                     }
                     IconButton(
@@ -375,7 +393,7 @@ private fun NowPlayingM3ExpressiveLayout(
                     ) {
                         Icon(
                             imageVector = SimpIcons.MoreVert,
-                            contentDescription = "",
+                            contentDescription = stringResource(Res.string.more),
                         )
                     }
                 }
@@ -439,6 +457,22 @@ private fun NowPlayingM3ExpressiveLayout(
                                     inlineLyrics.syncType != null &&
                                     inlineLyrics.syncType != "UNSYNCED" &&
                                     inlineLyrics.lines != null
+                            // lyricsData is null both while the fetch is in flight and when no
+                            // provider had anything, and the state cannot tell the two apart.
+                            // "No lyrics" is therefore only claimed once the track has been
+                            // current for 3s — long enough for every provider to have answered.
+                            val currentTrackKey =
+                                state.artworkQueue.getOrNull(state.currentOrderIndex)?.videoId
+                                    ?: state.screenData.nowPlayingTitle
+                            var lyricsSettled by remember(currentTrackKey) { mutableStateOf(false) }
+                            LaunchedEffect(currentTrackKey) {
+                                delay(3000)
+                                lyricsSettled = true
+                            }
+                            val showNoLyrics =
+                                state.screenData.lyricsData == null &&
+                                    lyricsSettled &&
+                                    state.screenData.canvasData == null
                             val currentLyricLineText =
                                 if (!hasSyncedLyrics ||
                                     state.screenData.canvasData != null ||
@@ -454,24 +488,42 @@ private fun NowPlayingM3ExpressiveLayout(
                                         .orEmpty()
                                 }
                             Crossfade(
-                                targetState = currentLyricLineText,
+                                targetState = currentLyricLineText to showNoLyrics,
                                 animationSpec = tween(durationMillis = 300),
                                 label = "inlineLyricLineExpressive",
-                            ) { lineText ->
-                                Text(
-                                    text = lineText,
-                                    style = typo().labelSmall,
-                                    color = Color.White,
-                                    maxLines = 1,
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 20.dp)
-                                            .basicMarquee(
-                                                iterations = Int.MAX_VALUE,
-                                                animationMode = MarqueeAnimationMode.Immediately,
-                                            ).focusable(),
-                                )
+                            ) { (lineText, noLyrics) ->
+                                if (noLyrics) {
+                                    Text(
+                                        text = stringResource(Res.string.no_lyrics_for_track),
+                                        style = typo().bodySmall,
+                                        color = colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 20.dp)
+                                                .alpha(0.7f),
+                                    )
+                                } else {
+                                    Text(
+                                        text = lineText,
+                                        style = typo().labelSmall,
+                                        // On the tonal surface: canvas mode blanks this line.
+                                        color = colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 20.dp)
+                                                .basicMarquee(
+                                                    iterations = marqueeIterations(Int.MAX_VALUE),
+                                                    animationMode = MarqueeAnimationMode.Immediately,
+                                                ).focusable(),
+                                    )
+                                }
                             }
                         }
 
@@ -560,8 +612,9 @@ private fun NowPlayingM3ExpressiveLayout(
                                             exit = fadeOut() + shrinkVertically(),
                                         ) {
                                             // Canvas subtitle — lyric line above the metadata
-                                            // row. White/yellow kept from Classic: the backdrop
-                                            // is black in both styles.
+                                            // row. White kept from Classic: the backdrop is a
+                                            // black scrim, not a tonal surface. The translation
+                                            // takes the scheme's primary, not Classic's yellow.
                                             val lineText =
                                                 state.screenData.lyricsData
                                                     ?.lyrics
@@ -580,13 +633,14 @@ private fun NowPlayingM3ExpressiveLayout(
                                                                 .padding(horizontal = 20.dp)
                                                                 .padding(bottom = 4.dp)
                                                                 .basicMarquee(
-                                                                    iterations = Int.MAX_VALUE,
+                                                                    iterations = marqueeIterations(Int.MAX_VALUE),
                                                                     animationMode = MarqueeAnimationMode.Immediately,
                                                                 ).focusable(),
                                                         text = lineText,
                                                         style = typo().bodyMedium,
                                                         color = Color.White,
                                                         maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
                                                     )
                                                     val translatedLineText =
                                                         state.screenData.lyricsData
@@ -604,13 +658,14 @@ private fun NowPlayingM3ExpressiveLayout(
                                                                     .padding(horizontal = 20.dp)
                                                                     .padding(bottom = 8.dp)
                                                                     .basicMarquee(
-                                                                        iterations = Int.MAX_VALUE,
+                                                                        iterations = marqueeIterations(Int.MAX_VALUE),
                                                                         animationMode = MarqueeAnimationMode.Immediately,
                                                                     ).focusable(),
                                                             text = translatedLineText,
                                                             style = typo().bodyMedium,
-                                                            color = Color.Yellow,
+                                                            color = colorScheme.primary,
                                                             maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis,
                                                         )
                                                     }
                                                 }
@@ -682,14 +737,15 @@ internal fun ExpressiveTrackInfoRow(
             Text(
                 text = state.screenData.nowPlayingTitle,
                 style = typo().titleMedium,
-                color = Color.White,
+                color = colorScheme.onSurface,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .wrapContentHeight(align = Alignment.CenterVertically)
                         .basicMarquee(
-                            iterations = Int.MAX_VALUE,
+                            iterations = marqueeIterations(Int.MAX_VALUE),
                             animationMode = MarqueeAnimationMode.Immediately,
                         ).focusable(),
             )
@@ -706,23 +762,28 @@ internal fun ExpressiveTrackInfoRow(
                                 .padding(end = 4.dp),
                     )
                 }
+                // A tap target, so it must not move under the finger: ellipsis, no marquee.
                 Text(
                     text = state.screenData.artistName,
                     style = typo().bodyMedium,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier =
                         Modifier
                             .weight(1f)
                             .wrapContentHeight(align = Alignment.CenterVertically)
-                            .basicMarquee(
-                                iterations = Int.MAX_VALUE,
-                                animationMode = MarqueeAnimationMode.Immediately,
-                            ).focusable()
                             .clickable {
                                 actions.onNavigateToArtist()
                             },
                 )
             }
+            // This listener's own history line — the scheme's primary rather than the raw
+            // seed, because this style is tonal and the raw seed would fight the palette.
+            ListenerStatsLine(
+                stats = state.screenData.listenerStats,
+                modifier = Modifier.padding(top = 2.dp),
+                color = colorScheme.primary,
+            )
         }
         if (state.isUserLoggedIn) {
             Spacer(modifier = Modifier.size(12.dp))
@@ -734,12 +795,14 @@ internal fun ExpressiveTrackInfoRow(
                         containerColor = colorScheme.surfaceContainerHigh,
                         contentColor = colorScheme.onSurface,
                     ),
-                modifier = Modifier.size(48.dp),
+                // Named after the YouTube list, not "favorite": that word belongs to the heart
+                // beside it, and TalkBack would otherwise read two identical buttons.
+                modifier = Modifier.size(48.dp).semantics { selected = state.likeStatus },
             ) {
                 Crossfade(targetState = state.likeStatus) { liked ->
                     Icon(
                         imageVector = if (liked) SimpIcons.CheckCircle else SimpIcons.AddCircleOutline,
-                        contentDescription = "",
+                        contentDescription = stringResource(Res.string.youtube_liked_music),
                     )
                 }
             }
@@ -768,7 +831,7 @@ internal fun ExpressiveTrackInfoRow(
             Crossfade(targetState = state.controllerState.isLiked) { liked ->
                 Icon(
                     imageVector = if (liked) SimpIcons.Favorite else SimpIcons.FavoriteBorder,
-                    contentDescription = "",
+                    contentDescription = stringResource(if (liked) Res.string.unfavorite else Res.string.favorite),
                 )
             }
         }
@@ -928,18 +991,21 @@ private fun ExpressiveConnectedGroup(
         ) {
             Icon(
                 imageVector = SimpIcons.Info,
-                contentDescription = "",
+                contentDescription = stringResource(Res.string.song_info),
                 tint = colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp),
             )
         }
         // Cast — PlatformCastButton owns its own click and hides itself when Cast is
         // unavailable, but it can't hide this wrapper slot, so the slot is gated too.
-        // Active session tints primary, like Classic's cyan.
+        // Active session tints primary, like Classic's cyan. The native view stays the real
+        // 24dp target; the slot only guarantees the 48dp footprint around it.
         if (isPlatformCastAvailable()) {
+            val castLabel = stringResource(Res.string.cast)
             ExpressiveConnectedSlot(
                 shape = middle,
                 onClick = null,
+                modifier = Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp).semantics { contentDescription = castLabel },
             ) {
                 PlatformCastButton(
                     modifier = Modifier.size(24.dp),
@@ -950,12 +1016,13 @@ private fun ExpressiveConnectedGroup(
         ExpressiveConnectedSlot(
             shape = middle,
             active = state.controllerState.isShuffle,
+            toggle = true,
             onClick = { actions.onUIEvent(UIEvent.Shuffle) },
         ) {
             Crossfade(targetState = state.controllerState.isShuffle, label = "expressiveShuffle") { isShuffle ->
                 Icon(
                     imageVector = SimpIcons.Shuffle,
-                    contentDescription = "",
+                    contentDescription = stringResource(Res.string.shuffle),
                     tint = if (isShuffle) colorScheme.onPrimaryContainer else colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(22.dp),
                 )
@@ -964,14 +1031,17 @@ private fun ExpressiveConnectedGroup(
         ExpressiveConnectedSlot(
             shape = middle,
             active = state.controllerState.repeatState !is RepeatState.None,
+            toggle = true,
             onClick = { actions.onUIEvent(UIEvent.Repeat) },
         ) {
             Crossfade(targetState = state.controllerState.repeatState, label = "expressiveRepeat") { rs ->
+                // The state label doubles as the name: no bare "repeat" string exists.
+                val label = stringResource(rs.labelRes())
                 when (rs) {
                     is RepeatState.None -> {
                         Icon(
                             imageVector = SimpIcons.Repeat,
-                            contentDescription = "",
+                            contentDescription = label,
                             tint = colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(22.dp),
                         )
@@ -980,7 +1050,7 @@ private fun ExpressiveConnectedGroup(
                     RepeatState.All -> {
                         Icon(
                             imageVector = SimpIcons.Repeat,
-                            contentDescription = "",
+                            contentDescription = label,
                             tint = colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(22.dp),
                         )
@@ -989,7 +1059,7 @@ private fun ExpressiveConnectedGroup(
                     RepeatState.One -> {
                         Icon(
                             imageVector = SimpIcons.RepeatOne,
-                            contentDescription = "",
+                            contentDescription = label,
                             tint = colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(22.dp),
                         )
@@ -1003,7 +1073,7 @@ private fun ExpressiveConnectedGroup(
         ) {
             Icon(
                 imageVector = SimpIcons.PlaylistAdd,
-                contentDescription = "Add to Playlist",
+                contentDescription = stringResource(Res.string.add_to_playlist),
                 tint = colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp),
             )
@@ -1014,7 +1084,7 @@ private fun ExpressiveConnectedGroup(
         ) {
             Icon(
                 imageVector = SimpIcons.QueueMusic,
-                contentDescription = "",
+                contentDescription = stringResource(Res.string.queue),
                 tint = colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp),
             )
@@ -1027,19 +1097,27 @@ private fun RowScope.ExpressiveConnectedSlot(
     shape: Shape,
     onClick: (() -> Unit)?,
     active: Boolean = false,
+    // Only shuffle/repeat announce a selected state; a plain action slot must not say "not selected".
+    toggle: Boolean = false,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val container = if (active) colorScheme.primaryContainer else colorScheme.surfaceContainerHigh
+    val slotModifier =
+        modifier
+            .weight(1f)
+            .fillMaxHeight()
+            .semantics {
+                if (onClick != null) role = Role.Button
+                if (toggle) selected = active
+            }
     if (onClick != null) {
         Surface(
             onClick = onClick,
             shape = shape,
             color = container,
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
+            modifier = slotModifier,
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 content()
@@ -1049,10 +1127,7 @@ private fun RowScope.ExpressiveConnectedSlot(
         Surface(
             shape = shape,
             color = container,
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
+            modifier = slotModifier,
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 content()

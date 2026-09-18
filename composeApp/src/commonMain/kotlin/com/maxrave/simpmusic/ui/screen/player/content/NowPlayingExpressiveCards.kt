@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -45,13 +46,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,7 +68,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -81,6 +80,7 @@ import com.maxrave.simpmusic.Platform
 import com.maxrave.simpmusic.expect.ui.MediaPlayerView
 import com.maxrave.simpmusic.expect.ui.MediaPlayerViewWithSubtitle
 import com.maxrave.simpmusic.expect.ui.toImageBitmap
+import com.maxrave.simpmusic.extension.getScreenSizeInfo
 import com.maxrave.simpmusic.extension.parseTimestampToMilliseconds
 import com.maxrave.simpmusic.extension.smoothScrimBrush
 import com.maxrave.simpmusic.getPlatform
@@ -92,6 +92,7 @@ import com.maxrave.simpmusic.ui.component.LyricsView
 import com.maxrave.simpmusic.ui.component.PlayPauseButton
 import com.maxrave.simpmusic.ui.component.lyrics.ShareLyricsSheet
 import com.maxrave.simpmusic.ui.component.lyrics.toShareLyricsLines
+import com.maxrave.simpmusic.ui.component.marqueeIterations
 import com.maxrave.simpmusic.ui.component.rememberHolderPainter
 import com.maxrave.simpmusic.ui.icon.Forward5
 import com.maxrave.simpmusic.ui.icon.Fullscreen
@@ -108,9 +109,11 @@ import com.maxrave.simpmusic.viewModel.LyricsProvider
 import com.maxrave.simpmusic.viewModel.UIEvent
 import org.jetbrains.compose.resources.stringResource
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.album_artwork
 import simpmusic.composeapp.generated.resources.artists
 import simpmusic.composeapp.generated.resources.description
-import simpmusic.composeapp.generated.resources.like_and_dislike
+import simpmusic.composeapp.generated.resources.forward_5s
+import simpmusic.composeapp.generated.resources.fullscreen
 import simpmusic.composeapp.generated.resources.line_synced
 import simpmusic.composeapp.generated.resources.lyrics
 import simpmusic.composeapp.generated.resources.lyrics_provider_betterlyrics
@@ -118,14 +121,14 @@ import simpmusic.composeapp.generated.resources.lyrics_provider_lrc
 import simpmusic.composeapp.generated.resources.lyrics_provider_simpmusic
 import simpmusic.composeapp.generated.resources.lyrics_provider_youtube
 import simpmusic.composeapp.generated.resources.offline_mode
-import simpmusic.composeapp.generated.resources.published_at
 import simpmusic.composeapp.generated.resources.rate_lyrics
+import simpmusic.composeapp.generated.resources.rewind_5s
 import simpmusic.composeapp.generated.resources.rich_synced
 import simpmusic.composeapp.generated.resources.share_lyrics
 import simpmusic.composeapp.generated.resources.show
 import simpmusic.composeapp.generated.resources.spotify_lyrics_provider
+import simpmusic.composeapp.generated.resources.subtitles
 import simpmusic.composeapp.generated.resources.unsynced
-import simpmusic.composeapp.generated.resources.view_count
 
 // Shared shape for the below-the-fold tonal cards.
 private val ExpressiveCardShape = RoundedCornerShape(20.dp)
@@ -311,7 +314,8 @@ internal fun ExpressiveArtworkCardPage(
                                 .diskCacheKey(artworkUrl + "BIGGER")
                                 .crossfade(550)
                                 .build(),
-                        contentDescription = "",
+                        contentDescription =
+                            state.screenData.nowPlayingTitle.ifBlank { stringResource(Res.string.album_artwork) },
                         onSuccess = {
                             actions.onArtworkBitmap(
                                 it.result.image.toImageBitmap(),
@@ -408,7 +412,7 @@ internal fun ExpressiveArtworkCardPage(
                                             ) {
                                                 Icon(
                                                     imageVector = SimpIcons.Fullscreen,
-                                                    contentDescription = "",
+                                                    contentDescription = stringResource(Res.string.fullscreen),
                                                     // Over-video control, not a semantic surface
                                                     // foreground — stays white like Classic.
                                                     tint = Color.White,
@@ -437,7 +441,7 @@ internal fun ExpressiveArtworkCardPage(
                                                     Icon(
                                                         imageVector = SimpIcons.Replay5,
                                                         tint = Color.White,
-                                                        contentDescription = "",
+                                                        contentDescription = stringResource(Res.string.rewind_5s),
                                                         modifier =
                                                             Modifier
                                                                 .size(36.dp)
@@ -461,7 +465,7 @@ internal fun ExpressiveArtworkCardPage(
                                                     Icon(
                                                         imageVector = SimpIcons.Forward5,
                                                         tint = Color.White,
-                                                        contentDescription = "",
+                                                        contentDescription = stringResource(Res.string.forward_5s),
                                                         modifier =
                                                             Modifier
                                                                 .size(36.dp)
@@ -483,7 +487,7 @@ internal fun ExpressiveArtworkCardPage(
                                                             } else {
                                                                 SimpIcons.Subtitles
                                                             },
-                                                        contentDescription = "",
+                                                        contentDescription = stringResource(Res.string.subtitles),
                                                         tint = Color.White,
                                                     )
                                                 }
@@ -534,6 +538,7 @@ internal fun ExpressiveBelowTheFold(
     val colorScheme = MaterialTheme.colorScheme
     val localDensity = LocalDensity.current
     val uriHandler = LocalUriHandler.current
+    val screenInfo = getScreenSizeInfo()
     var showShareLyricsSheet by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.padding(horizontal = 20.dp)) {
         // Lyrics card
@@ -547,11 +552,16 @@ internal fun ExpressiveBelowTheFold(
             ) {
                 Column(modifier = Modifier.padding(15.dp)) {
                     Spacer(modifier = Modifier.height(5.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Glyphs stay 16dp; the buttons keep Material's 48dp minimum target, so
+                    // the row is that tall rather than the 20dp it used to be squeezed into.
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.heightIn(min = 48.dp),
+                    ) {
                         Text(
                             text = stringResource(Res.string.lyrics),
                             style = typo().labelMedium,
-                            color = Color.White,
+                            color = colorScheme.onSurface,
                         )
                         if (state.screenData.lyricsData?.translatedLyrics?.second == LyricsProvider.AI) {
                             Spacer(modifier = Modifier.width(8.dp))
@@ -562,56 +572,51 @@ internal fun ExpressiveBelowTheFold(
                         // Lyrics. The rule itself lives on the shared contract (canVote), so a style
                         // cannot ship without it the way the Apple Music tab did.
                         if (state.screenData.lyricsData.canVote()) {
-                            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-                                IconButton(
-                                    onClick = {
-                                        actions.onShowVoteDialog()
-                                    },
-                                ) {
-                                    Icon(
-                                        imageVector = SimpIcons.ThumbsUpDown,
-                                        contentDescription = stringResource(Res.string.rate_lyrics),
-                                        tint = colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(16.dp),
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
                             IconButton(
-                                onClick = { showShareLyricsSheet = true },
+                                onClick = {
+                                    actions.onShowVoteDialog()
+                                },
                             ) {
                                 Icon(
-                                    imageVector = SimpIcons.Share,
-                                    contentDescription = stringResource(Res.string.share_lyrics),
+                                    imageVector = SimpIcons.ThumbsUpDown,
+                                    contentDescription = stringResource(Res.string.rate_lyrics),
                                     tint = colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(16.dp),
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-                            TextButton(
-                                onClick = {
-                                    actions.onShowFullscreenLyrics()
-                                },
-                                contentPadding = PaddingValues(0.dp),
-                                modifier =
-                                    Modifier
-                                        .height(20.dp)
-                                        .wrapContentWidth(),
-                            ) {
-                                Text(text = stringResource(Res.string.show), color = Color.White)
-                            }
+                        IconButton(
+                            onClick = { showShareLyricsSheet = true },
+                        ) {
+                            Icon(
+                                imageVector = SimpIcons.Share,
+                                contentDescription = stringResource(Res.string.share_lyrics),
+                                tint = colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                        // Action text: TextButton's own primary content colour, no override.
+                        TextButton(
+                            onClick = {
+                                actions.onShowFullscreenLyrics()
+                            },
+                            contentPadding = PaddingValues(horizontal = 8.dp),
+                            modifier = Modifier.wrapContentWidth(),
+                        ) {
+                            Text(text = stringResource(Res.string.show))
                         }
                     }
-                    Spacer(modifier = Modifier.height(18.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
+                    // Grows with the screen instead of a fixed 300dp; the floor keeps short
+                    // windows readable.
                     Box(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .height(300.dp),
+                                .heightIn(
+                                    min = 300.dp,
+                                    max = maxOf(300f, screenInfo.hDP * 0.5f).dp,
+                                ),
                     ) {
                         state.screenData.lyricsData?.let {
                             LyricsView(
@@ -749,13 +754,13 @@ internal fun ExpressiveBelowTheFold(
                         Text(
                             text = state.screenData.songInfoData?.author ?: "",
                             style = typo().titleMedium,
-                            color = Color.White,
+                            color = colorScheme.onSurface,
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = state.screenData.songInfoData?.subscribers ?: "",
                             style = typo().bodySmall,
-                            color = Color.White.copy(alpha = 0.7f),
+                            color = colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -774,36 +779,19 @@ internal fun ExpressiveBelowTheFold(
                         .fillMaxWidth(),
                 ) {
                     Spacer(modifier = Modifier.height(5.dp))
-                    Text(
-                        text = stringResource(Res.string.published_at, state.screenData.songInfoData?.uploadDate ?: ""),
-                        style = typo().labelSmall,
-                        color = Color.White,
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text =
-                            stringResource(
-                                Res.string.view_count,
-                                "%,d".format(state.screenData.songInfoData?.viewCount),
-                            ),
-                        style = typo().labelMedium,
-                        color = Color.White,
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text =
-                            stringResource(
-                                Res.string.like_and_dislike,
-                                state.screenData.songInfoData?.like ?: 0,
-                                state.screenData.songInfoData?.dislike ?: 0,
-                            ),
-                        style = typo().bodyMedium,
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
+                    // YouTube's publish date, view and like counts are gone: the one figure this
+                    // card leads with is the listener's own history for the track.
+                    if (state.screenData.listenerStats != null) {
+                        ListenerStatsLine(
+                            stats = state.screenData.listenerStats,
+                            color = colorScheme.primary,
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
                     Text(
                         text = stringResource(Res.string.description),
                         style = typo().labelSmall,
-                        color = Color.White,
+                        color = colorScheme.onSurface,
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     DescriptionView(
@@ -907,15 +895,16 @@ internal fun ExpressiveCollapsedToolbar(
                             Text(
                                 text = state.screenData.nowPlayingTitle,
                                 style = typo().bodyMedium,
-                                color = Color.White,
+                                color = colorScheme.onSurface,
                                 maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
                                         .wrapContentHeight(
                                             align = Alignment.CenterVertically,
                                         ).basicMarquee(
-                                            iterations = Int.MAX_VALUE,
+                                            iterations = marqueeIterations(Int.MAX_VALUE),
                                             animationMode = MarqueeAnimationMode.Immediately,
                                         ).focusable(),
                             )
@@ -933,19 +922,18 @@ internal fun ExpressiveCollapsedToolbar(
                                 item(
                                     key = state.screenData.artistName,
                                 ) {
+                                    // Only the title scrolls; a second marquee under it competes.
                                     Text(
                                         text = state.screenData.artistName,
                                         style = typo().bodySmall,
                                         maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
                                         modifier =
                                             Modifier
                                                 .fillMaxWidth()
                                                 .wrapContentHeight(
                                                     align = Alignment.CenterVertically,
-                                                ).basicMarquee(
-                                                    iterations = Int.MAX_VALUE,
-                                                    animationMode = MarqueeAnimationMode.Immediately,
-                                                ).focusable(),
+                                                ),
                                     )
                                 }
                             }

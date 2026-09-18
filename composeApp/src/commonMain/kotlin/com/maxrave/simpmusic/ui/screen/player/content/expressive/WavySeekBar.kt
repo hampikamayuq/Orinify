@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.progressSemantics
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.runtime.Composable
@@ -25,9 +26,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
+import org.jetbrains.compose.resources.stringResource
+import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.seek_bar
 
 /**
  * Seekable wavy progress bar for the M3 Expressive Now Playing style, built on material3's
@@ -80,6 +87,7 @@ fun WavySeekBar(
 
     fun fractionAt(x: Float): Float = if (widthPx <= 0) 0f else (x / widthPx).coerceIn(0f, 1f)
 
+    val seekLabel = stringResource(Res.string.seek_bar)
     Box(
         contentAlignment = Alignment.CenterStart,
         modifier =
@@ -87,7 +95,18 @@ fun WavySeekBar(
                 .fillMaxWidth()
                 // ~40dp hit area — comfortably taller than the wave itself.
                 .height(40.dp)
-                .onSizeChanged { widthPx = it.width }
+                // Pointer input alone is invisible to TalkBack: progressSemantics names the range
+                // and setProgress makes it adjustable with volume keys / swipe up-down. Same
+                // callbacks as a tap, so the shell commits the seek exactly the same way.
+                .progressSemantics(value = displayedFraction, valueRange = 0f..1f)
+                .semantics {
+                    contentDescription = seekLabel
+                    setProgress { target ->
+                        onSliderChange(target.coerceIn(0f, 1f) * 100f)
+                        onSliderChangeFinished()
+                        true
+                    }
+                }.onSizeChanged { widthPx = it.width }
                 .pointerInput(Unit) {
                     detectTapGestures { offset ->
                         val fraction = fractionAt(offset.x)

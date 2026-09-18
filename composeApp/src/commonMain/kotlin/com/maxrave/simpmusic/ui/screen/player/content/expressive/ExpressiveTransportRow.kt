@@ -27,6 +27,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.maxrave.domain.mediaservice.handler.ControlState
 import com.maxrave.domain.mediaservice.handler.RepeatState
@@ -39,6 +43,16 @@ import com.maxrave.simpmusic.ui.icon.SimpIcons
 import com.maxrave.simpmusic.ui.icon.SkipNext
 import com.maxrave.simpmusic.ui.icon.SkipPrevious
 import com.maxrave.simpmusic.viewModel.UIEvent
+import org.jetbrains.compose.resources.stringResource
+import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.next
+import simpmusic.composeapp.generated.resources.pause
+import simpmusic.composeapp.generated.resources.play
+import simpmusic.composeapp.generated.resources.previous
+import simpmusic.composeapp.generated.resources.repeat_all
+import simpmusic.composeapp.generated.resources.repeat_off
+import simpmusic.composeapp.generated.resources.repeat_one
+import simpmusic.composeapp.generated.resources.shuffle
 
 // Base weights: prev 0.55 | play 1.2 | next 0.55. A pressed button grows ×1.15; because Row
 // normalizes weights, the other two shrink proportionally without any extra bookkeeping.
@@ -124,11 +138,13 @@ fun ExpressiveTransportRow(
             ExpressiveToggleButton(
                 icon = SimpIcons.Shuffle,
                 active = controllerState.isShuffle,
+                contentDescription = stringResource(Res.string.shuffle),
                 onClick = { onUIEvent(UIEvent.Shuffle) },
             )
             Spacer(modifier = Modifier.width(TOGGLE_SEPARATION))
         }
-        // Previous — full pill on secondaryContainer.
+        // Previous — full pill on secondaryContainer. Surface(onClick) sets no role, so each
+        // pill names itself a button; the Icon carries the label.
         Surface(
             onClick = {
                 if (controllerState.isPreviousAvailable) {
@@ -141,12 +157,13 @@ fun ExpressiveTransportRow(
             modifier =
                 Modifier
                     .weight(prevWeight)
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .semantics { role = Role.Button },
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 Icon(
                     imageVector = SimpIcons.SkipPrevious,
-                    contentDescription = "",
+                    contentDescription = stringResource(Res.string.previous),
                     tint =
                         colorScheme.onSecondaryContainer.copy(
                             alpha = if (controllerState.isPreviousAvailable) 1f else 0.4f,
@@ -168,7 +185,8 @@ fun ExpressiveTransportRow(
             modifier =
                 Modifier
                     .weight(playWeight)
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .semantics { role = Role.Button },
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 Crossfade(
@@ -198,7 +216,7 @@ fun ExpressiveTransportRow(
                             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                                 Icon(
                                     imageVector = if (isPlaying) SimpIcons.Pause else SimpIcons.PlayArrow,
-                                    contentDescription = "",
+                                    contentDescription = stringResource(if (isPlaying) Res.string.pause else Res.string.play),
                                     tint = colorScheme.onPrimary,
                                     modifier = Modifier.size(36.dp),
                                 )
@@ -221,12 +239,13 @@ fun ExpressiveTransportRow(
             modifier =
                 Modifier
                     .weight(nextWeight)
-                    .fillMaxHeight(),
+                    .fillMaxHeight()
+                    .semantics { role = Role.Button },
         ) {
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 Icon(
                     imageVector = SimpIcons.SkipNext,
-                    contentDescription = "",
+                    contentDescription = stringResource(Res.string.next),
                     tint =
                         colorScheme.onSecondaryContainer.copy(
                             alpha = if (controllerState.isNextAvailable) 1f else 0.4f,
@@ -241,11 +260,21 @@ fun ExpressiveTransportRow(
             ExpressiveToggleButton(
                 icon = if (repeatState is RepeatState.One) SimpIcons.RepeatOne else SimpIcons.Repeat,
                 active = repeatState !is RepeatState.None,
+                // No bare "repeat" string exists; the state label already names the control.
+                contentDescription = stringResource(repeatState.labelRes()),
                 onClick = { onUIEvent(UIEvent.Repeat) },
             )
         }
     }
 }
+
+/** The repeat state as TalkBack should read it. */
+internal fun RepeatState.labelRes() =
+    when (this) {
+        RepeatState.None -> Res.string.repeat_off
+        RepeatState.All -> Res.string.repeat_all
+        RepeatState.One -> Res.string.repeat_one
+    }
 
 /**
  * Shuffle or repeat as a pill beside the transport, in the connected group's colours: primary
@@ -255,6 +284,7 @@ fun ExpressiveTransportRow(
 private fun RowScope.ExpressiveToggleButton(
     icon: ImageVector,
     active: Boolean,
+    contentDescription: String,
     onClick: () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -265,12 +295,16 @@ private fun RowScope.ExpressiveToggleButton(
         modifier =
             Modifier
                 .weight(TOGGLE_WEIGHT)
-                .fillMaxHeight(),
+                .fillMaxHeight()
+                .semantics {
+                    role = Role.Button
+                    selected = active
+                },
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             Icon(
                 imageVector = icon,
-                contentDescription = "",
+                contentDescription = contentDescription,
                 tint = if (active) colorScheme.onPrimaryContainer else colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp),
             )
