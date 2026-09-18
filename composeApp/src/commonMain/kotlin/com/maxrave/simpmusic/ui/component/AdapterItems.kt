@@ -85,9 +85,9 @@ import com.maxrave.domain.utils.connectArtists
 import com.maxrave.domain.utils.toListName
 import com.maxrave.domain.utils.toSongEntity
 import com.maxrave.domain.utils.toTrack
-import com.maxrave.logger.Logger
 import com.maxrave.simpmusic.Platform
 import com.maxrave.simpmusic.expect.ui.HorizontalScrollBar
+import com.maxrave.simpmusic.expect.ui.rememberReduceMotion
 import com.maxrave.simpmusic.getPlatform
 import com.maxrave.simpmusic.ui.navigation.destination.list.AlbumDestination
 import com.maxrave.simpmusic.ui.navigation.destination.list.ArtistDestination
@@ -107,6 +107,12 @@ import simpmusic.composeapp.generated.resources.playlist
 import simpmusic.composeapp.generated.resources.subscribers
 import simpmusic.composeapp.generated.resources.wrapped_recap_subtitle
 import simpmusic.composeapp.generated.resources.you
+
+// basicMarquee has no hook into the system "Remove animations" setting (Android encodes it as
+// ANIMATOR_DURATION_SCALE = 0, see rememberReduceMotion). Its documented off switch is
+// `iterations = 0`, which leaves the text static so the Ellipsis on each caller takes over.
+@Composable
+private fun marqueeIterations(default: Int): Int = if (rememberReduceMotion()) 0 else default
 
 @Composable
 fun HomeItem(
@@ -689,7 +695,7 @@ fun QuickPicksItem(
                             .padding(
                                 bottom = 3.dp,
                             ).basicMarquee(
-                                iterations = Int.MAX_VALUE,
+                                iterations = marqueeIterations(Int.MAX_VALUE),
                                 initialDelayMillis = 2000,
                                 repeatDelayMillis = 2000,
                                 velocity = 25.dp,
@@ -718,6 +724,7 @@ fun QuickPicksItem(
                                     .fillMaxWidth()
                                     .wrapContentHeight(align = Alignment.CenterVertically)
                                     .basicMarquee(
+                                        iterations = marqueeIterations(3),
                                         initialDelayMillis = 2000,
                                         repeatDelayMillis = 2000,
                                         velocity = 25.dp,
@@ -762,7 +769,6 @@ fun HomeItemSong(
                         it
                     }
                 }
-            Logger.w("AsyncImage", "HomeItemSong: $thumb")
             AsyncImage(
                 model =
                     ImageRequest
@@ -857,7 +863,6 @@ fun HomeItemVideo(
                     .heightIn(min = rememberShelfCardMinHeight(160.dp)),
         ) {
             val thumb = data.thumbnails.lastOrNull()?.url
-            Logger.w("AsyncImage", "HomeItemSong: $thumb")
             AsyncImage(
                 model =
                     ImageRequest
@@ -941,7 +946,6 @@ fun HomeItemArtist(
                     .heightIn(min = rememberShelfCardMinHeight(160.dp)),
         ) {
             val thumb = data.thumbnails.lastOrNull()?.url
-            Logger.w("AsyncImage", "HomeItemSong: $thumb")
             AsyncImage(
                 model =
                     ImageRequest
@@ -1071,7 +1075,6 @@ fun ItemVideoChart(
                     .padding(10.dp),
         ) {
             val thumb = data.thumbnails.lastOrNull()?.url
-            Logger.w("AsyncImage", "HomeItemSong: $thumb")
             AsyncImage(
                 model =
                     ImageRequest
@@ -1137,6 +1140,7 @@ fun ItemVideoChart(
                                 .width(210.dp)
                                 .wrapContentHeight(align = Alignment.CenterVertically)
                                 .basicMarquee(
+                                    iterations = marqueeIterations(3),
                                     initialDelayMillis = 2000,
                                     repeatDelayMillis = 2000,
                                     velocity = 25.dp,
@@ -1182,7 +1186,6 @@ fun ItemArtistChart(
                         .padding(end = 20.dp),
             )
             val thumb = data.thumbnails.lastOrNull()?.url
-            Logger.w("AsyncImage", "HomeItemSong: $thumb")
             AsyncImage(
                 model =
                     ImageRequest
@@ -1240,6 +1243,7 @@ fun ItemArtistChart(
                         Modifier
                             .wrapContentHeight(align = Alignment.CenterVertically)
                             .basicMarquee(
+                                iterations = marqueeIterations(3),
                                 initialDelayMillis = 2000,
                                 repeatDelayMillis = 2000,
                                 velocity = 25.dp,
@@ -1293,7 +1297,6 @@ fun ItemTrackChart(
                 }
             }
             val thumb = data.thumbnails?.lastOrNull()?.url
-            Logger.w("AsyncImage", "HomeItemSong: $thumb")
             AsyncImage(
                 model =
                     ImageRequest
@@ -1348,6 +1351,7 @@ fun ItemTrackChart(
                             .fillMaxWidth()
                             .wrapContentHeight(align = Alignment.CenterVertically)
                             .basicMarquee(
+                                iterations = marqueeIterations(3),
                                 initialDelayMillis = 2000,
                                 repeatDelayMillis = 2000,
                                 velocity = 25.dp,
