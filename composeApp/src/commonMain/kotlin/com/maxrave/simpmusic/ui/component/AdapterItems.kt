@@ -114,11 +114,17 @@ import simpmusic.composeapp.generated.resources.you
 @Composable
 internal fun marqueeIterations(default: Int): Int = if (rememberReduceMotion()) 0 else default
 
+/**
+ * @param queueName what the queue a tapped song starts is called on the player. Null keeps the
+ * song's own title; a personal shelf passes its heading, so the player says where the track came
+ * from rather than restating the track.
+ */
 @Composable
 fun HomeItem(
     homeViewModel: HomeViewModel = koinViewModel(),
     navController: NavController,
     data: HomeItem,
+    queueName: String? = null,
 ) {
     var bottomSheetShow by remember { mutableStateOf(false) }
 
@@ -279,7 +285,7 @@ fun HomeItem(
                                         listTracks = arrayListOf(firstQueue),
                                         firstPlayedTrack = firstQueue,
                                         playlistId = "RDAMVM${temp.videoId}",
-                                        playlistName = temp.title,
+                                        playlistName = queueName ?: temp.title,
                                         playlistType = PlaylistType.RADIO,
                                         continuation = null,
                                     ),
@@ -304,7 +310,7 @@ fun HomeItem(
                                         listTracks = arrayListOf(firstQueue),
                                         firstPlayedTrack = firstQueue,
                                         playlistId = "RDAMVM${temp.videoId}",
-                                        playlistName = temp.title,
+                                        playlistName = queueName ?: temp.title,
                                         playlistType = PlaylistType.RADIO,
                                         continuation = null,
                                     ),

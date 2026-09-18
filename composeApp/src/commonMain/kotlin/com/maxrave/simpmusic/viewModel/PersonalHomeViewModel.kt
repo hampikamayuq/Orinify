@@ -33,10 +33,10 @@ import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.atTime
 import kotlinx.datetime.minus
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.artist_mix
 import simpmusic.composeapp.generated.resources.artist_mix_unavailable
 import simpmusic.composeapp.generated.resources.might_like
 import simpmusic.composeapp.generated.resources.might_like_subtitle
-import simpmusic.composeapp.generated.resources.radio
 import simpmusic.composeapp.generated.resources.rediscover
 import simpmusic.composeapp.generated.resources.rediscover_subtitle
 
@@ -268,7 +268,7 @@ class PersonalHomeViewModel(
                         listTracks = tracks,
                         firstPlayedTrack = tracks.first(),
                         playlistId = endpoint.playlistId,
-                        playlistName = "\"${artist.name}\" ${getString(Res.string.radio)}",
+                        playlistName = "${getString(Res.string.artist_mix)} · ${artist.name}",
                         playlistType = PlaylistType.RADIO,
                         continuation = radio.data?.second,
                     ),

@@ -19,6 +19,7 @@ import com.maxrave.domain.data.entities.NewFormatEntity
 import com.maxrave.domain.data.entities.PlaylistEntity
 import com.maxrave.domain.data.entities.SongEntity
 import com.maxrave.domain.data.entities.SongInfoEntity
+import com.maxrave.domain.data.model.analytics.ListenerStats
 import com.maxrave.domain.data.entities.TranslatedLyricsEntity
 import com.maxrave.domain.data.model.browse.album.Track
 import com.maxrave.domain.data.model.canvas.CanvasResult
@@ -46,6 +47,7 @@ import com.maxrave.domain.mediaservice.handler.RepeatState
 import com.maxrave.domain.mediaservice.handler.SimpleMediaState
 import com.maxrave.domain.mediaservice.handler.SleepTimerState
 import com.maxrave.domain.repository.AlbumRepository
+import com.maxrave.domain.repository.AnalyticsRepository
 import com.maxrave.domain.repository.CacheRepository
 import com.maxrave.domain.repository.LocalPlaylistRepository
 import com.maxrave.domain.repository.LyricsCanvasRepository
@@ -71,6 +73,7 @@ import com.maxrave.simpmusic.viewModel.base.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -94,6 +97,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.getString
+import org.koin.core.component.inject
 import org.simpmusic.lastfm.completeLogin
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.added_to_queue
@@ -126,6 +130,9 @@ class SharedViewModel(
     private val lyricsCanvasRepository: LyricsCanvasRepository,
     private val cacheRepository: CacheRepository,
 ) : BaseViewModel() {
+    // Injected, not a constructor parameter: the module builds this class with positional get()s.
+    private val analyticsRepository: AnalyticsRepository by inject()
+
     var isFirstLiked: Boolean = false
     var isFirstMiniplayer: Boolean = false
     var isFirstSuggestions: Boolean = false
@@ -383,6 +390,7 @@ class SharedViewModel(
                         getLikeStatus(now.mediaId)
                         getSongInfo(now.mediaId)
                         getFormat(now.mediaId)
+                        getListenerStats(now.mediaId)
                         _nowPlayingScreenData.update {
                             it.copy(
                                 thumbnailURL = now.metadata.artworkUri,
@@ -1040,6 +1048,35 @@ class SharedViewModel(
                             )
                         }
                     }
+                }
+            }
+    }
+
+    private var listenerStatsJob: Job? = null
+
+    /**
+     * Fills [NowPlayingScreenData.listenerStats] for the track that just started.
+     *
+     * The play in progress is logged by the media handler, on the transition AWAY from it, so this
+     * class cannot hook the insert; at this moment the table holds the track's earlier plays, which
+     * is what "played N times" should count. The single re-read covers the row being written for
+     * the track that just ENDED — on repeat-one or a queue replay that is this same videoId, and
+     * the insert runs on the handler's own scope, so a query fired on the same tick can land first.
+     *
+     * Always a copy() on the current value: lyrics and canvas arrive later and must survive.
+     */
+    private fun getListenerStats(videoId: String?) {
+        listenerStatsJob?.cancel()
+        listenerStatsJob =
+            viewModelScope.launch {
+                if (videoId == null || dataStoreManager.localTrackingEnabled.first() != TRUE) {
+                    _nowPlayingScreenData.update { it.copy(listenerStats = null) }
+                    return@launch
+                }
+                repeat(2) { attempt ->
+                    if (attempt > 0) delay(LISTENER_STATS_RECHECK_MS)
+                    val stats = analyticsRepository.getTrackPlayStats(videoId)
+                    _nowPlayingScreenData.update { it.copy(listenerStats = stats) }
                 }
             }
     }
@@ -2103,6 +2140,9 @@ enum class LyricsProvider {
     OFFLINE,
 }
 
+/** Long enough for the handler's insert of the previous play to have committed. */
+private const val LISTENER_STATS_RECHECK_MS = 2_000L
+
 data class NowPlayingScreenData(
     val playlistName: String,
     val nowPlayingTitle: String,
@@ -2114,6 +2154,8 @@ data class NowPlayingScreenData(
     val lyricsData: LyricsData? = null,
     val songInfoData: SongInfoEntity? = null,
     val bitmap: ImageBitmap? = null,
+    /** This listener's own history for the track; null while unknown or with tracking off. */
+    val listenerStats: ListenerStats? = null,
 ) {
     data class CanvasData(
         val isVideo: Boolean,

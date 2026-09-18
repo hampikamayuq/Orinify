@@ -2,6 +2,7 @@ package com.maxrave.domain.repository
 
 import com.maxrave.domain.data.entities.analytics.PlaybackEventEntity
 import com.maxrave.domain.data.model.analytics.AnalyticsPeriodStats
+import com.maxrave.domain.data.model.analytics.ListenerStats
 import com.maxrave.domain.data.entities.analytics.query.TopPlayedAlbum
 import com.maxrave.domain.data.entities.analytics.query.TopPlayedArtist
 import com.maxrave.domain.data.entities.analytics.query.TopPlayedArtistTime
@@ -88,6 +89,12 @@ interface AnalyticsRepository {
         startTimestamp: LocalDateTime,
         endTimestamp: LocalDateTime,
     ): Flow<Long>
+
+    /**
+     * This listener's own history for one track, or null when it holds no play of it — which is
+     * also what an empty table under tracking-off looks like, so the caller need not tell them apart.
+     */
+    suspend fun getTrackPlayStats(videoId: String): ListenerStats?
 
     /**
      * One coherent snapshot of a span, rather than a dozen flows the caller has to line up.

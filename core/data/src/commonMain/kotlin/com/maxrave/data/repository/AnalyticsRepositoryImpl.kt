@@ -9,6 +9,7 @@ import com.maxrave.domain.data.entities.analytics.query.TopPlayedArtist
 import com.maxrave.domain.data.entities.analytics.query.TopPlayedArtistTime
 import com.maxrave.domain.data.entities.analytics.query.TopPlayedTracks
 import com.maxrave.domain.data.model.analytics.AnalyticsPeriodStats
+import com.maxrave.domain.data.model.analytics.ListenerStats
 import com.maxrave.domain.data.model.analytics.DecadePlays
 import com.maxrave.domain.data.model.analytics.ListeningFingerprint
 import com.maxrave.domain.repository.AnalyticsRepository
@@ -202,6 +203,14 @@ internal class AnalyticsRepositoryImpl(
                 ),
             )
         }.flowOn(Dispatchers.IO)
+
+    override suspend fun getTrackPlayStats(videoId: String): ListenerStats? =
+        withContext(Dispatchers.IO) {
+            val stats = databaseDao.getTrackPlayStats(videoId)
+            val first = stats.first ?: return@withContext null
+            val last = stats.last ?: return@withContext null
+            if (stats.count <= 0) null else ListenerStats(stats.count, first, last)
+        }
 
     @OptIn(ExperimentalTime::class)
     override suspend fun getPeriodStats(

@@ -565,6 +565,7 @@ fun HomeScreen(
                                 HomeItem(
                                     navController = navController,
                                     data = shelf,
+                                    queueName = shelf.title,
                                 )
                             }
                             item(key = "personal:artistMixes") {

@@ -38,6 +38,7 @@ import com.maxrave.domain.data.entities.analytics.query.TopPlayedAlbum
 import com.maxrave.domain.data.entities.analytics.query.TopPlayedArtist
 import com.maxrave.domain.data.entities.analytics.query.TopPlayedArtistTime
 import com.maxrave.domain.data.entities.analytics.query.TopPlayedTracks
+import com.maxrave.domain.data.entities.analytics.query.TrackPlayStats
 import com.maxrave.domain.data.type.PlaylistType
 import com.maxrave.domain.data.type.RecentlyType
 import com.maxrave.domain.extension.now
@@ -1388,6 +1389,16 @@ interface DatabaseDao {
         startTimestamp: LocalDateTime,
         endTimestamp: LocalDateTime,
     ): Long
+
+    /**
+     * How often, and when, one track has been played. Aliases avoid `first`/`last`, which SQLite
+     * also uses as keywords (`NULLS FIRST`).
+     */
+    @Query(
+        "SELECT COUNT(*) AS playCount, MIN(timestamp) AS firstPlayed, MAX(timestamp) AS lastPlayed" +
+            " FROM playback_event WHERE videoId = :videoId",
+    )
+    suspend fun getTrackPlayStats(videoId: String): TrackPlayStats
 
     /**
      * Every play in the range, as timestamp + listened seconds.
