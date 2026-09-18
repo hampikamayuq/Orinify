@@ -16,6 +16,7 @@ import com.maxrave.simpmusic.viewModel.MoodViewModel
 import com.maxrave.simpmusic.viewModel.MoreAlbumsViewModel
 import com.maxrave.simpmusic.viewModel.NotificationViewModel
 import com.maxrave.simpmusic.viewModel.NowPlayingBottomSheetViewModel
+import com.maxrave.simpmusic.viewModel.PersonalHomeViewModel
 import com.maxrave.simpmusic.viewModel.PlaylistViewModel
 import com.maxrave.simpmusic.viewModel.PodcastViewModel
 import com.maxrave.simpmusic.viewModel.RecentlySongsViewModel
@@ -97,6 +98,14 @@ val viewModelModule =
         }
         viewModel {
             HomeViewModel(
+                get(),
+                get(),
+            )
+        }
+        viewModel {
+            PersonalHomeViewModel(
+                get(),
+                get(),
                 get(),
                 get(),
             )

@@ -111,6 +111,7 @@ import com.maxrave.simpmusic.ui.component.CenterLoadingBox
 import com.maxrave.simpmusic.ui.component.Chip
 import com.maxrave.simpmusic.ui.component.DropdownButton
 import com.maxrave.simpmusic.extension.copy
+import com.maxrave.simpmusic.ui.component.ArtistMixShelf
 import com.maxrave.simpmusic.ui.component.EndOfPage
 import com.maxrave.simpmusic.ui.component.HomeItem
 import com.maxrave.simpmusic.ui.component.HomeItemContentPlaylist
@@ -153,6 +154,7 @@ import com.maxrave.simpmusic.viewModel.HomeViewModel.Companion.HOME_PARAMS_SAD
 import com.maxrave.simpmusic.viewModel.HomeViewModel.Companion.HOME_PARAMS_SLEEP
 import com.maxrave.simpmusic.viewModel.HomeViewModel.Companion.HOME_PARAMS_WORKOUT
 import com.maxrave.simpmusic.viewModel.ListState
+import com.maxrave.simpmusic.viewModel.PersonalHomeViewModel
 import com.maxrave.simpmusic.viewModel.SharedViewModel
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
@@ -227,9 +229,17 @@ fun HomeScreen(
         koinViewModel(),
     sharedViewModel: SharedViewModel =
         koinInject(),
+    personalViewModel: PersonalHomeViewModel =
+        koinViewModel(),
     navController: NavController,
 ) {
     val coroutineScope = rememberCoroutineScope()
+    // Home's own half. Collected separately from `homeData` because the two fail independently —
+    // see PersonalHomeViewModel.
+    val personalTracking by personalViewModel.localTrackingEnabled.collectAsStateWithLifecycle(initialValue = false)
+    val personalShelves by personalViewModel.songShelves.collectAsStateWithLifecycle()
+    val artistMixes by personalViewModel.artistMixes.collectAsStateWithLifecycle()
+    val loadingArtistMix by personalViewModel.loadingArtistMix.collectAsStateWithLifecycle()
     val scrollState = rememberLazyListState()
     val isScrollingUp by scrollState.isScrollingUp()
     val accountInfo by viewModel.accountInfo.collectAsStateWithLifecycle()
@@ -487,6 +497,27 @@ fun HomeScreen(
                         contentPadding = innerPadding.copy(top = 0.dp),
                         verticalArrangement = Arrangement.spacedBy(20.dp),
                     ) {
+                        // Principle 2: when both halves have something to show, the listener's own
+                        // history goes first. These are ordinary HomeItems, so they draw through
+                        // the same shelf component as everything below them.
+                        if (personalTracking) {
+                            items(personalShelves, key = { "personal:" + it.title }) { shelf ->
+                                HomeItem(
+                                    navController = navController,
+                                    data = shelf,
+                                )
+                            }
+                            item(key = "personal:artistMixes") {
+                                // Not a HomeItem: the generic shelf routes an artist to the artist
+                                // page, and a mix has to start the artist's radio instead.
+                                ArtistMixShelf(
+                                    artists = artistMixes,
+                                    isLoading = false,
+                                    loadingChannelId = loadingArtistMix,
+                                    onClick = { artist -> personalViewModel.playArtistMix(artist) },
+                                )
+                            }
+                        }
                         itemsIndexed(homeData, key = { _, item ->
                             item.hashCode().toString() + (mainHomeThumbnail ?: "nothumb")
                         }) { index, item ->
