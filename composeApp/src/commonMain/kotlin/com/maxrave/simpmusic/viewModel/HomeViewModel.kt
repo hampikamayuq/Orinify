@@ -45,6 +45,11 @@ class HomeViewModel(
     private var _homeListState = MutableStateFlow<ListState>(ListState.IDLE)
     val homeListState: StateFlow<ListState> = _homeListState
 
+    // True only while the last home request itself came back as Resource.Error. A mood chip with
+    // no shelves is an empty Success, not a failure, and must not raise the offline screen.
+    private val _homeLoadFailed = MutableStateFlow(false)
+    val homeLoadFailed: StateFlow<Boolean> = _homeLoadFailed
+
     private var _continuation = MutableStateFlow<String?>(null)
     val continuation: StateFlow<String?> = _continuation
 
@@ -181,6 +186,7 @@ class HomeViewModel(
 
     fun getHomeItemList(params: String? = null) {
         loading.value = true
+        _homeLoadFailed.value = false
         _homeListState.value = ListState.LOADING
         language =
             runBlocking {
@@ -222,6 +228,7 @@ class HomeViewModel(
                             _homeItemList.value = listOf()
                         }
                     }
+                    _homeLoadFailed.value = home is Resource.Error
                     if (continuation.value.isNullOrEmpty()) {
                         _homeListState.value = ListState.PAGINATION_EXHAUST
                     } else {

@@ -65,6 +65,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -74,12 +75,19 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -165,7 +173,11 @@ import dev.chrisbanes.haze.rememberHazeState
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.http.Url
+import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -185,6 +197,7 @@ import simpmusic.composeapp.generated.resources.good_afternoon
 import simpmusic.composeapp.generated.resources.good_evening
 import simpmusic.composeapp.generated.resources.good_morning
 import simpmusic.composeapp.generated.resources.good_night
+import simpmusic.composeapp.generated.resources.home_offline_title
 import simpmusic.composeapp.generated.resources.let_s_pick_a_playlist_for_you
 import simpmusic.composeapp.generated.resources.let_s_start_with_a_radio
 import simpmusic.composeapp.generated.resources.log_in_warning
@@ -193,6 +206,7 @@ import simpmusic.composeapp.generated.resources.party
 import simpmusic.composeapp.generated.resources.quick_picks
 import simpmusic.composeapp.generated.resources.recently
 import simpmusic.composeapp.generated.resources.relax
+import simpmusic.composeapp.generated.resources.retry
 import simpmusic.composeapp.generated.resources.romance
 import simpmusic.composeapp.generated.resources.sad
 import simpmusic.composeapp.generated.resources.settings
@@ -245,6 +259,7 @@ fun HomeScreen(
     val isScrollingUp by scrollState.isScrollingUp()
     val accountInfo by viewModel.accountInfo.collectAsStateWithLifecycle()
     val homeData by viewModel.homeItemList.collectAsStateWithLifecycle()
+    val homeLoadFailed by viewModel.homeLoadFailed.collectAsStateWithLifecycle()
     val newRelease by viewModel.newRelease.collectAsStateWithLifecycle()
     val chart by viewModel.chart.collectAsStateWithLifecycle()
     val moodMomentAndGenre by viewModel.exploreMoodItem.collectAsStateWithLifecycle()
@@ -259,6 +274,33 @@ fun HomeScreen(
     var isRefreshing by remember { mutableStateOf(false) }
     val chipRowState = rememberScrollState()
     val params by viewModel.params.collectAsStateWithLifecycle()
+    val selectedChip = homeChipFor(params)
+    // Each chip's bounds in the Row's content space, written from onGloballyPositioned. The Row
+    // is a plain horizontalScroll, so nothing brings a chip into view on its own: one restored
+    // from `params` on return, or tapped at the right edge, sat half off-screen.
+    val chipBounds = remember { mutableStateMapOf<StringResource, Rect>() }
+    val chipRowPaddingPx = with(LocalDensity.current) { CHIP_ROW_HORIZONTAL_PADDING.toPx() }
+    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    LaunchedEffect(params) {
+        // The map is empty until the row has been placed, on first composition and on return.
+        val bounds = snapshotFlow { chipBounds[selectedChip] }.filterNotNull().first()
+        val viewport = chipRowState.viewportSize
+        if (viewport <= 0) return@LaunchedEffect
+        // boundsInParent excludes the Row's own padding, which scrolls with the content.
+        val chipStart = bounds.left + chipRowPaddingPx
+        val chipEnd = bounds.right + chipRowPaddingPx
+        // Left-based window. In RTL scroll value 0 shows the content's RIGHT edge.
+        val windowStart =
+            if (isRtl) (chipRowState.maxValue - chipRowState.value).toFloat() else chipRowState.value.toFloat()
+        val target =
+            when {
+                chipStart < windowStart -> chipStart
+                chipEnd > windowStart + viewport -> chipEnd - viewport
+                else -> return@LaunchedEffect // already fully visible
+            }
+        val value = if (isRtl) chipRowState.maxValue - target else target
+        chipRowState.animateScrollTo(value.roundToInt().coerceIn(0, chipRowState.maxValue))
+    }
     val homeListState by viewModel.homeListState.collectAsStateWithLifecycle()
     val continuation by viewModel.continuation.collectAsStateWithLifecycle()
 
@@ -481,7 +523,13 @@ fun HomeScreen(
         ) {
             Crossfade(targetState = loading, label = "Home Shimmer") { loading ->
                 if (!loading) {
-                    if (homeData.isEmpty()) {
+                    // The full-page offline state only when there is nothing at all to show AND
+                    // the home request actually failed. An empty list on its own is not an error:
+                    // a mood chip can legitimately return no shelves, and the personal half needs
+                    // no network, so it keeps rendering with an inline retry row instead.
+                    val hasPersonalContent =
+                        personalTracking && (personalShelves.isNotEmpty() || artistMixes.isNotEmpty())
+                    if (homeData.isEmpty() && homeLoadFailed && !hasPersonalContent) {
                         OfflineErrorState(
                             onRetry = onRefresh,
                             onOpenDownloaded = {
@@ -627,6 +675,29 @@ fun HomeScreen(
                                             navController = navController,
                                             data = item,
                                         )
+                                    }
+                                }
+                            }
+                        }
+                        // The YouTube half failed while the personal half is on screen: one line
+                        // and a retry where the shelves would have been, not the full-page state.
+                        if (homeData.isEmpty() && homeLoadFailed) {
+                            item(key = "home:loadFailed") {
+                                Row(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 15.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.home_offline_title),
+                                        style = typo().bodyMedium,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    TextButton(onClick = onRefresh) {
+                                        Text(stringResource(Res.string.retry))
                                     }
                                 }
                             }
@@ -804,44 +875,40 @@ fun HomeScreen(
                             .windowInsetsPadding(
                                 WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal),
                             ).horizontalScroll(chipRowState)
-                            .padding(vertical = 8.dp, horizontal = 15.dp)
+                            .padding(vertical = 8.dp, horizontal = CHIP_ROW_HORIZONTAL_PADDING)
                             .background(Color.Transparent),
                     // 8dp, not 4: android.md asks for at least 8dp between touch targets, and
                     // these chips are the primary filter of the screen.
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     listOfHomeChip.forEach { id ->
-                        val isSelected =
-                            when (params) {
-                                HOME_PARAMS_RELAX -> id == Res.string.relax
-                                HOME_PARAMS_SLEEP -> id == Res.string.sleep
-                                HOME_PARAMS_ENERGIZE -> id == Res.string.energize
-                                HOME_PARAMS_SAD -> id == Res.string.sad
-                                HOME_PARAMS_ROMANCE -> id == Res.string.romance
-                                HOME_PARAMS_FEEL_GOOD -> id == Res.string.feel_good
-                                HOME_PARAMS_WORKOUT -> id == Res.string.workout
-                                HOME_PARAMS_PARTY -> id == Res.string.party
-                                HOME_PARAMS_COMMUTE -> id == Res.string.commute
-                                HOME_PARAMS_FOCUS -> id == Res.string.focus
-                                else -> id == Res.string.all
-                            }
-                        Chip(
-                            isAnimated = loading,
-                            isSelected = isSelected,
-                            text = stringResource(id),
+                        // Chip takes no Modifier, hence the Box. boundsInParent is relative to
+                        // the Row's content, so it does not move with the scroll; the equality
+                        // guard keeps every scroll frame from writing the same value as state.
+                        Box(
+                            Modifier.onGloballyPositioned { coordinates ->
+                                val bounds = coordinates.boundsInParent()
+                                if (chipBounds[id] != bounds) chipBounds[id] = bounds
+                            },
                         ) {
-                            when (id) {
-                                Res.string.all -> viewModel.setParams(null)
-                                Res.string.relax -> viewModel.setParams(HOME_PARAMS_RELAX)
-                                Res.string.sleep -> viewModel.setParams(HOME_PARAMS_SLEEP)
-                                Res.string.energize -> viewModel.setParams(HOME_PARAMS_ENERGIZE)
-                                Res.string.sad -> viewModel.setParams(HOME_PARAMS_SAD)
-                                Res.string.romance -> viewModel.setParams(HOME_PARAMS_ROMANCE)
-                                Res.string.feel_good -> viewModel.setParams(HOME_PARAMS_FEEL_GOOD)
-                                Res.string.workout -> viewModel.setParams(HOME_PARAMS_WORKOUT)
-                                Res.string.party -> viewModel.setParams(HOME_PARAMS_PARTY)
-                                Res.string.commute -> viewModel.setParams(HOME_PARAMS_COMMUTE)
-                                Res.string.focus -> viewModel.setParams(HOME_PARAMS_FOCUS)
+                            Chip(
+                                isAnimated = loading,
+                                isSelected = id == selectedChip,
+                                text = stringResource(id),
+                            ) {
+                                when (id) {
+                                    Res.string.all -> viewModel.setParams(null)
+                                    Res.string.relax -> viewModel.setParams(HOME_PARAMS_RELAX)
+                                    Res.string.sleep -> viewModel.setParams(HOME_PARAMS_SLEEP)
+                                    Res.string.energize -> viewModel.setParams(HOME_PARAMS_ENERGIZE)
+                                    Res.string.sad -> viewModel.setParams(HOME_PARAMS_SAD)
+                                    Res.string.romance -> viewModel.setParams(HOME_PARAMS_ROMANCE)
+                                    Res.string.feel_good -> viewModel.setParams(HOME_PARAMS_FEEL_GOOD)
+                                    Res.string.workout -> viewModel.setParams(HOME_PARAMS_WORKOUT)
+                                    Res.string.party -> viewModel.setParams(HOME_PARAMS_PARTY)
+                                    Res.string.commute -> viewModel.setParams(HOME_PARAMS_COMMUTE)
+                                    Res.string.focus -> viewModel.setParams(HOME_PARAMS_FOCUS)
+                                }
                             }
                         }
                     }
@@ -875,16 +942,17 @@ fun HomeTopAppBar(navController: NavController) {
                 )
                 Text(
                     text =
+                        // Noon is afternoon and 5am is morning: 12 used to greet "good morning".
                         when (hour) {
-                            in 6..12 -> {
+                            in 5..11 -> {
                                 stringResource(Res.string.good_morning)
                             }
 
-                            in 13..17 -> {
+                            in 12..17 -> {
                                 stringResource(Res.string.good_afternoon)
                             }
 
-                            in 18..23 -> {
+                            in 18..22 -> {
                                 stringResource(Res.string.good_evening)
                             }
 
@@ -1027,8 +1095,8 @@ fun QuickPicks(
                     .padding(vertical = 5.dp),
         )
         LazyHorizontalGrid(
-            rows = GridCells.Fixed(4),
-            modifier = Modifier.height(256.dp),
+            rows = GridCells.Fixed(QUICK_PICKS_ROWS),
+            modifier = Modifier.height(rememberQuickPicksGridHeight()),
             state = lazyListState,
             flingBehavior = snapperFlingBehavior,
         ) {
@@ -1089,6 +1157,7 @@ fun MoodMomentAndGenre(
         // "Moods & moment" / "Genre" here (and reading mood.moodsMoments / mood.genres by
         // index) mislabelled every row as soon as a signed-in account got an extra
         // "For you" section, and hid the real Genres section altogether.
+        val gridHeight = rememberMoodGridHeight()
         mood.sections.forEach { section ->
             val gridState = rememberLazyGridState()
             val flingBehavior = rememberSnapFlingBehavior(SnapLayoutInfoProvider(lazyGridState = gridState))
@@ -1103,8 +1172,8 @@ fun MoodMomentAndGenre(
                         .padding(vertical = 5.dp),
             )
             LazyHorizontalGrid(
-                rows = GridCells.Fixed(3),
-                modifier = Modifier.height(210.dp),
+                rows = GridCells.Fixed(MOOD_GRID_ROWS),
+                modifier = Modifier.height(gridHeight),
                 state = gridState,
                 flingBehavior = flingBehavior,
             ) {
@@ -1208,8 +1277,8 @@ fun ChartData(
                     .padding(vertical = 10.dp),
         )
         LazyHorizontalGrid(
-            rows = GridCells.Fixed(3),
-            modifier = Modifier.height(240.dp),
+            rows = GridCells.Fixed(CHART_ARTIST_ROWS),
+            modifier = Modifier.height(rememberChartArtistGridHeight()),
             state = lazyListState2,
             flingBehavior = snapperFlingBehavior2,
         ) {
@@ -1232,4 +1301,75 @@ fun ChartData(
             }
         }
     }
+}
+
+// Horizontal padding of the chip row. Named because the scroll-into-view effect has to add the
+// same number back: boundsInParent stops at the Row's content, ScrollState counts the padding.
+private val CHIP_ROW_HORIZONTAL_PADDING = 15.dp
+
+// Which chip a params value selects; null and anything unknown fall to "All".
+private fun homeChipFor(params: String?): StringResource =
+    when (params) {
+        HOME_PARAMS_RELAX -> Res.string.relax
+        HOME_PARAMS_SLEEP -> Res.string.sleep
+        HOME_PARAMS_ENERGIZE -> Res.string.energize
+        HOME_PARAMS_SAD -> Res.string.sad
+        HOME_PARAMS_ROMANCE -> Res.string.romance
+        HOME_PARAMS_FEEL_GOOD -> Res.string.feel_good
+        HOME_PARAMS_WORKOUT -> Res.string.workout
+        HOME_PARAMS_PARTY -> Res.string.party
+        HOME_PARAMS_COMMUTE -> Res.string.commute
+        HOME_PARAMS_FOCUS -> Res.string.focus
+        else -> Res.string.all
+    }
+
+// The three LazyHorizontalGrids on this screen carried a height literal tuned by eye at font
+// scale 1.0 (256, 210, 240). None of typo()'s styles declares a lineHeight, so the text grows
+// with the system font-size setting while the literal did not, and at 1.3 the last row clipped.
+// Each is now rows × what one cell actually holds, measured the way rememberShelfCardMinHeight
+// in AdapterItems.kt measures a shelf card. A row's contents are restated here from the item
+// composable it renders — change one, change the other.
+private const val QUICK_PICKS_ROWS = 4
+private const val MOOD_GRID_ROWS = 3
+private const val CHART_ARTIST_ROWS = 3
+
+@Composable
+private fun rememberTextLinesHeight(
+    style: TextStyle,
+    lines: Int,
+): Dp {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    return remember(measurer, density, style, lines) {
+        val probe = List(lines) { "A" }.joinToString("\n")
+        with(density) { measurer.measure(probe, style).size.height.toDp() }
+    }
+}
+
+// QuickPicksItem: 10dp row padding around max(44dp thumbnail, one-line titleSmall + 3dp + the
+// artist row, which is one line of bodySmall or the 20dp explicit badge). 64dp/row at scale 1.0.
+@Composable
+private fun rememberQuickPicksGridHeight(): Dp {
+    val title = rememberTextLinesHeight(typo().titleSmall, 1)
+    val artists = rememberTextLinesHeight(typo().bodySmall, 1)
+    val text = title + 3.dp + maxOf(artists, 20.dp)
+    return (maxOf(44.dp, text) + 20.dp) * QUICK_PICKS_ROWS
+}
+
+// MoodMomentAndGenreHomeItem: 8dp padding around a card floored at 48dp holding up to two lines
+// of titleSmall. 64dp/row at scale 1.0: the old 70dp/row stretched every card to 54dp (a
+// horizontal grid fixes the cell height); the card now sits at its own 48dp floor.
+@Composable
+private fun rememberMoodGridHeight(): Dp {
+    val title = rememberTextLinesHeight(typo().titleSmall, 2)
+    return (maxOf(48.dp, title) + 16.dp) * MOOD_GRID_ROWS
+}
+
+// ItemArtistChart: 10dp row padding around max(one-line titleLarge rank, 60dp avatar, two-line
+// titleSmall name + one-line bodySmall subscribers). 80dp/row at scale 1.0.
+@Composable
+private fun rememberChartArtistGridHeight(): Dp {
+    val rank = rememberTextLinesHeight(typo().titleLarge, 1)
+    val name = rememberTextLinesHeight(typo().titleSmall, 2) + rememberTextLinesHeight(typo().bodySmall, 1)
+    return (maxOf(rank, 60.dp, name) + 20.dp) * CHART_ARTIST_ROWS
 }
