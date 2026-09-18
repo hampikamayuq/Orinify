@@ -1,27 +1,30 @@
 package com.maxrave.simpmusic.ui.component
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.maxrave.simpmusic.extension.NonLazyGrid
 import com.maxrave.simpmusic.ui.icon.Downloading
-import com.maxrave.simpmusic.ui.icon.History
-import com.maxrave.simpmusic.ui.icon.TipsAndUpdates
 import com.maxrave.simpmusic.ui.icon.Favorite
 import com.maxrave.simpmusic.ui.icon.Insights
 import com.maxrave.simpmusic.ui.icon.SimpIcons
@@ -36,19 +39,17 @@ import simpmusic.composeapp.generated.resources.downloaded
 import simpmusic.composeapp.generated.resources.favorite
 import simpmusic.composeapp.generated.resources.followed
 import simpmusic.composeapp.generated.resources.most_played
-import simpmusic.composeapp.generated.resources.might_like
-import simpmusic.composeapp.generated.resources.rediscover
 
 @Composable
 fun LibraryTilingBox(navController: NavController) {
+    // Rediscover and You might like left this grid for the Home shelves, where they render with
+    // artwork rather than as a tile with a name on it.
     val listItem =
         listOf(
             LibraryTilingState.Favorite,
             LibraryTilingState.Followed,
             LibraryTilingState.MostPlayed,
             LibraryTilingState.Downloaded,
-            LibraryTilingState.Rediscover,
-            LibraryTilingState.MightLike,
         )
     NonLazyGrid(
         columns = 2,
@@ -96,22 +97,6 @@ fun LibraryTilingBox(navController: NavController) {
                                 ),
                             )
                         }
-
-                        LibraryTilingState.Rediscover -> {
-                            navController.navigate(
-                                LibraryDynamicPlaylistDestination(
-                                    type = LibraryDynamicPlaylistType.Rediscover.toStringParams(),
-                                ),
-                            )
-                        }
-
-                        LibraryTilingState.MightLike -> {
-                            navController.navigate(
-                                LibraryDynamicPlaylistDestination(
-                                    type = LibraryDynamicPlaylistType.MightLike.toStringParams(),
-                                ),
-                            )
-                        }
                     }
                 },
             )
@@ -124,89 +109,79 @@ fun LibraryTilingItem(
     state: LibraryTilingState,
     onClick: () -> Unit = {},
 ) {
-    val title = stringResource(state.title)
+    // onClick on the card itself, not a clickable on top of it: that is what gives the node the
+    // button role. The icon is undescribed because the label beside it already names the merged
+    // node — describing both read every tile twice.
     ElevatedCard(
-        modifier =
-            Modifier.fillMaxWidth().clickable {
-                onClick.invoke()
-            },
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         elevation = CardDefaults.elevatedCardElevation(),
         colors =
             CardDefaults.elevatedCardColors().copy(
-                containerColor = state.containerColor,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             ),
     ) {
         Row(
-            Modifier.fillMaxWidth(),
+            // 40dp disc plus 5dp above and below keeps the row at the 50dp it has always been.
+            Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(
-                state.icon,
-                contentDescription = title,
-                modifier =
-                    Modifier
-                        .size(50.dp)
-                        .padding(10.dp),
-                tint = state.iconColor,
-            )
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    state.icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                    tint = state.iconColor ?: MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+            Spacer(Modifier.width(12.dp))
             Text(
-                title,
+                stringResource(state.title),
                 style = typo().titleSmall,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
     }
 }
 
+/**
+ * @property iconColor null takes the theme's own tint. Only Favorite sets one: its red is the
+ *   liked-state colour (`baseline_favorite_24`'s `#D10000`) and means something, so it is kept as
+ *   the one literal here rather than tinted like the others.
+ */
 data class LibraryTilingState(
     val title: StringResource,
-    val containerColor: Color,
     val icon: ImageVector,
-    val iconColor: Color,
+    val iconColor: Color? = null,
 ) {
     companion object {
         val Favorite =
             LibraryTilingState(
                 title = Res.string.favorite,
-                containerColor = Color(0xffff99ae),
                 icon = SimpIcons.Favorite,
                 iconColor = Color(0xffD10000),
             )
         val Followed =
             LibraryTilingState(
                 title = Res.string.followed,
-                containerColor = Color(0xffFFEB3B),
                 icon = SimpIcons.Insights,
-                iconColor = Color.Black,
             )
         val MostPlayed =
             LibraryTilingState(
                 title = Res.string.most_played,
-                containerColor = Color(0xff00BCD4),
                 icon = SimpIcons.TrendingUp,
-                iconColor = Color.Black,
             )
         val Downloaded =
             LibraryTilingState(
                 title = Res.string.downloaded,
-                containerColor = Color(0xff4CAF50),
                 icon = SimpIcons.Downloading,
-                iconColor = Color.Black,
-            )
-        val Rediscover =
-            LibraryTilingState(
-                title = Res.string.rediscover,
-                containerColor = Color(0xffB39DDB),
-                icon = SimpIcons.History,
-                iconColor = Color.Black,
-            )
-        val MightLike =
-            LibraryTilingState(
-                title = Res.string.might_like,
-                containerColor = Color(0xffFFAB91),
-                icon = SimpIcons.TipsAndUpdates,
-                iconColor = Color.Black,
             )
     }
 }

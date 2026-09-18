@@ -21,7 +21,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -40,6 +43,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -49,10 +53,15 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -60,51 +69,54 @@ import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.maxrave.common.Config
 import com.maxrave.common.LibraryChipType
 import com.maxrave.domain.data.entities.SongEntity
+import com.maxrave.domain.mediaservice.handler.QueueData
 import com.maxrave.domain.utils.LocalResource
-import com.maxrave.logger.Logger
+import com.maxrave.domain.utils.toTrack
 import com.maxrave.simpmusic.extension.copy
 import com.maxrave.simpmusic.extension.isScrollingUp
 import com.maxrave.simpmusic.ui.component.AddToPlaylistModalBottomSheet
-import com.maxrave.simpmusic.ui.component.ArtistMixShelf
+import com.maxrave.simpmusic.ui.component.CenterLoadingBox
 import com.maxrave.simpmusic.ui.component.Chip
 import com.maxrave.simpmusic.ui.component.EndOfPage
 import com.maxrave.simpmusic.ui.component.GridLibraryPlaylist
-import com.maxrave.simpmusic.ui.component.LibraryItem
-import com.maxrave.simpmusic.ui.component.LibraryItemState
-import com.maxrave.simpmusic.ui.component.LibraryItemType
 import com.maxrave.simpmusic.ui.component.LibraryTilingBox
 import com.maxrave.simpmusic.ui.component.ListenTogetherIconButton
-import com.maxrave.simpmusic.ui.component.RippleIconButton
+import com.maxrave.simpmusic.ui.component.NowPlayingBottomSheet
+import com.maxrave.simpmusic.ui.component.SimpMusicChartButton
+import com.maxrave.simpmusic.ui.component.SongFullWidthItems
 import com.maxrave.simpmusic.ui.component.selection.SelectedSongsBottomSheet
 import com.maxrave.simpmusic.ui.component.selection.SongSelectionTopAppBar
 import com.maxrave.simpmusic.ui.component.selection.rememberSongSelectionState
-import com.maxrave.simpmusic.ui.icon.Groups
 import com.maxrave.simpmusic.ui.icon.PeopleAlt
 import com.maxrave.simpmusic.ui.icon.SimpIcons
 import com.maxrave.simpmusic.ui.navigation.destination.home.ListenTogetherDestination
+import com.maxrave.simpmusic.ui.navigation.destination.library.LibraryDynamicPlaylistDestination
 import com.maxrave.simpmusic.ui.theme.typo
 import com.maxrave.simpmusic.viewModel.LibraryViewModel
+import com.maxrave.simpmusic.viewModel.SharedViewModel
 import com.maxrave.simpmusic.viewModel.SongSelectionViewModel
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import org.jetbrains.compose.resources.getString
-import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import simpmusic.composeapp.generated.resources.Res
-import simpmusic.composeapp.generated.resources.chart
 import simpmusic.composeapp.generated.resources.create
 import simpmusic.composeapp.generated.resources.downloaded_playlists
 import simpmusic.composeapp.generated.resources.favorite_playlists
 import simpmusic.composeapp.generated.resources.favorite_podcasts
 import simpmusic.composeapp.generated.resources.library
+import simpmusic.composeapp.generated.resources.load_failed
 import simpmusic.composeapp.generated.resources.mix_for_you
 import simpmusic.composeapp.generated.resources.no_YouTube_playlists
 import simpmusic.composeapp.generated.resources.no_charts_found
@@ -114,11 +126,18 @@ import simpmusic.composeapp.generated.resources.no_playlists_added
 import simpmusic.composeapp.generated.resources.no_playlists_downloaded
 import simpmusic.composeapp.generated.resources.playlist_name
 import simpmusic.composeapp.generated.resources.playlist_name_cannot_be_empty
+import simpmusic.composeapp.generated.resources.recently_played
+import simpmusic.composeapp.generated.resources.recently_played_empty
+import simpmusic.composeapp.generated.resources.recently_played_subtitle
+import simpmusic.composeapp.generated.resources.retry
+import simpmusic.composeapp.generated.resources.see_all
 import simpmusic.composeapp.generated.resources.simpmusic_charts
 import simpmusic.composeapp.generated.resources.wrapped
 import simpmusic.composeapp.generated.resources.your_library
 import simpmusic.composeapp.generated.resources.your_playlists
 import simpmusic.composeapp.generated.resources.your_youtube_playlists
+import kotlin.math.roundToInt
+import com.maxrave.domain.mediaservice.handler.PlaylistType as DomainPlaylistType
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
@@ -129,23 +148,22 @@ fun LibraryScreen(
     onScrolling: (onTop: Boolean) -> Unit = {},
 ) {
     val density = LocalDensity.current
+    val uriHandler = LocalUriHandler.current
+    val sharedViewModel: SharedViewModel = koinInject()
 
     val loggedIn by viewModel.youtubeLoggedIn.collectAsStateWithLifecycle(initialValue = false)
     // Wrapped and its recaps are built entirely from playback_event, so the chip follows the same
     // setting the Analytics tab does.
     val localTrackingEnabled by viewModel.localTrackingEnabled.collectAsStateWithLifecycle(initialValue = false)
     val monthlyRecaps by viewModel.monthlyRecaps.collectAsStateWithLifecycle()
-    val artistMixes by viewModel.artistMixes.collectAsStateWithLifecycle()
-    val loadingArtistMix by viewModel.loadingArtistMix.collectAsStateWithLifecycle()
     val nowPlaying by viewModel.nowPlayingVideoId.collectAsStateWithLifecycle()
     val youTubePlaylist by viewModel.youTubePlaylist.collectAsStateWithLifecycle()
-    val listCanvasSong by viewModel.listCanvasSong.collectAsStateWithLifecycle()
     val yourLocalPlaylist by viewModel.yourLocalPlaylist.collectAsStateWithLifecycle()
     val favoritePlaylist by viewModel.favoritePlaylist.collectAsStateWithLifecycle()
     val downloadedPlaylist by viewModel.downloadedPlaylist.collectAsStateWithLifecycle()
     val favoritePodcasts by viewModel.favoritePodcasts.collectAsStateWithLifecycle()
     val chartPlaylists by viewModel.chartPlaylists.collectAsStateWithLifecycle()
-    val recentlyAdded by viewModel.recentlyAdded.collectAsStateWithLifecycle()
+    val recentlyPlayed by viewModel.recentlyPlayed.collectAsStateWithLifecycle()
 
     val selectionState = rememberSongSelectionState()
     val selectionViewModel: SongSelectionViewModel = koinViewModel()
@@ -161,14 +179,62 @@ fun LibraryScreen(
         mutableStateOf(0.dp)
     }
     var showAddSheet by remember { mutableStateOf(false) }
+    // The song whose "more" sheet is open, if any. One sheet for the whole shelf, hoisted out of
+    // the rows, since the rows are now items of the tab's own LazyColumn.
+    var moreSong by remember { mutableStateOf<SongEntity?>(null) }
 
     LaunchedEffect(nowPlaying) {
-        Logger.w("LibraryScreen", "Check nowPlaying: $nowPlaying")
-        viewModel.getRecentlyAdded()
+        viewModel.getRecentlyPlayed()
     }
 
     val chipRowState = rememberScrollState()
     val currentFilter by viewModel.currentScreen.collectAsStateWithLifecycle()
+
+    // Ordered by hand, not `entries`: the enum's declaration order is persistence order, and
+    // Mix for you sits in it with no chip of its own.
+    val chips =
+        remember(loggedIn, localTrackingEnabled) {
+            listOfNotNull(
+                LibraryChipType.YOUR_LIBRARY,
+                LibraryChipType.LOCAL_PLAYLIST,
+                LibraryChipType.YOUTUBE_MUSIC_PLAYLIST.takeIf { loggedIn },
+                LibraryChipType.FAVORITE_PLAYLIST,
+                LibraryChipType.DOWNLOADED_PLAYLIST,
+                LibraryChipType.FAVORITE_PODCAST,
+                // Nothing to recap without the plays — gated exactly as the YouTube chip is
+                // gated on being logged in.
+                LibraryChipType.WRAPPED.takeIf { localTrackingEnabled },
+                LibraryChipType.CHART,
+            )
+        }
+
+    // Each chip's bounds in the Row's content space, written from onGloballyPositioned. The Row
+    // is a plain horizontalScroll, so nothing brings a chip into view on its own: the one restored
+    // from DataStore on return, or tapped at the right edge, sat half off-screen. Same mechanism
+    // as Home's chip row.
+    val chipBounds = remember { mutableStateMapOf<LibraryChipType, Rect>() }
+    val chipRowPaddingPx = with(density) { CHIP_ROW_HORIZONTAL_PADDING.toPx() }
+    val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    LaunchedEffect(currentFilter) {
+        // The map is empty until the row has been placed, on first composition and on return.
+        val bounds = snapshotFlow { chipBounds[currentFilter] }.filterNotNull().first()
+        val viewport = chipRowState.viewportSize
+        if (viewport <= 0) return@LaunchedEffect
+        // boundsInParent excludes the Row's own padding, which scrolls with the content.
+        val chipStart = bounds.left + chipRowPaddingPx
+        val chipEnd = bounds.right + chipRowPaddingPx
+        // Left-based window. In RTL scroll value 0 shows the content's RIGHT edge.
+        val windowStart =
+            if (isRtl) (chipRowState.maxValue - chipRowState.value).toFloat() else chipRowState.value.toFloat()
+        val target =
+            when {
+                chipStart < windowStart -> chipStart
+                chipEnd > windowStart + viewport -> chipEnd - viewport
+                else -> return@LaunchedEffect // already fully visible
+            }
+        val value = if (isRtl) chipRowState.maxValue - target else target
+        chipRowState.animateScrollTo(value.roundToInt().coerceIn(0, chipRowState.maxValue))
+    }
 
     LaunchedEffect(currentFilter) {
         when (currentFilter) {
@@ -186,9 +252,7 @@ fun LibraryScreen(
             }
 
             LibraryChipType.YOUR_LIBRARY -> {
-                viewModel.getCanvasSong()
-                viewModel.getRecentlyAdded()
-                viewModel.getArtistMixes()
+                viewModel.getRecentlyPlayed()
             }
 
             LibraryChipType.LOCAL_PLAYLIST -> {
@@ -219,16 +283,19 @@ fun LibraryScreen(
         }
     }
 
+    // Above the Crossfade, not inside its content lambda: there it was created afresh on every
+    // return to the tab, so the scroll position was lost each time another chip was visited.
+    val libraryListState = rememberLazyListState()
+
     Crossfade(
         modifier = Modifier.hazeSource(hazeState),
         targetState = currentFilter,
     ) { filter ->
         when (filter) {
             LibraryChipType.YOUR_LIBRARY -> {
-                val state = rememberLazyListState()
-                val isScrollingUp by state.isScrollingUp()
-                LaunchedEffect(state) {
-                    snapshotFlow { state.firstVisibleItemIndex }
+                val isScrollingUp by libraryListState.isScrollingUp()
+                LaunchedEffect(libraryListState) {
+                    snapshotFlow { libraryListState.firstVisibleItemIndex }
                         .collect {
                             if (it <= 1) {
                                 onScrolling.invoke(true)
@@ -242,54 +309,110 @@ fun LibraryScreen(
                         innerPadding.copy(
                             top = topAppBarHeight,
                         ),
-                    state = state,
+                    state = libraryListState,
                 ) {
                     item {
                         LibraryTilingBox(navController)
                     }
 
-                    // Built from `playback_event`, so it follows local tracking exactly as the
-                    // Wrapped chip does — with the setting off the table is empty and the shelf
-                    // would be a heading over nothing.
-                    if (localTrackingEnabled) {
-                        item {
-                            ArtistMixShelf(
-                                artists = artistMixes.data ?: emptyList(),
-                                isLoading = artistMixes is LocalResource.Loading,
-                                loadingChannelId = loadingArtistMix,
-                                onClick = { artist -> viewModel.playArtistMix(artist) },
-                            )
-                        }
-                    }
-
-                    if (!listCanvasSong.data.isNullOrEmpty()) {
-                        item {
-                            LibraryItem(
-                                state =
-                                    LibraryItemState(
-                                        type = LibraryItemType.CanvasSong,
-                                        data = listCanvasSong.data ?: emptyList(),
-                                        isLoading = listCanvasSong is LocalResource.Loading,
-                                    ),
-                                navController = navController,
-                            )
-                        }
-                    }
-
-                    item {
-                        LibraryItem(
-                            state =
-                                LibraryItemState(
-                                    type =
-                                        LibraryItemType.RecentlyAdded(
-                                            playingVideoId = nowPlaying,
-                                        ),
-                                    data = recentlyAdded.data ?: emptyList(),
-                                    isLoading = recentlyAdded is LocalResource.Loading,
+                    item(key = "recently_played:header") {
+                        RecentlyPlayedHeader {
+                            navController.navigate(
+                                LibraryDynamicPlaylistDestination(
+                                    type = LibraryDynamicPlaylistType.RecentlyPlayed.toStringParams(),
                                 ),
-                            navController = navController,
-                            selectionState = selectionState,
-                        )
+                            )
+                        }
+                    }
+
+                    // Rows are items of THIS list, not a Column inside one item: a Column is one
+                    // item to the LazyColumn, so it was measured and composed whole.
+                    when (val recent = recentlyPlayed) {
+                        is LocalResource.Loading -> {
+                            item(key = "recently_played:loading") {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .height(130.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CenterLoadingBox(Modifier.wrapContentSize())
+                                }
+                            }
+                        }
+
+                        is LocalResource.Error -> {
+                            item(key = "recently_played:error") {
+                                Row(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = stringResource(Res.string.load_failed),
+                                        style = typo().bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    TextButton(onClick = { viewModel.getRecentlyPlayed() }) {
+                                        Text(text = stringResource(Res.string.retry))
+                                    }
+                                }
+                            }
+                        }
+
+                        is LocalResource.Success -> {
+                            val songs = recent.data.orEmpty()
+                            if (songs.isEmpty()) {
+                                // The heading stays: this line is what explains it.
+                                item(key = "recently_played:empty") {
+                                    Text(
+                                        text = stringResource(Res.string.recently_played_empty),
+                                        style = typo().bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp),
+                                    )
+                                }
+                            } else {
+                                items(songs, key = { it.videoId }) { song ->
+                                    SongFullWidthItems(
+                                        songEntity = song,
+                                        isPlaying = song.videoId == nowPlaying,
+                                        modifier = Modifier,
+                                        onMoreClickListener = { moreSong = song },
+                                        onClickListener = {
+                                            viewModel.setQueueData(
+                                                QueueData.Data(
+                                                    listTracks = arrayListOf(song.toTrack()),
+                                                    firstPlayedTrack = song.toTrack(),
+                                                    playlistId = "RDAMVM${song.videoId}",
+                                                    playlistName = song.title,
+                                                    playlistType = DomainPlaylistType.RADIO,
+                                                    continuation = null,
+                                                ),
+                                            )
+                                            viewModel.loadMediaItem(
+                                                song,
+                                                type = Config.SONG_CLICK,
+                                                index = 0,
+                                            )
+                                        },
+                                        selectionMode = selectionState.isActive,
+                                        isSelected = selectionState.isSelected(song.videoId),
+                                        onLongClick = { selectionState.start(it) },
+                                        onSelectToggle = { selectionState.toggle(it) },
+                                        onAddToQueue = {
+                                            sharedViewModel.addListToQueue(
+                                                arrayListOf(song.toTrack()),
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                        }
                     }
                     item {
                         EndOfPage()
@@ -371,6 +494,15 @@ fun LibraryScreen(
                     chartPlaylists,
                     emptyText = Res.string.no_charts_found,
                     onScrolling = onScrolling,
+                    footer = {
+                        SimpMusicChartButton(
+                            modifier =
+                                Modifier
+                                    .wrapContentWidth()
+                                    .padding(vertical = 16.dp),
+                            onClick = { uriHandler.openUri("https://chart.simpmusic.org") },
+                        )
+                    },
                 ) {
                     viewModel.getChartPlaylists()
                 }
@@ -388,9 +520,20 @@ fun LibraryScreen(
             }
         }
     }
+    moreSong?.let { song ->
+        NowPlayingBottomSheet(
+            onDismiss = { moreSong = null },
+            navController = navController,
+            song = song,
+            onLibraryDelete = { viewModel.deleteSong(song.videoId) },
+        )
+    }
     val coroutineScope = rememberCoroutineScope()
     if (showAddSheet) {
         var newTitle by remember { mutableStateOf("") }
+        // Read in composition and captured: the click handler used to resolve it with
+        // runBlocking on the main thread.
+        val emptyTitleMessage = stringResource(Res.string.playlist_name_cannot_be_empty)
         val showAddSheetState =
             rememberModalBottomSheetState(
                 skipPartiallyExpanded = true,
@@ -449,7 +592,7 @@ fun LibraryScreen(
                     TextButton(
                         onClick = {
                             if (newTitle.isBlank()) {
-                                viewModel.makeToast(runBlocking { getString(Res.string.playlist_name_cannot_be_empty) })
+                                viewModel.makeToast(emptyTitleMessage)
                             } else {
                                 viewModel.createPlaylist(newTitle)
                                 hideEditTitleBottomSheet()
@@ -528,9 +671,7 @@ fun LibraryScreen(
                 windowInsets = WindowInsets(0),
                 onSelectAll = {
                     selectionState.toggleSelectAll(
-                        (recentlyAdded.data ?: emptyList())
-                            .filterIsInstance<SongEntity>()
-                            .map { it.videoId },
+                        recentlyPlayed.data.orEmpty().map { it.videoId },
                     )
                 },
                 onOpenActions = { showSelectionSheet = true },
@@ -542,41 +683,28 @@ fun LibraryScreen(
             modifier =
                 Modifier
                     .horizontalScroll(chipRowState)
-                    .padding(horizontal = 15.dp)
+                    .padding(horizontal = CHIP_ROW_HORIZONTAL_PADDING)
                     .padding(bottom = 8.dp)
                     .background(Color.Transparent),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            LibraryChipType.entries.forEach { type ->
-                // Mix for you left this row for a tab of its own.
-                if (type == LibraryChipType.YOUTUBE_MIX_FOR_YOU) {
-                    return@forEach
-                }
-                if (type == LibraryChipType.YOUTUBE_MUSIC_PLAYLIST && !loggedIn) {
-                    return@forEach
-                }
-                // Nothing to recap without the plays — gated exactly as the YouTube chip above
-                // is gated on being logged in.
-                if (type == LibraryChipType.WRAPPED && !localTrackingEnabled) {
-                    return@forEach
-                }
-                Chip(
-                    isAnimated = false,
-                    isSelected = type == currentFilter,
-                    text =
-                        when (type) {
-                            LibraryChipType.YOUR_LIBRARY -> stringResource(Res.string.your_library)
-                            LibraryChipType.YOUTUBE_MUSIC_PLAYLIST -> stringResource(Res.string.your_youtube_playlists)
-                            LibraryChipType.YOUTUBE_MIX_FOR_YOU -> stringResource(Res.string.mix_for_you)
-                            LibraryChipType.LOCAL_PLAYLIST -> stringResource(Res.string.your_playlists)
-                            LibraryChipType.FAVORITE_PLAYLIST -> stringResource(Res.string.favorite_playlists)
-                            LibraryChipType.DOWNLOADED_PLAYLIST -> stringResource(Res.string.downloaded_playlists)
-                            LibraryChipType.FAVORITE_PODCAST -> stringResource(Res.string.favorite_podcasts)
-                            LibraryChipType.CHART -> stringResource(Res.string.simpmusic_charts)
-                            LibraryChipType.WRAPPED -> stringResource(Res.string.wrapped)
-                        },
+            chips.forEach { type ->
+                // Chip takes no Modifier, hence the Box. boundsInParent is relative to the Row's
+                // content, so it does not move with the scroll; the equality guard keeps every
+                // scroll frame from writing the same value as state.
+                Box(
+                    Modifier.onGloballyPositioned { coordinates ->
+                        val bounds = coordinates.boundsInParent()
+                        if (chipBounds[type] != bounds) chipBounds[type] = bounds
+                    },
                 ) {
-                    viewModel.setCurrentScreen(type)
+                    Chip(
+                        isAnimated = false,
+                        isSelected = type == currentFilter,
+                        text = stringResource(type.label()),
+                    ) {
+                        viewModel.setCurrentScreen(type)
+                    }
                 }
             }
         }
@@ -621,3 +749,54 @@ fun LibraryScreen(
         }
     }
 }
+
+/**
+ * Eyebrow over title, the way a Home shelf names itself, with "See all" on the trailing edge.
+ *
+ * The eyebrow says where the rows come from; on this tab that is the point — every other block
+ * on it is a bucket the listener filled by hand, and this one they filled by listening.
+ */
+@Composable
+private fun RecentlyPlayedHeader(onSeeAll: () -> Unit) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 15.dp, start = 10.dp, end = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = stringResource(Res.string.recently_played_subtitle),
+                style = typo().bodySmall,
+            )
+            Text(
+                text = stringResource(Res.string.recently_played),
+                style = typo().headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+            )
+        }
+        TextButton(onClick = onSeeAll) {
+            Text(text = stringResource(Res.string.see_all))
+        }
+    }
+}
+
+private fun LibraryChipType.label(): StringResource =
+    when (this) {
+        LibraryChipType.YOUR_LIBRARY -> Res.string.your_library
+        LibraryChipType.YOUTUBE_MUSIC_PLAYLIST -> Res.string.your_youtube_playlists
+        LibraryChipType.YOUTUBE_MIX_FOR_YOU -> Res.string.mix_for_you
+        LibraryChipType.LOCAL_PLAYLIST -> Res.string.your_playlists
+        LibraryChipType.FAVORITE_PLAYLIST -> Res.string.favorite_playlists
+        LibraryChipType.DOWNLOADED_PLAYLIST -> Res.string.downloaded_playlists
+        LibraryChipType.FAVORITE_PODCAST -> Res.string.favorite_podcasts
+        LibraryChipType.CHART -> Res.string.simpmusic_charts
+        LibraryChipType.WRAPPED -> Res.string.wrapped
+    }
+
+// The Row's own horizontal padding, added back onto boundsInParent so both sides of the
+// scroll-into-view maths count the same thing: boundsInParent stops at the Row's content,
+// ScrollState counts the padding.
+private val CHIP_ROW_HORIZONTAL_PADDING = 15.dp

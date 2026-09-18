@@ -60,6 +60,9 @@ class LibraryDynamicPlaylistViewModel(
     private val _listMightLikeSong: MutableStateFlow<List<SongEntity>> = MutableStateFlow(emptyList())
     val listMightLikeSong: StateFlow<List<SongEntity>> get() = _listMightLikeSong
 
+    private val _listRecentlyPlayedSong: MutableStateFlow<List<SongEntity>> = MutableStateFlow(emptyList())
+    val listRecentlyPlayedSong: StateFlow<List<SongEntity>> get() = _listRecentlyPlayedSong
+
     /**
      * True while the suggestions are being fetched.
      *
@@ -96,6 +99,7 @@ class LibraryDynamicPlaylistViewModel(
         getDownloadedSong()
         getRediscoverSong()
         getMightLikeSong()
+        getRecentlyPlayedSong()
     }
 
     /**
@@ -194,6 +198,34 @@ class LibraryDynamicPlaylistViewModel(
                             .orEmpty()
                             .take(REDISCOVER_LIMIT)
                 }
+        }
+    }
+
+    /**
+     * The long form of the Library tab's Recently played shelf: newest first, one row per track.
+     *
+     * Same two steps as the shelf — a window of the latest plays, each id's first appearance kept,
+     * then one batch lookup — so the page opened from "See all" starts with exactly the rows the
+     * shelf showed. The window bounds the batch under SQLite's 999 bound variables on the oldest
+     * supported devices; a listener who repeats a lot gets fewer than [RECENTLY_PLAYED_LIMIT]
+     * rows rather than a query that throws.
+     */
+    private fun getRecentlyPlayedSong() {
+        viewModelScope.launch {
+            val ids =
+                analyticsRepository
+                    .getPlaybackEventsByOffset(offset = 0, limit = RECENTLY_PLAYED_EVENT_WINDOW)
+                    .firstOrNull()
+                    .orEmpty()
+                    .map { it.videoId }
+                    .distinct()
+            _listRecentlyPlayedSong.value =
+                songRepository
+                    .getSongsByListVideoId(ids)
+                    .firstOrNull()
+                    .orEmpty()
+                    .filterNot { it.inLibrary == REMOVED_SONG_DATE_TIME }
+                    .take(RECENTLY_PLAYED_LIMIT)
         }
     }
 
@@ -315,6 +347,8 @@ class LibraryDynamicPlaylistViewModel(
                 LibraryDynamicPlaylistType.MostPlayed -> listMostPlayedSong.value to listMostPlayedSong.value.find { it.videoId == videoId }
                 LibraryDynamicPlaylistType.Rediscover -> listRediscoverSong.value to listRediscoverSong.value.find { it.videoId == videoId }
                 LibraryDynamicPlaylistType.MightLike -> listMightLikeSong.value to listMightLikeSong.value.find { it.videoId == videoId }
+                LibraryDynamicPlaylistType.RecentlyPlayed ->
+                    listRecentlyPlayedSong.value to listRecentlyPlayedSong.value.find { it.videoId == videoId }
                 is LibraryDynamicPlaylistType.MonthlyRecap ->
                     listMonthlyRecapSong.value to listMonthlyRecapSong.value.find { it.videoId == videoId }
                 else -> return
@@ -344,6 +378,7 @@ class LibraryDynamicPlaylistViewModel(
             LibraryDynamicPlaylistType.MostPlayed -> listMostPlayedSong.value
             LibraryDynamicPlaylistType.Rediscover -> listRediscoverSong.value
             LibraryDynamicPlaylistType.MightLike -> listMightLikeSong.value
+            LibraryDynamicPlaylistType.RecentlyPlayed -> listRecentlyPlayedSong.value
             is LibraryDynamicPlaylistType.MonthlyRecap -> listMonthlyRecapSong.value
             else -> emptyList()
         }
@@ -420,5 +455,10 @@ class LibraryDynamicPlaylistViewModel(
         /** One network round trip each, so this is a cost as much as a setting. */
         private const val MIGHT_LIKE_SEEDS = 4
         private const val MIGHT_LIKE_LIMIT = 50
+
+        private const val RECENTLY_PLAYED_LIMIT = 200
+
+        /** Plays read behind the 200 rows; distinct ids out of it stay under the 999 bound. */
+        private const val RECENTLY_PLAYED_EVENT_WINDOW = 600
     }
 }

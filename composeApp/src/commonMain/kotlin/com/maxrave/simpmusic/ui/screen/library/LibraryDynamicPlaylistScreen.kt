@@ -103,6 +103,8 @@ import simpmusic.composeapp.generated.resources.might_like
 import simpmusic.composeapp.generated.resources.might_like_empty
 import simpmusic.composeapp.generated.resources.might_like_subtitle
 import simpmusic.composeapp.generated.resources.most_played
+import simpmusic.composeapp.generated.resources.recently_played
+import simpmusic.composeapp.generated.resources.recently_played_subtitle
 import simpmusic.composeapp.generated.resources.rediscover
 import simpmusic.composeapp.generated.resources.rediscover_subtitle
 import simpmusic.composeapp.generated.resources.search
@@ -150,6 +152,8 @@ fun LibraryDynamicPlaylistScreen(
     var tempMonthlyRecap by remember { mutableStateOf(emptyList<SongEntity>()) }
     val rediscover by viewModel.listRediscoverSong.collectAsStateWithLifecycle()
     var tempRediscover by remember { mutableStateOf(emptyList<SongEntity>()) }
+    val recentlyPlayed by viewModel.listRecentlyPlayedSong.collectAsStateWithLifecycle()
+    var tempRecentlyPlayed by remember { mutableStateOf(emptyList<SongEntity>()) }
     val mightLike by viewModel.listMightLikeSong.collectAsStateWithLifecycle()
     val mightLikeLoading by viewModel.mightLikeLoading.collectAsStateWithLifecycle()
     var tempMightLike by remember { mutableStateOf(emptyList<SongEntity>()) }
@@ -190,6 +194,7 @@ fun LibraryDynamicPlaylistScreen(
         monthlyRecap,
         rediscover,
         mightLike,
+        recentlyPlayed,
         analyticsUIState,
     ) {
         tempFavorite = favorite.filter { it.matches(query) }
@@ -199,6 +204,7 @@ fun LibraryDynamicPlaylistScreen(
         tempMonthlyRecap = monthlyRecap.filter { it.matches(query) }
         tempRediscover = rediscover.filter { it.matches(query) }
         tempMightLike = mightLike.filter { it.matches(query) }
+        tempRecentlyPlayed = recentlyPlayed.filter { it.matches(query) }
         tempTopTracks =
             analyticsUIState.topTracks.data
                 ?.filter { it.second.matches(query) }
@@ -439,6 +445,14 @@ fun LibraryDynamicPlaylistScreen(
                         }
                     }
 
+                    LibraryDynamicPlaylistType.RecentlyPlayed -> {
+                        if (query.isNotEmpty() && showSearchBar) {
+                            tempRecentlyPlayed
+                        } else {
+                            recentlyPlayed
+                        }
+                    }
+
                     // Kept as an explicit branch rather than an `else`: the three cases above are
                     // reachable only because the `if` chain around this block has already ruled
                     // out every other object, and an `else` here would silently swallow the next
@@ -586,6 +600,8 @@ fun LibraryDynamicPlaylistScreen(
                     stringResource(Res.string.rediscover_subtitle)
                 LibraryDynamicPlaylistType.MightLike ->
                     stringResource(Res.string.might_like_subtitle)
+                LibraryDynamicPlaylistType.RecentlyPlayed ->
+                    stringResource(Res.string.recently_played_subtitle)
                 LibraryDynamicPlaylistType.Followed ->
                     "${followed.size} ${stringResource(Res.string.artists)}"
                 is LibraryDynamicPlaylistType.MonthlyRecap ->
@@ -819,6 +835,15 @@ sealed class LibraryDynamicPlaylistType {
     data object MightLike : LibraryDynamicPlaylistType()
 
     /**
+     * The listening history itself, newest first, one row per track.
+     *
+     * The Library tab shows the first ten of these under "Recently played"; this is the page its
+     * "See all" opens. The only list here that orders by WHEN rather than by how much, which is why
+     * it is not a variant of [MostPlayed].
+     */
+    data object RecentlyPlayed : LibraryDynamicPlaylistType()
+
+    /**
      * The three top lists carry the period they were opened for, so the list on screen is the one
      * the user was looking at rather than whatever period this screen's own view model starts on.
      *
@@ -877,6 +902,7 @@ sealed class LibraryDynamicPlaylistType {
             Downloaded -> Res.string.downloaded
             Rediscover -> Res.string.rediscover
             MightLike -> Res.string.might_like
+            RecentlyPlayed -> Res.string.recently_played
             is TopAlbums -> Res.string.your_top_albums
             is TopArtists -> Res.string.your_top_artists
             is TopTracks -> Res.string.your_top_tracks
@@ -948,6 +974,7 @@ sealed class LibraryDynamicPlaylistType {
             Downloaded -> "downloaded"
             Rediscover -> "rediscover"
             MightLike -> "might_like"
+            RecentlyPlayed -> "recently_played"
             is TopAlbums -> TOP_ALBUMS + periodSuffix()
             is TopArtists -> TOP_ARTISTS + periodSuffix()
             is TopTracks -> TOP_TRACKS + periodSuffix()
@@ -970,6 +997,7 @@ sealed class LibraryDynamicPlaylistType {
                 "downloaded" -> Downloaded
                 "rediscover" -> Rediscover
                 "might_like" -> MightLike
+                "recently_played" -> RecentlyPlayed
                 TOP_ALBUMS -> TopAlbums()
                 TOP_ARTISTS -> TopArtists()
                 TOP_TRACKS -> TopTracks()
