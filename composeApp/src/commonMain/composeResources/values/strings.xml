@@ -236,7 +236,7 @@
     <string name="copyright" translatable="false">©2023-2025 Tuan Minh Nguyen Duc (maxrave-dev)</string>
     <string name="end_of_page_credit">©%1$s %2$s %3$s\n%4$s</string>
     <string name="featured_playlists">Featured Playlists</string>
-    <string name="podcasts" translatable="false">Podcasts</string>
+    <string name="podcasts">Podcasts</string>
     <string name="featured_inArtist">Featured on</string>
     <string name="play_video_for_video_track_instead_of_audio_only">Play video for video track instead of audio only</string>
     <string name="such_as_music_video_lyrics_video_podcasts_and_more">Such as Music Video, Lyrics Video, Podcasts, and more</string>
@@ -705,7 +705,7 @@
     <string name="share_lyrics_share_failed">Could not share the image</string>
     <string name="share_lyrics_background">Background</string>
     <string name="share_lyrics_permission_denied">Storage permission is needed to save the image</string>
-    <string name="wrapped" translatable="false">Wrapped</string>
+    <string name="wrapped">Wrapped</string>
     <string name="wrapped_year" translatable="false">Wrapped %1$s</string>
     <string name="wrapped_tap_to_begin">Tap to begin</string>
     <string name="wrapped_tap_to_continue">Tap to continue</string>

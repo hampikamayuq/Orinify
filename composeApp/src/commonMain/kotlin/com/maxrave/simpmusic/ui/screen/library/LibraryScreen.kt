@@ -33,6 +33,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Button
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -117,6 +118,7 @@ import simpmusic.composeapp.generated.resources.favorite_playlists
 import simpmusic.composeapp.generated.resources.favorite_podcasts
 import simpmusic.composeapp.generated.resources.library
 import simpmusic.composeapp.generated.resources.load_failed
+import simpmusic.composeapp.generated.resources.logged_in
 import simpmusic.composeapp.generated.resources.mix_for_you
 import simpmusic.composeapp.generated.resources.no_YouTube_playlists
 import simpmusic.composeapp.generated.resources.no_charts_found
@@ -125,7 +127,6 @@ import simpmusic.composeapp.generated.resources.no_favorite_podcasts
 import simpmusic.composeapp.generated.resources.no_playlists_added
 import simpmusic.composeapp.generated.resources.no_playlists_downloaded
 import simpmusic.composeapp.generated.resources.playlist_name
-import simpmusic.composeapp.generated.resources.playlist_name_cannot_be_empty
 import simpmusic.composeapp.generated.resources.recently_played
 import simpmusic.composeapp.generated.resources.recently_played_empty
 import simpmusic.composeapp.generated.resources.recently_played_subtitle
@@ -533,7 +534,6 @@ fun LibraryScreen(
         var newTitle by remember { mutableStateOf("") }
         // Read in composition and captured: the click handler used to resolve it with
         // runBlocking on the main thread.
-        val emptyTitleMessage = stringResource(Res.string.playlist_name_cannot_be_empty)
         val showAddSheetState =
             rememberModalBottomSheetState(
                 skipPartiallyExpanded = true,
@@ -588,23 +588,25 @@ fun LibraryScreen(
                                 .fillMaxWidth()
                                 .padding(horizontal = 8.dp),
                     )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    TextButton(
+                    Spacer(modifier = Modifier.height(12.dp))
+                    // The one action in the sheet is a filled button, and it is disabled while
+                    // the name is blank: a toast after the tap told the user what the button
+                    // could have told them before it.
+                    Button(
                         onClick = {
-                            if (newTitle.isBlank()) {
-                                viewModel.makeToast(emptyTitleMessage)
-                            } else {
-                                viewModel.createPlaylist(newTitle)
-                                hideEditTitleBottomSheet()
-                            }
+                            viewModel.createPlaylist(newTitle.trim())
+                            hideEditTitleBottomSheet()
                         },
+                        enabled = newTitle.isNotBlank(),
                         modifier =
                             Modifier
                                 .fillMaxWidth()
+                                .padding(horizontal = 8.dp)
                                 .align(Alignment.CenterHorizontally),
                     ) {
                         Text(text = stringResource(Res.string.create))
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
             }
         }
@@ -646,7 +648,9 @@ fun LibraryScreen(
                                 .build(),
                         placeholder = rememberVectorPainter(SimpIcons.PeopleAlt),
                         error = rememberVectorPainter(SimpIcons.PeopleAlt),
-                        contentDescription = null,
+                        // Not decorative: this face is the only thing on the screen that says
+                        // an account is signed in.
+                        contentDescription = stringResource(Res.string.logged_in),
                         modifier =
                             Modifier
                                 .size(26.dp)
