@@ -95,6 +95,10 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -214,6 +218,7 @@ import simpmusic.composeapp.generated.resources.edit_title
 import simpmusic.composeapp.generated.resources.endless_queue
 import simpmusic.composeapp.generated.resources.error_occurred
 import simpmusic.composeapp.generated.resources.extract_source
+import simpmusic.composeapp.generated.resources.favorite
 import simpmusic.composeapp.generated.resources.itag
 import simpmusic.composeapp.generated.resources.key
 import simpmusic.composeapp.generated.resources.like
@@ -263,6 +268,7 @@ import simpmusic.composeapp.generated.resources.sync_first
 import simpmusic.composeapp.generated.resources.synced
 import simpmusic.composeapp.generated.resources.title
 import simpmusic.composeapp.generated.resources.to_download_folder
+import simpmusic.composeapp.generated.resources.unfavorite
 import simpmusic.composeapp.generated.resources.unknown
 import simpmusic.composeapp.generated.resources.update_playlist
 import simpmusic.composeapp.generated.resources.warning
@@ -2067,19 +2073,24 @@ fun HeartCheckBox(
                     // already-liked song from celebrating a like nobody gave.
                     if (!checked) burstState.fire()
                     onStateChange?.invoke()
+                }
+                // The description names the ACTION; the state rides on `selected`.
+                .semantics {
+                    role = Role.Checkbox
+                    selected = checked
                 },
     ) {
         Crossfade(targetState = checked, modifier = Modifier.fillMaxSize()) {
             if (it) {
                 Image(
                     painter = painterResource(Res.drawable.baseline_favorite_24),
-                    contentDescription = "Favorite checked",
+                    contentDescription = stringResource(Res.string.unfavorite),
                     modifier = Modifier.fillMaxSize().padding(4.dp),
                 )
             } else {
                 Image(
                     imageVector = SimpIcons.FavoriteBorder,
-                    contentDescription = "Favorite unchecked",
+                    contentDescription = stringResource(Res.string.favorite),
                     modifier = Modifier.fillMaxSize().padding(4.dp),
                     colorFilter = ColorFilter.tint(tint),
                 )

@@ -18,6 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.maxrave.domain.mediaservice.handler.ControlState
@@ -34,6 +37,16 @@ import com.maxrave.simpmusic.ui.icon.SkipNext
 import com.maxrave.simpmusic.ui.icon.SkipPrevious
 import com.maxrave.simpmusic.ui.theme.seed
 import com.maxrave.simpmusic.viewModel.UIEvent
+import org.jetbrains.compose.resources.stringResource
+import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.next
+import simpmusic.composeapp.generated.resources.pause
+import simpmusic.composeapp.generated.resources.play
+import simpmusic.composeapp.generated.resources.previous
+import simpmusic.composeapp.generated.resources.repeat_all
+import simpmusic.composeapp.generated.resources.repeat_off
+import simpmusic.composeapp.generated.resources.repeat_one
+import simpmusic.composeapp.generated.resources.shuffle
 
 @Composable
 fun PlayerControlLayout(
@@ -45,7 +58,7 @@ fun PlayerControlLayout(
     // The capsule already pads its own edges; stacking this 20dp on top of that
     // read as a hole at both ends of the transport cluster.
     horizontalPadding: Dp = 20.dp,
-    // Tint for the ACTIVE shuffle/repeat state. The default keeps the raw seed (#8ECAE6) every
+    // Tint for the ACTIVE shuffle/repeat state. The default keeps the raw seed (#AD85FD) every
     // existing call site had; the capsule passes a theme-aware colour because pastel seed on a
     // light glass surface is nearly invisible.
     activeColor: Color = seed,
@@ -75,9 +88,11 @@ fun PlayerControlLayout(
                         .clip(
                             CircleShape,
                         )
-                        .clickable {
+                        .clickable(role = Role.Button) {
                             onUIEvent(UIEvent.Shuffle)
-                        },
+                        }
+                        // On/off is otherwise only a tint change, which a screen reader cannot see.
+                        .semantics { selected = controllerState.isShuffle },
                 contentAlignment = Alignment.Center,
             ) {
                 Crossfade(targetState = controllerState.isShuffle, label = "Shuffle Button") { isShuffle ->
@@ -85,14 +100,14 @@ fun PlayerControlLayout(
                         Icon(
                             imageVector = SimpIcons.Shuffle,
                             tint = contentColor,
-                            contentDescription = "",
+                            contentDescription = stringResource(Res.string.shuffle),
                             modifier = Modifier.size(smallIcon.first),
                         )
                     } else {
                         Icon(
                             imageVector = SimpIcons.Shuffle,
                             tint = activeColor,
-                            contentDescription = "",
+                            contentDescription = stringResource(Res.string.shuffle),
                             modifier = Modifier.size(smallIcon.first),
                         )
                     }
@@ -109,7 +124,7 @@ fun PlayerControlLayout(
                         .clip(
                             CircleShape,
                         )
-                        .clickable {
+                        .clickable(role = Role.Button) {
                             if (controllerState.isPreviousAvailable) {
                                 onUIEvent(UIEvent.Previous)
                             }
@@ -119,7 +134,7 @@ fun PlayerControlLayout(
                 Icon(
                     imageVector = SimpIcons.SkipPrevious,
                     tint = if (controllerState.isPreviousAvailable) contentColor else contentColor.copy(alpha = 0.4f),
-                    contentDescription = "",
+                    contentDescription = stringResource(Res.string.previous),
                     modifier = Modifier.size(mediumIcon.first),
                 )
             }
@@ -134,7 +149,7 @@ fun PlayerControlLayout(
                         .clip(
                             CircleShape,
                         )
-                        .clickable {
+                        .clickable(role = Role.Button) {
                             onUIEvent(UIEvent.PlayPause)
                         },
                 contentAlignment = Alignment.Center,
@@ -144,14 +159,14 @@ fun PlayerControlLayout(
                         Icon(
                             imageVector = if (plainPlayPause) SimpIcons.PlayArrow else SimpIcons.PlayCircle,
                             tint = contentColor,
-                            contentDescription = "",
+                            contentDescription = stringResource(Res.string.play),
                             modifier = Modifier.size(bigIcon.first),
                         )
                     } else {
                         Icon(
                             imageVector = if (plainPlayPause) SimpIcons.Pause else SimpIcons.PauseCircle,
                             tint = contentColor,
-                            contentDescription = "",
+                            contentDescription = stringResource(Res.string.pause),
                             modifier = Modifier.size(bigIcon.first),
                         )
                     }
@@ -168,7 +183,7 @@ fun PlayerControlLayout(
                         .clip(
                             CircleShape,
                         )
-                        .clickable {
+                        .clickable(role = Role.Button) {
                             if (controllerState.isNextAvailable) {
                                 onUIEvent(UIEvent.Next)
                             }
@@ -178,7 +193,7 @@ fun PlayerControlLayout(
                 Icon(
                     imageVector = SimpIcons.SkipNext,
                     tint = if (controllerState.isNextAvailable) contentColor else contentColor.copy(alpha = 0.4f),
-                    contentDescription = "",
+                    contentDescription = stringResource(Res.string.next),
                     modifier = Modifier.size(mediumIcon.first),
                 )
             }
@@ -192,9 +207,9 @@ fun PlayerControlLayout(
                         .clip(
                             CircleShape,
                         )
-                        .clickable {
+                        .clickable(role = Role.Button) {
                             onUIEvent(UIEvent.Repeat)
-                        },
+                        }.semantics { selected = controllerState.repeatState !is RepeatState.None },
                 contentAlignment = Alignment.Center,
             ) {
                 Crossfade(targetState = controllerState.repeatState) { rs ->
@@ -203,7 +218,7 @@ fun PlayerControlLayout(
                             Icon(
                                 imageVector = SimpIcons.Repeat,
                                 tint = contentColor,
-                                contentDescription = "",
+                                contentDescription = stringResource(Res.string.repeat_off),
                                 modifier = Modifier.size(smallIcon.first),
                             )
                         }
@@ -212,7 +227,7 @@ fun PlayerControlLayout(
                             Icon(
                                 imageVector = SimpIcons.Repeat,
                                 tint = activeColor,
-                                contentDescription = "",
+                                contentDescription = stringResource(Res.string.repeat_all),
                                 modifier = Modifier.size(smallIcon.first),
                             )
                         }
@@ -221,7 +236,7 @@ fun PlayerControlLayout(
                             Icon(
                                 imageVector = SimpIcons.RepeatOne,
                                 tint = activeColor,
-                                contentDescription = "",
+                                contentDescription = stringResource(Res.string.repeat_one),
                                 modifier = Modifier.size(smallIcon.first),
                             )
                         }

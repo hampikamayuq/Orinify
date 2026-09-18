@@ -96,6 +96,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -128,6 +130,7 @@ import com.maxrave.simpmusic.ui.component.HeartCheckBox
 import com.maxrave.simpmusic.ui.component.LyricsView
 import com.maxrave.simpmusic.ui.component.PlayPauseButton
 import com.maxrave.simpmusic.ui.component.PlayerControlLayout
+import com.maxrave.simpmusic.ui.component.marqueeIterations
 import com.maxrave.simpmusic.ui.component.lyrics.ShareLyricsSheet
 import com.maxrave.simpmusic.ui.component.lyrics.toShareLyricsLines
 import com.maxrave.simpmusic.ui.component.rememberHolderPainter
@@ -147,6 +150,7 @@ import com.maxrave.simpmusic.ui.icon.SubtitlesOff
 import com.maxrave.simpmusic.ui.icon.ThumbsUpDown
 import com.maxrave.simpmusic.ui.theme.blackMoreOverlay
 import com.maxrave.simpmusic.ui.theme.overlay
+import com.maxrave.simpmusic.ui.theme.seed
 import com.maxrave.simpmusic.ui.theme.typo
 import com.maxrave.simpmusic.viewModel.LyricsProvider
 import com.maxrave.simpmusic.viewModel.UIEvent
@@ -157,27 +161,38 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.add_to_playlist
+import simpmusic.composeapp.generated.resources.album_artwork
 import simpmusic.composeapp.generated.resources.artists
+import simpmusic.composeapp.generated.resources.close_player
 import simpmusic.composeapp.generated.resources.crossfading
 import simpmusic.composeapp.generated.resources.description
-import simpmusic.composeapp.generated.resources.like_and_dislike
+import simpmusic.composeapp.generated.resources.forward_5s
+import simpmusic.composeapp.generated.resources.fullscreen
+import simpmusic.composeapp.generated.resources.like
+import simpmusic.composeapp.generated.resources.liked
 import simpmusic.composeapp.generated.resources.line_synced
 import simpmusic.composeapp.generated.resources.lyrics
 import simpmusic.composeapp.generated.resources.lyrics_provider_betterlyrics
 import simpmusic.composeapp.generated.resources.lyrics_provider_lrc
 import simpmusic.composeapp.generated.resources.lyrics_provider_simpmusic
 import simpmusic.composeapp.generated.resources.lyrics_provider_youtube
+import simpmusic.composeapp.generated.resources.more
+import simpmusic.composeapp.generated.resources.no_lyrics_for_track
 import simpmusic.composeapp.generated.resources.now_playing_upper
 import simpmusic.composeapp.generated.resources.offline_mode
 import simpmusic.composeapp.generated.resources.playing_on_device
-import simpmusic.composeapp.generated.resources.published_at
+import simpmusic.composeapp.generated.resources.queue
 import simpmusic.composeapp.generated.resources.rate_lyrics
+import simpmusic.composeapp.generated.resources.rewind_5s
 import simpmusic.composeapp.generated.resources.rich_synced
+import simpmusic.composeapp.generated.resources.seek_bar
 import simpmusic.composeapp.generated.resources.share_lyrics
 import simpmusic.composeapp.generated.resources.show
+import simpmusic.composeapp.generated.resources.song_info
 import simpmusic.composeapp.generated.resources.spotify_lyrics_provider
+import simpmusic.composeapp.generated.resources.subtitles
 import simpmusic.composeapp.generated.resources.unsynced
-import simpmusic.composeapp.generated.resources.view_count
 
 // stripRichSyncTimestamps() lives in NowPlayingContentState.kt (same package) so both
 // content styles share one copy.
@@ -551,7 +566,10 @@ fun NowPlayingContentSpotify(
                                                     .diskCacheKey(artworkUrl + "BIGGER")
                                                     .crossfade(550)
                                                     .build(),
-                                            contentDescription = "",
+                                            contentDescription =
+                                                state.screenData.nowPlayingTitle.ifBlank {
+                                                    stringResource(Res.string.album_artwork)
+                                                },
                                             onSuccess = {
                                                 actions.onArtworkBitmap(
                                                     it.result.image.toImageBitmap(),
@@ -650,7 +668,7 @@ fun NowPlayingContentSpotify(
                                                             ) {
                                                                 Icon(
                                                                     imageVector = SimpIcons.Fullscreen,
-                                                                    contentDescription = "",
+                                                                    contentDescription = stringResource(Res.string.fullscreen),
                                                                     tint = Color.White,
                                                                 )
                                                             }
@@ -677,7 +695,7 @@ fun NowPlayingContentSpotify(
                                                                     Icon(
                                                                         imageVector = SimpIcons.Replay5,
                                                                         tint = Color.White,
-                                                                        contentDescription = "",
+                                                                        contentDescription = stringResource(Res.string.rewind_5s),
                                                                         modifier =
                                                                             Modifier
                                                                                 .size(36.dp)
@@ -701,7 +719,7 @@ fun NowPlayingContentSpotify(
                                                                     Icon(
                                                                         imageVector = SimpIcons.Forward5,
                                                                         tint = Color.White,
-                                                                        contentDescription = "",
+                                                                        contentDescription = stringResource(Res.string.forward_5s),
                                                                         modifier =
                                                                             Modifier
                                                                                 .size(36.dp)
@@ -723,7 +741,7 @@ fun NowPlayingContentSpotify(
                                                                             } else {
                                                                                 SimpIcons.Subtitles
                                                                             },
-                                                                        contentDescription = "",
+                                                                        contentDescription = stringResource(Res.string.subtitles),
                                                                         tint = Color.White,
                                                                     )
                                                                 }
@@ -832,14 +850,11 @@ fun NowPlayingContentSpotify(
                                 color = Color.White,
                                 textAlign = TextAlign.Center,
                                 maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
-                                        .wrapContentHeight(align = Alignment.CenterVertically)
-                                        .basicMarquee(
-                                            iterations = Int.MAX_VALUE,
-                                            animationMode = MarqueeAnimationMode.Immediately,
-                                        ).focusable(),
+                                        .wrapContentHeight(align = Alignment.CenterVertically),
                             )
                         }
                     },
@@ -849,7 +864,7 @@ fun NowPlayingContentSpotify(
                         }) {
                             Icon(
                                 imageVector = state.dismissIcon,
-                                contentDescription = "",
+                                contentDescription = stringResource(Res.string.close_player),
                                 tint = Color.White,
                             )
                         }
@@ -860,7 +875,7 @@ fun NowPlayingContentSpotify(
                         }) {
                             Icon(
                                 imageVector = SimpIcons.MoreVert,
-                                contentDescription = "",
+                                contentDescription = stringResource(Res.string.more),
                                 tint = Color.White,
                             )
                         }
@@ -941,25 +956,58 @@ fun NowPlayingContentSpotify(
                                             ?.stripRichSyncTimestamps()
                                             .orEmpty()
                                     }
+                                // lyricsData is null both while the fetch is in flight and when nothing
+                                // was found, and the state cannot tell the two apart. "No lyrics" is
+                                // therefore only claimed once the track has been current for 3 s — by
+                                // then a fetch that will succeed has.
+                                val currentTrackKey =
+                                    state.artworkQueue.getOrNull(state.currentOrderIndex)?.videoId
+                                        ?: state.screenData.nowPlayingTitle
+                                var lyricsSettled by remember(currentTrackKey) { mutableStateOf(false) }
+                                LaunchedEffect(currentTrackKey) {
+                                    delay(3000)
+                                    lyricsSettled = true
+                                }
+                                val showNoLyrics =
+                                    lyricsSettled &&
+                                        state.screenData.lyricsData == null &&
+                                        state.screenData.canvasData == null
                                 Crossfade(
-                                    targetState = currentLyricLineText,
+                                    targetState = if (showNoLyrics) null else currentLyricLineText,
                                     animationSpec = tween(durationMillis = 300),
                                     label = "inlineLyricLine",
                                 ) { lineText ->
-                                    Text(
-                                        text = lineText,
-                                        style = typo().labelSmall,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .padding(horizontal = 20.dp)
-                                                .basicMarquee(
-                                                    iterations = Int.MAX_VALUE,
-                                                    animationMode = MarqueeAnimationMode.Immediately,
-                                                ).focusable(),
-                                    )
+                                    if (lineText == null) {
+                                        Text(
+                                            text = stringResource(Res.string.no_lyrics_for_track),
+                                            style = typo().bodySmall,
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 20.dp)
+                                                    .alpha(0.7f),
+                                        )
+                                    } else {
+                                        Text(
+                                            text = lineText,
+                                            style = typo().labelSmall,
+                                            color = Color.White,
+                                            maxLines = 1,
+                                            // Inert while the marquee runs; carries the line once reduce-motion stops it.
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier =
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 20.dp)
+                                                    .basicMarquee(
+                                                        iterations = marqueeIterations(Int.MAX_VALUE),
+                                                        animationMode = MarqueeAnimationMode.Immediately,
+                                                    ).focusable(),
+                                        )
+                                    }
                                 }
                             }
 
@@ -995,12 +1043,15 @@ fun NowPlayingContentSpotify(
                                         Spacer(Modifier.height(16.dp))
                                     }
                                     // List Bottom Buttons - MODIFIED TO ADD PLAYLIST BUTTON
+                                    // 48dp targets around 24dp glyphs. The row's side padding is 8dp
+                                    // rather than the page's 20dp so the outer glyphs still line up with
+                                    // the title above (20 = 8 + the 12dp of button around each glyph).
                                     Row(
                                         modifier =
                                             Modifier
-                                                .height(32.dp)
+                                                .height(48.dp)
                                                 .fillMaxWidth()
-                                                .padding(horizontal = 20.dp),
+                                                .padding(horizontal = 8.dp),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
@@ -1009,28 +1060,29 @@ fun NowPlayingContentSpotify(
                                         // playlist/queue buttons off the end of this SpaceBetween row.
                                         Row(
                                             modifier = Modifier.weight(1f, fill = false),
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             IconButton(
-                                                modifier =
-                                                    Modifier
-                                                        .size(24.dp)
-                                                        .aspectRatio(1f)
-                                                        .clip(CircleShape),
+                                                modifier = Modifier.size(48.dp),
                                                 onClick = {
                                                     actions.onShowInfo()
                                                 },
                                             ) {
-                                                Icon(imageVector = SimpIcons.Info, tint = Color.White, contentDescription = "")
+                                                Icon(
+                                                    imageVector = SimpIcons.Info,
+                                                    tint = Color.White,
+                                                    contentDescription = stringResource(Res.string.song_info),
+                                                    modifier = Modifier.size(24.dp),
+                                                )
                                             }
-                                            // Cyan rather than colorScheme.primary: this screen is force-dark whatever
-                                            // the app theme is, so a light-theme primary would sink into the black
-                                            // backdrop. Mirrors the `if (forceDark) Color.Cyan` rule in FullWidthItems.
-                                            PlatformCastButton(
-                                                modifier = Modifier.size(24.dp),
-                                                tint = if (state.castState.isRemote) Color.Cyan else Color.White,
-                                            )
+                                            // The native cast view stays 24dp; the 48dp box gives it the same
+                                            // footprint as its neighbours so the row does not look mis-sized.
+                                            Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                                                PlatformCastButton(
+                                                    modifier = Modifier.size(24.dp),
+                                                    tint = if (state.castState.isRemote) seed else Color.White,
+                                                )
+                                            }
                                             AnimatedVisibility(visible = state.castState.isRemote) {
                                                 Text(
                                                     text =
@@ -1039,7 +1091,7 @@ fun NowPlayingContentSpotify(
                                                             state.castState.deviceName ?: "Cast",
                                                         ),
                                                     style = typo().bodySmall,
-                                                    color = Color.Cyan,
+                                                    color = seed,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis,
                                                 )
@@ -1047,16 +1099,11 @@ fun NowPlayingContentSpotify(
                                         }
 
                                         Row(
-                                            horizontalArrangement = Arrangement.spacedBy(12.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
                                             // NEW: Add to Playlist Button (Center-Right)
                                             IconButton(
-                                                modifier =
-                                                    Modifier
-                                                        .size(24.dp)
-                                                        .aspectRatio(1f)
-                                                        .clip(CircleShape),
+                                                modifier = Modifier.size(48.dp),
                                                 onClick = {
                                                     actions.onShowAddToPlaylist()
                                                 },
@@ -1064,17 +1111,14 @@ fun NowPlayingContentSpotify(
                                                 Icon(
                                                     imageVector = SimpIcons.PlaylistAdd,
                                                     tint = Color.White,
-                                                    contentDescription = "Add to Playlist",
+                                                    contentDescription = stringResource(Res.string.add_to_playlist),
+                                                    modifier = Modifier.size(24.dp),
                                                 )
                                             }
 
                                             // Queue Button (Right)
                                             IconButton(
-                                                modifier =
-                                                    Modifier
-                                                        .size(24.dp)
-                                                        .aspectRatio(1f)
-                                                        .clip(CircleShape),
+                                                modifier = Modifier.size(48.dp),
                                                 onClick = {
                                                     actions.onShowQueue()
                                                 },
@@ -1082,7 +1126,8 @@ fun NowPlayingContentSpotify(
                                                 Icon(
                                                     imageVector = SimpIcons.QueueMusic,
                                                     tint = Color.White,
-                                                    contentDescription = "",
+                                                    contentDescription = stringResource(Res.string.queue),
+                                                    modifier = Modifier.size(24.dp),
                                                 )
                                             }
                                         }
@@ -1158,13 +1203,14 @@ fun NowPlayingContentSpotify(
                                                                     .padding(horizontal = 20.dp)
                                                                     .padding(bottom = 4.dp)
                                                                     .basicMarquee(
-                                                                        iterations = Int.MAX_VALUE,
+                                                                        iterations = marqueeIterations(Int.MAX_VALUE),
                                                                         animationMode = MarqueeAnimationMode.Immediately,
                                                                     ).focusable(),
                                                             text = lineText,
                                                             style = typo().bodyMedium,
                                                             color = Color.White,
                                                             maxLines = 1,
+                                                            overflow = TextOverflow.Ellipsis,
                                                         )
                                                         val translatedLineText =
                                                             state.screenData.lyricsData
@@ -1182,13 +1228,14 @@ fun NowPlayingContentSpotify(
                                                                         .padding(horizontal = 20.dp)
                                                                         .padding(bottom = 8.dp)
                                                                         .basicMarquee(
-                                                                            iterations = Int.MAX_VALUE,
+                                                                            iterations = marqueeIterations(Int.MAX_VALUE),
                                                                             animationMode = MarqueeAnimationMode.Immediately,
                                                                         ).focusable(),
                                                                 text = translatedLineText,
                                                                 style = typo().bodyMedium,
-                                                                color = Color.Yellow,
+                                                                color = seed,
                                                                 maxLines = 1,
+                                                                overflow = TextOverflow.Ellipsis,
                                                             )
                                                         }
                                                     }
@@ -1239,49 +1286,40 @@ fun NowPlayingContentSpotify(
                                         // SimpMusic Lyrics. The rule itself lives on the shared contract
                                         // (canVote), so a style cannot ship without it the way the Apple
                                         // Music tab did.
+                                        // No LocalMinimumInteractiveComponentSize override here: the 16dp
+                                        // glyphs keep their 48dp touch targets, and the row grows to fit them.
                                         if (state.screenData.lyricsData.canVote()) {
-                                            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-                                                IconButton(
-                                                    onClick = {
-                                                        actions.onShowVoteDialog()
-                                                    },
-                                                ) {
-                                                    Icon(
-                                                        imageVector = SimpIcons.ThumbsUpDown,
-                                                        contentDescription = stringResource(Res.string.rate_lyrics),
-                                                        tint = Color.White,
-                                                        modifier = Modifier.size(16.dp),
-                                                    )
-                                                }
-                                            }
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                        }
-                                        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
                                             IconButton(
-                                                onClick = { showShareLyricsSheet = true },
+                                                onClick = {
+                                                    actions.onShowVoteDialog()
+                                                },
                                             ) {
                                                 Icon(
-                                                    imageVector = SimpIcons.Share,
-                                                    contentDescription = stringResource(Res.string.share_lyrics),
+                                                    imageVector = SimpIcons.ThumbsUpDown,
+                                                    contentDescription = stringResource(Res.string.rate_lyrics),
                                                     tint = Color.White,
                                                     modifier = Modifier.size(16.dp),
                                                 )
                                             }
                                         }
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-                                            TextButton(
-                                                onClick = {
-                                                    actions.onShowFullscreenLyrics()
-                                                },
-                                                contentPadding = PaddingValues(0.dp),
-                                                modifier =
-                                                    Modifier
-                                                        .height(20.dp)
-                                                        .wrapContentWidth(),
-                                            ) {
-                                                Text(text = stringResource(Res.string.show), color = Color.White)
-                                            }
+                                        IconButton(
+                                            onClick = { showShareLyricsSheet = true },
+                                        ) {
+                                            Icon(
+                                                imageVector = SimpIcons.Share,
+                                                contentDescription = stringResource(Res.string.share_lyrics),
+                                                tint = Color.White,
+                                                modifier = Modifier.size(16.dp),
+                                            )
+                                        }
+                                        TextButton(
+                                            onClick = {
+                                                actions.onShowFullscreenLyrics()
+                                            },
+                                            contentPadding = PaddingValues(horizontal = 8.dp),
+                                            modifier = Modifier.wrapContentWidth(),
+                                        ) {
+                                            Text(text = stringResource(Res.string.show), color = Color.White)
                                         }
                                     }
                                     // Lyrics Layout
@@ -1462,32 +1500,12 @@ fun NowPlayingContentSpotify(
                                         .fillMaxWidth(),
                                 ) {
                                     Spacer(modifier = Modifier.height(5.dp))
-                                    Text(
-                                        text = stringResource(Res.string.published_at, state.screenData.songInfoData?.uploadDate ?: ""),
-                                        style = typo().labelSmall,
-                                        color = Color.White,
-                                    )
-                                    Spacer(modifier = Modifier.height(10.dp))
-                                    Text(
-                                        text =
-                                            stringResource(
-                                                Res.string.view_count,
-                                                "%,d".format(state.screenData.songInfoData?.viewCount),
-                                            ),
-                                        style = typo().labelMedium,
-                                        color = Color.White,
-                                    )
-                                    Spacer(modifier = Modifier.height(10.dp))
-                                    Text(
-                                        text =
-                                            stringResource(
-                                                Res.string.like_and_dislike,
-                                                state.screenData.songInfoData?.like ?: 0,
-                                                state.screenData.songInfoData?.dislike ?: 0,
-                                            ),
-                                        style = typo().bodyMedium,
-                                    )
-                                    Spacer(modifier = Modifier.height(10.dp))
+                                    // The listener's own numbers, not YouTube's: publish date, view
+                                    // count and like/dislike said nothing about THIS listener.
+                                    if (state.screenData.listenerStats != null) {
+                                        ListenerStatsLine(stats = state.screenData.listenerStats)
+                                        Spacer(modifier = Modifier.height(10.dp))
+                                    }
                                     Text(
                                         text = stringResource(Res.string.description),
                                         style = typo().labelSmall,
@@ -1577,13 +1595,14 @@ fun NowPlayingContentSpotify(
                                     style = typo().bodyMedium,
                                     color = Color.White,
                                     maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                     modifier =
                                         Modifier
                                             .fillMaxWidth()
                                             .wrapContentHeight(
                                                 align = Alignment.CenterVertically,
                                             ).basicMarquee(
-                                                iterations = Int.MAX_VALUE,
+                                                iterations = marqueeIterations(Int.MAX_VALUE),
                                                 animationMode = MarqueeAnimationMode.Immediately,
                                             ).focusable(),
                                 )
@@ -1606,15 +1625,13 @@ fun NowPlayingContentSpotify(
                                             text = state.screenData.artistName,
                                             style = typo().bodySmall,
                                             maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
                                             modifier =
                                                 Modifier
                                                     .fillMaxWidth()
                                                     .wrapContentHeight(
                                                         align = Alignment.CenterVertically,
-                                                    ).basicMarquee(
-                                                        iterations = Int.MAX_VALUE,
-                                                        animationMode = MarqueeAnimationMode.Immediately,
-                                                    ).focusable(),
+                                                    ),
                                         )
                                     }
                                 }
@@ -1732,13 +1749,14 @@ internal fun NowPlayingTrackInfoRow(
                 text = state.screenData.nowPlayingTitle,
                 style = typo().titleMedium,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 color = Color.White,
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .wrapContentHeight(align = Alignment.CenterVertically)
                         .basicMarquee(
-                            iterations = Int.MAX_VALUE,
+                            iterations = marqueeIterations(Int.MAX_VALUE),
                             animationMode = MarqueeAnimationMode.Immediately,
                         ).focusable(),
             )
@@ -1759,24 +1777,26 @@ internal fun NowPlayingTrackInfoRow(
                     }
                 }
                 item(state.screenData.artistName) {
+                    // A tap target must not scroll under the finger: ellipsis, no marquee.
                     Text(
                         text = state.screenData.artistName,
                         style = typo().bodyMedium,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier =
                             Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight(align = Alignment.CenterVertically)
-                                .basicMarquee(
-                                    iterations = Int.MAX_VALUE,
-                                    animationMode = MarqueeAnimationMode.Immediately,
-                                ).focusable()
                                 .clickable {
                                     actions.onNavigateToArtist()
                                 },
                     )
                 }
             }
+            ListenerStatsLine(
+                stats = state.screenData.listenerStats,
+                modifier = Modifier.padding(top = 2.dp),
+            )
         }
         if (state.isUserLoggedIn) {
             Spacer(modifier = Modifier.size(16.dp))
@@ -1785,28 +1805,21 @@ internal fun NowPlayingTrackInfoRow(
             ) {
                 if (it) {
                     IconButton(
-                        modifier =
-                            Modifier
-                                .size(24.dp)
-                                .aspectRatio(1f)
-                                .clip(
-                                    CircleShape,
-                                ),
+                        modifier = Modifier.size(48.dp),
                         onClick = {
                             actions.onAddToYouTubeLiked()
                         },
                     ) {
-                        Icon(imageVector = SimpIcons.CheckCircle, tint = Color.White, contentDescription = "")
+                        Icon(
+                            imageVector = SimpIcons.CheckCircle,
+                            tint = Color.White,
+                            contentDescription = stringResource(Res.string.liked),
+                            modifier = Modifier.size(24.dp),
+                        )
                     }
                 } else {
                     IconButton(
-                        modifier =
-                            Modifier
-                                .size(24.dp)
-                                .aspectRatio(1f)
-                                .clip(
-                                    CircleShape,
-                                ),
+                        modifier = Modifier.size(48.dp),
                         onClick = {
                             actions.onAddToYouTubeLiked()
                         },
@@ -1814,7 +1827,8 @@ internal fun NowPlayingTrackInfoRow(
                         Icon(
                             imageVector = SimpIcons.AddCircleOutline,
                             tint = Color.White,
-                            contentDescription = "",
+                            contentDescription = stringResource(Res.string.like),
+                            modifier = Modifier.size(24.dp),
                         )
                     }
                 }
@@ -1896,6 +1910,7 @@ internal fun ColumnScope.SpotifyPlaybackControls(
             }
         }
         CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+            val seekBarLabel = stringResource(Res.string.seek_bar)
             Slider(
                 // material3 1.5.0-alpha25 keeps a
                 // binary-compatibility overload of Slider that
@@ -1916,10 +1931,11 @@ internal fun ColumnScope.SpotifyPlaybackControls(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(top = 3.dp)
+                        // No top padding: the 24dp thumb already centres the slider on the 24dp
+                        // progress box behind it (the old 3dp offset did that for an 18dp thumb).
                         .align(
                             Alignment.TopCenter,
-                        ),
+                        ).semantics { contentDescription = seekBarLabel },
                 track = { sliderState ->
                     SliderDefaults.Track(
                         modifier =
@@ -1939,15 +1955,16 @@ internal fun ColumnScope.SpotifyPlaybackControls(
                     )
                 },
                 thumb = {
+                    // 16dp circle inside a 24dp-tall hit area; the track stays 5dp.
                     SliderDefaults.Thumb(
                         modifier =
                             Modifier
-                                .height(18.dp)
-                                .width(8.dp)
+                                .height(24.dp)
+                                .width(16.dp)
                                 .padding(
                                     vertical = 4.dp,
                                 ),
-                        thumbSize = DpSize(8.dp, 8.dp),
+                        thumbSize = DpSize(16.dp, 16.dp),
                         interactionSource =
                             remember {
                                 MutableInteractionSource()
