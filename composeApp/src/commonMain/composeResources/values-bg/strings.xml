@@ -98,7 +98,6 @@
     <string name="version">Версия</string>
     <string name="github">Github</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">Buy me a coffee</string>
     <string name="title">Заглавие</string>
     <string name="custom_order">Персонализирана поръчка</string>
     <string name="album">Албум</string>
@@ -214,7 +213,6 @@
     <string name="sort_by">Сортирай по</string>
     <string name="older_first">Най-стари</string>
     <string name="newer_first">Най-нови</string>
-    <string name="credit_app">Опростено приложение за музика, което използва YouTube Music за бекенд \n\nSimpMusic е проект с отворен код, който стриймва музика от YouTube и YouTube Music без реклами и проследяване. SimpMusic идва с много функции:\n\n - Стрийминг \n - Текстове\n - Персонализиране на данните\n - и т. н… \n\nSimpMusic е безплатен и без реклами\n\nBuild с ❤️ от Tuan Minh Nguyen Duc (maxrave-dev)</string>
     <string name="issue_tracker">Тракър на задачи</string>
     <string name="featured_playlists">Избрани плейлисти</string>
     <string name="featured_inArtist">Участва в</string>
@@ -265,7 +263,6 @@
     <string name="user_interface">Интерфейс</string>
     <string name="translucent_bottom_navigation_bar">Прозрачна навигационна лента</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">Можете да видите съдържанието под долната лента</string>
-    <string name="donation">Ако харесвате работата ми, почерпете ме кафе</string>
     <string name="relax">Спокойствие</string>
     <string name="sleep">Сън</string>
     <string name="energize">Енергизиране</string>

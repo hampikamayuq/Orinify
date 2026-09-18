@@ -98,11 +98,6 @@
     <string name="version">Versió</string>
     <string name="github">Github</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">Compra'm un cafè</string>
-    <string name="developer_blog">Blog del desenvolupador</string>
-    <string name="developer_blog_tagline">Llegir notes de desenvolupament, tutorials &amp; continguts entre bastidors</string>
-    <string name="blog_promo_title">Novetats del desenvolupador</string>
-    <string name="blog_promo_message">Acabe de llançar el meu blog personal a maxrave.dev — compartisc la història darrere de SimpMusic, anàlisis a fons sobre tecnologia musical i notes d'enginyeria. Dona-li una ullada si tens curiositat ✨</string>
     <string name="visit_blog">Visita el blog</string>
     <string name="title">Títol</string>
     <string name="custom_order">Ordre personalitzat</string>
@@ -220,7 +215,6 @@
     <string name="sort_by">Ordena per</string>
     <string name="older_first">Més antics primer</string>
     <string name="newer_first">Més nous primer</string>
-    <string name="credit_app">Una aplicació de música senzilla que utilitza YouTube Music per al backend \n\nSimpMusic és un projecte de codi obert per reproduir música de YouTube i YouTube Music sense anuncis ni seguiment. SimpMusic ofereix moltes funcions:\n\n - Reproducció de música en temps real \n - Lletres sincronitzades\n - Personalització de dades\n - etc... \n\nSimpMusic sempre és gratuït i sense anuncis\n\nCrea amb ❤️ de Tuan Minh Nguyen Duc (maxrave -dev)</string>
     <string name="issue_tracker">Detector de problemes</string>
     <string name="featured_playlists">Llistes de reproducció destacades</string>
     <string name="featured_inArtist">Destacat a</string>
@@ -271,7 +265,6 @@
     <string name="user_interface">Interface</string>
     <string name="translucent_bottom_navigation_bar">Translucent bottom navigation bar</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">You can see the content below the bottom bar</string>
-    <string name="donation">If you love my work, give me a coffee</string>
     <string name="relax">Calma</string>
     <string name="sleep">Repòs</string>
     <string name="energize">Energia</string>
@@ -389,7 +382,6 @@
     <string name="no_playlist_found">No s'han trobat llistes de reproducció locals, per favor, creï'n una primer.</string>
     <string name="list_all_cookies_of_this_page">Fes un llistat de totes les cookies d'aquesta web</string>
     <string name="copied_to_clipboard">S'ha copiat al porta-retalls</string>
-    <string name="update_channel">Canal d'actualitzacions</string>
     <string name="enable_liquid_glass_effect">Activa liquid glass (BETA)</string>
     <string name="enable_liquid_glass_effect_description">Activa l'efecte de vidre líquid d'iOS en alguna posició (Android 13+)</string>
     <string name="your_library">La seva biblioteca</string>

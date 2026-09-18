@@ -98,11 +98,6 @@
     <string name="version">Version</string>
     <string name="github">GitHub</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">Offrez-moi un café ! ☕</string>
-    <string name="developer_blog">Blog des Développeurs</string>
-    <string name="developer_blog_tagline">Lisez les notes des développeurs, les tutoriels &amp; les coulisses du projet</string>
-    <string name="blog_promo_title">Une nouveauté du développeur</string>
-    <string name="blog_promo_message">Je viens de lancer mon blog personnel sur maxrave.dev — j'y partage l'histoire de SimpMusic, des analyses approfondies sur les technologies musicales et des notes d'ingénierie. N'hésitez pas à y jeter un œil si ça vous intéresse. ✨</string>
     <string name="visit_blog">Consultez le blog</string>
     <string name="title">Titre</string>
     <string name="custom_order">Commande personnalisée</string>
@@ -222,7 +217,6 @@
     <string name="sort_by">Trier par</string>
     <string name="older_first">Les plus anciens d'abord</string>
     <string name="newer_first">Les plus récents d'abord</string>
-    <string name="credit_app">Une application musicale simple utilisant YouTube Music pour le backend \n\nSimpMusic est un projet open source pour diffuser de la musique à partir de YouTube et YouTube Music sans publicité ni suivi. SimpMusic offre de nombreuses fonctionnalités :\n\n - Streaming de musique \n - Paroles synchronisées\n - Personnaliser les données\n - etc… \n\nSimpMusic est toujours gratuit et sans publicité\n\nConstruit avec ❤️ de Tuan Minh Nguyen Duc (maxrave-dev)</string>
     <string name="issue_tracker">Suivi des problèmes</string>
     <string name="featured_playlists">Playlists en Vedette</string>
     <string name="featured_inArtist">En vedette sur</string>
@@ -323,7 +317,6 @@
     <string name="custom_color">Couleur personnalisée</string>
     <string name="translucent_bottom_navigation_bar">Barre de navigation inférieure translucide</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">Vous pouvez voir le contenu en dessous de la barre inférieure</string>
-    <string name="donation">Si vous aimez mon travail, offrez-moi un café ! ☕</string>
     <string name="relax">Détente</string>
     <string name="sleep">Sommeil</string>
     <string name="energize">Stimulant</string>
@@ -391,8 +384,6 @@
     <string name="if_you_enjoy_using_simpmusic_star_simpmusic_on_github_or_leave_a_review_on">Si vous aimez utiliser Orinify, donnez une étoile à Orinify sur GitHub ou laissez un avis sur</string>
     <string name="if_you_love_my_work_consider">"Si vous aimez mon travail, considérez "</string>
     <string name="buying_me_a_coffee">m'offrir un café.</string>
-    <string name="footguns_promo_title">Tous les pièges dans lesquels je suis tombé</string>
-    <string name="footguns_promo_message">SimpMusic m'a coûté de nombreuses nuits passées à me débattre avec les pièges de Kotlin et de Compose dont aucune documentation ne m'avait jamais prévenu. Je les ai tous répertoriés dans « kotlin-footguns », pour que vous n'ayez pas à passer les mêmes nuits blanches. Si cela vous en épargne ne serait-ce qu'une seule, une étoile signifierait beaucoup pour moi.</string>
     <string name="shuffle_not_available">Point de terminaison aléatoire non disponible</string>
     <string name="radio_not_available">Point de terminaison radio non disponible</string>
     <string name="no_results_found">Aucun résultat trouvé</string>
@@ -454,7 +445,6 @@
     <string name="no_playlist_found">Aucune playlist locale trouvée, veuillez d'abord en créer une.</string>
     <string name="list_all_cookies_of_this_page">Lister tous les cookies de cette page</string>
     <string name="copied_to_clipboard">Copié dans le presse-papiers</string>
-    <string name="update_channel">Mettre à jour la chaîne</string>
     <string name="enable_liquid_glass_effect">Activer le verre liquide (Bêta)</string>
     <string name="enable_liquid_glass_effect_description">Activer l'effet verre liquide d'iOS dans certaines positions (Android 13+)</string>
     <string name="your_library">Votre Bibliothèque</string>
@@ -561,8 +551,6 @@
     <string name="quit_app">Quitter l'application</string>
     <string name="local_tracking_title">Historique d'écoute local</string>
     <string name="local_tracking_description">Enregistrez votre historique d'écoute dans une base de données locale</string>
-    <string name="blog_notification_title">Notifications relatives aux articles de blog</string>
-    <string name="blog_notification_description">Recevez une notification dès qu'un nouvel article de blog est publié</string>
     <string name="simpmusic_charts">Classements Orinify</string>
     <string name="crossfading">Fondu enchaîné</string>
     <string name="search_for">Rechercher</string>

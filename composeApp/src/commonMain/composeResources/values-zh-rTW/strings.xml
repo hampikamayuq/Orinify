@@ -98,11 +98,6 @@
     <string name="version">版本</string>
     <string name="github">Github</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">求贊助QAQ</string>
-    <string name="developer_blog">部落格</string>
-    <string name="developer_blog_tagline">閱讀開發日誌、教學及幕後花絮</string>
-    <string name="blog_promo_title">來自開發者的最新動態</string>
-    <string name="blog_promo_message">我剛剛上線了個人部落格 maxrave.dev，內容涵蓋 SimpMusic 背後的故事、音樂科技深度解析以及工程技術筆記。如果你有興趣，歡迎去看看 ✨</string>
     <string name="visit_blog">訪問紀錄</string>
     <string name="title">標題</string>
     <string name="custom_order">客製訂單</string>
@@ -220,7 +215,6 @@
     <string name="sort_by">排序方式</string>
     <string name="older_first">由舊至新</string>
     <string name="newer_first">最新作品</string>
-    <string name="credit_app">SimpMusic是一個開放原始碼、零廣告、使用YouTube Music作為後端的簡單音樂應用程式 \n\n用於從YouTube和YouTube Music串流音樂。SimpMusic提供許多功能：\n\n - 串流音樂\n - 同步歌詞\n - 個人化資料\n - 等等... \n\nSimpMusic總是免費，無廣告\n\n由Tuan Minh Nguyen Duc (maxrave) 開發 ❤️</string>
     <string name="issue_tracker">回報問題</string>
     <string name="featured_playlists">精選播放清單</string>
     <string name="featured_inArtist">已發布</string>
@@ -280,7 +274,6 @@
     <string name="custom_color">自訂顏色</string>
     <string name="translucent_bottom_navigation_bar">半透明底部導覽列</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">你可以看到底欄下方的內容</string>
-    <string name="donation">如果你喜歡我的工作，請給我一杯咖啡</string>
     <string name="relax">放鬆</string>
     <string name="sleep">睡眠</string>
     <string name="energize">活力</string>
@@ -399,7 +392,6 @@
     <string name="no_playlist_found">沒有本地播放清單，請先創建一個</string>
     <string name="list_all_cookies_of_this_page">列出本頁面的所有 Cookies</string>
     <string name="copied_to_clipboard">已複製至剪貼簿</string>
-    <string name="update_channel">更新頻道</string>
     <string name="enable_liquid_glass_effect">啟用 Liquid Glass 效果（測試版）</string>
     <string name="enable_liquid_glass_effect_description">在某些位置啟用 iOS 的液態玻璃效果（Android 13+）</string>
     <string name="your_library">我的音樂庫</string>
@@ -466,8 +458,6 @@
     <string name="quit_app">退出app</string>
     <string name="local_tracking_title">本地追蹤收聽歷史記錄</string>
     <string name="local_tracking_description">將您的收聽歷史記錄到本機資料庫</string>
-    <string name="blog_notification_title">部落格文章通知</string>
-    <string name="blog_notification_description">在新文章發佈時接收通知</string>
     <string name="simpmusic_charts">Orinify排行榜</string>
     <string name="crossfading">交叉淡入淡出</string>
     <string name="search_for">搜尋</string>

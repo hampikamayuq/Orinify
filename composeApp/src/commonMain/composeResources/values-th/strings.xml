@@ -98,13 +98,6 @@
     <string name="version">เวอร์ชัน</string>
     <string name="github">Github</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">เลี้ยงกาแฟให้ฉัน</string>
-    <string name="developer_blog">บล็อกนักพัฒนา</string>
-    <string name="developer_blog_tagline">อ่านบันทึกจากผู้พัฒนา บทแนะนำ &amp; เบื้องหลังการทำงาน</string>
-    <string name="blog_promo_title">สิ่งใหม่จากผู้พัฒนา</string>
-    <string name="blog_promo_message">ผมเพิ่งเปิดบล็อกส่วนตัวที่ maxrave.dev
-เอาไว้แชร์เรื่องราวเบื้องหลัง SimpMusic เจาะลึกด้าน music-tech และบันทึกด้านวิศวกรรมต่าง ๆ
-แวะเข้าไปอ่านกันได้ถ้าสนใจ ✨</string>
     <string name="visit_blog">เยี่ยมชมบล็อก</string>
     <string name="title">ชื่อ</string>
     <string name="custom_order">กำหนดลำดับเอง</string>
@@ -222,7 +215,6 @@
     <string name="sort_by">เรียงตาม</string>
     <string name="older_first">เรียงจากเก่าไปใหม่</string>
     <string name="newer_first">เรียงจากใหม่ไปเก่า</string>
-    <string name="credit_app">แอปเพลงง่ายๆ ที่ใช้ YouTube Music สำหรับแบ็กเอนด์ \n\nSimpMusic เป็นโครงการโอเพ่นซอร์สสำหรับสตรีมเพลงจาก YouTube และ YouTube Music โดยไม่มีโฆษณาและการติดตาม SimpMusic มีคุณสมบัติมากมาย:\n\n - สตรีมเพลง \n - เนื้อเพลงที่ซิงค์กัน\n - ปรับแต่งข้อมูล\n - ฯลฯ…\n\nSimpMusic ฟรีเสมอและไม่มีโฆษณา\n\nสร้างด้วย ❤️ จาก Tuan Minh Nguyen Duc (maxrave-dev)</string>
     <string name="issue_tracker">ติดตามปัญหา</string>
     <string name="featured_playlists">เพลย์ลิสต์ที่โดดเด่น</string>
     <string name="featured_inArtist">โดดเด่นบน</string>
@@ -300,7 +292,6 @@
     <string name="custom_color">กำหนดสี</string>
     <string name="translucent_bottom_navigation_bar">แถบนำทางด้านล่างโปร่งแสง</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">คุณสามารถดูเนื้อหาได้ที่แถบด้านล่าง</string>
-    <string name="donation">ถ้าคุณชอบแอปนี้ สามารถเลี้ยงกาแฟให้ฉันได้</string>
     <string name="relax">ผ่อนคลาย</string>
     <string name="sleep">นอน</string>
     <string name="energize">เพิ่มพลัง</string>
@@ -418,7 +409,6 @@
     <string name="no_playlist_found">ไม่พบเพลย์ลิสต์ในเครื่อง กรุณาสร้างเพลย์ลิสต์ก่อน</string>
     <string name="list_all_cookies_of_this_page">รายการคุกกี้ทั้งหมดของหน้านี้</string>
     <string name="copied_to_clipboard">คัดลอกไปยังคลิปบอร์ดแล้ว</string>
-    <string name="update_channel">ช่องทางอัพเดต</string>
     <string name="enable_liquid_glass_effect">เปิดใช้งาน Liquid Glass (เบต้า)</string>
     <string name="enable_liquid_glass_effect_description">เปิดใช้งานเอฟเฟกต์ Liquid glass ในบางจุด (Android 13 ขึ้นไป)</string>
     <string name="your_library">คลังเพลงของคุณ</string>
@@ -481,8 +471,6 @@
     <string name="quit_app">ออกจากแอป</string>
     <string name="local_tracking_title">ติดตามประวัติการฟังในเครื่อง</string>
     <string name="local_tracking_description">บันทึกประวัติการฟังไว้ในฐานข้อมูลภายในเครื่อง</string>
-    <string name="blog_notification_title">รับการแจ้งเตือนจากบล็อก</string>
-    <string name="blog_notification_description">รับการแจ้งเตือนจากบล็อกเมื่อมีบทความใหม่</string>
     <string name="simpmusic_charts">ชาร์ต Orinify</string>
     <string name="crossfading">Crossfading</string>
     <string name="search_for">ค้นหา</string>

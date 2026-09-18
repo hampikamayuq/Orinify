@@ -2,6 +2,7 @@ package com.maxrave.simpmusic.ui.screen.other
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.MarqueeAnimationMode
+import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -9,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,26 +20,26 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.maxrave.simpmusic.AppLinks
 import com.maxrave.simpmusic.expect.openUrl
 import com.maxrave.simpmusic.ui.component.RippleIconButton
+import com.maxrave.simpmusic.ui.component.marqueeIterations
 import com.maxrave.simpmusic.ui.icon.ArrowBackIosNew
 import com.maxrave.simpmusic.ui.icon.SimpIcons
 import com.maxrave.simpmusic.ui.theme.typo
@@ -51,7 +51,21 @@ import dev.chrisbanes.haze.materials.HazeMaterials
 import dev.chrisbanes.haze.rememberHazeState
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import simpmusic.composeapp.generated.resources.*
+import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.app_name
+import simpmusic.composeapp.generated.resources.based_on_simpmusic
+import simpmusic.composeapp.generated.resources.copyright
+import simpmusic.composeapp.generated.resources.credit_app
+import simpmusic.composeapp.generated.resources.issue_tracker
+import simpmusic.composeapp.generated.resources.orinify_author
+import simpmusic.composeapp.generated.resources.orinify_glyph
+import simpmusic.composeapp.generated.resources.source_code
+import simpmusic.composeapp.generated.resources.support_original_developer
+import simpmusic.composeapp.generated.resources.version_format
+
+// The launcher's own gradient (ic_launcher_background), so the icon here is the icon on the
+// home screen and not a second drawing of it.
+private val IconGradient = listOf(Color(0xFF3B1E8A), Color(0xFF7C3AED))
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
@@ -72,46 +86,48 @@ fun CreditScreen(
     ) {
         Spacer(modifier = Modifier.height(30.dp))
 
-        // App icon
-        Image(
-            painter = painterResource(Res.drawable.app_icon),
-            contentDescription = "App Icon",
+        Box(
             modifier =
                 Modifier
                     .size(150.dp)
-                    .clip(CircleShape),
-        )
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(IconGradient)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(Res.drawable.orinify_glyph),
+                // Decorative: the app name is the next line.
+                contentDescription = null,
+                modifier = Modifier.size(150.dp),
+            )
+        }
 
         Spacer(modifier = Modifier.height(30.dp))
 
-        // App name
         Text(
             text = stringResource(Res.string.app_name),
             style = typo().titleLarge,
             fontSize = 22.sp,
         )
 
-        // Version
         Text(
             text = stringResource(Res.string.version_format, VersionManager.getVersionName()),
             style = typo().bodySmall,
             fontSize = 13.sp,
         )
 
-        // Developer - clickable, opens dev blog
         Text(
-            text = stringResource(Res.string.maxrave_dev),
+            text = stringResource(Res.string.orinify_author),
             style = typo().bodyMedium,
             textDecoration = TextDecoration.Underline,
             modifier =
-                Modifier.clickable {
-                    openUrl("https://maxrave.dev")
-                },
+                Modifier
+                    .clickable { openUrl(AppLinks.REPO) }
+                    .padding(8.dp),
         )
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        // App description
         Text(
             text = stringResource(Res.string.credit_app),
             style = typo().bodyMedium,
@@ -124,87 +140,16 @@ fun CreditScreen(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-            // Website button
-            TextButton(
-                onClick = {
-                    openUrl("https://simpmusic.org")
-                },
-                modifier =
-                    Modifier
-                        .align(Alignment.Start)
-                        .padding(horizontal = 25.dp)
-                        .defaultMinSize(minHeight = 1.dp, minWidth = 1.dp),
-            ) {
-                Text(text = stringResource(Res.string.website))
-            }
-
-            // Developer blog button
-            TextButton(
-                onClick = {
-                    openUrl("https://maxrave.dev")
-                },
-                modifier =
-                    Modifier
-                        .align(Alignment.Start)
-                        .padding(horizontal = 25.dp)
-                        .defaultMinSize(minHeight = 1.dp, minWidth = 1.dp),
-            ) {
-                Column {
-                    Text(text = stringResource(Res.string.developer_blog))
-                    Text(
-                        text = stringResource(Res.string.developer_blog_tagline),
-                        style = typo().bodySmall,
-                    )
-                }
-            }
-
-            // GitHub button
-            TextButton(
-                onClick = {
-                    openUrl("https://github.com/maxrave-dev/SimpMusic")
-                },
-                modifier =
-                    Modifier
-                        .align(Alignment.Start)
-                        .padding(horizontal = 25.dp)
-                        .defaultMinSize(minHeight = 1.dp, minWidth = 1.dp),
-            ) {
-                Text(text = stringResource(Res.string.github))
-            }
-
-            // Issue tracker button
-            TextButton(
-                onClick = {
-                    openUrl("https://github.com/maxrave-dev/SimpMusic/issues")
-                },
-                modifier =
-                    Modifier
-                        .align(Alignment.Start)
-                        .padding(horizontal = 25.dp)
-                        .defaultMinSize(minHeight = 1.dp, minWidth = 1.dp),
-            ) {
-                Text(text = stringResource(Res.string.issue_tracker))
-            }
-
-            // Buy me a coffee button
-            TextButton(
-                onClick = {
-                    openUrl("https://github.com/sponsors/maxrave-dev")
-                },
-                modifier =
-                    Modifier
-                        .align(Alignment.Start)
-                        .padding(horizontal = 25.dp)
-                        .defaultMinSize(minHeight = 1.dp, minWidth = 1.dp),
-            ) {
-                Text(text = stringResource(Res.string.buy_me_a_coffee))
-            }
-        }
+        // Plain 48dp text buttons: the minimum-interactive-size override that used to sit here
+        // made every one of these a 20dp target.
+        LinkButton(Res.string.source_code) { openUrl(AppLinks.REPO) }
+        LinkButton(Res.string.issue_tracker) { openUrl(AppLinks.ISSUES) }
+        // Principle 4: credit what is not ours, by name and with a way to give back.
+        LinkButton(Res.string.based_on_simpmusic) { openUrl(AppLinks.UPSTREAM_REPO) }
+        LinkButton(Res.string.support_original_developer) { openUrl(AppLinks.UPSTREAM_SPONSOR) }
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Copyright text
         Text(
             text = stringResource(Res.string.copyright),
             style = typo().bodySmall,
@@ -215,7 +160,6 @@ fun CreditScreen(
             textAlign = TextAlign.Start,
         )
 
-        // Bottom spacing
         Spacer(modifier = Modifier.height(200.dp))
     }
     TopAppBar(
@@ -235,7 +179,7 @@ fun CreditScreen(
                         .wrapContentHeight(
                             align = Alignment.CenterVertically,
                         ).basicMarquee(
-                            iterations = Int.MAX_VALUE,
+                            iterations = marqueeIterations(Int.MAX_VALUE),
                             animationMode = MarqueeAnimationMode.Immediately,
                         ).focusable(),
             )
@@ -262,4 +206,20 @@ fun CreditScreen(
                 Color.Unspecified,
             ),
     )
+}
+
+@Composable
+private fun androidx.compose.foundation.layout.ColumnScope.LinkButton(
+    label: org.jetbrains.compose.resources.StringResource,
+    onClick: () -> Unit,
+) {
+    TextButton(
+        onClick = onClick,
+        modifier =
+            Modifier
+                .align(Alignment.Start)
+                .padding(horizontal = 25.dp),
+    ) {
+        Text(text = stringResource(label))
+    }
 }

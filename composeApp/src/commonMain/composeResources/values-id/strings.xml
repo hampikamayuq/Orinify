@@ -98,11 +98,6 @@
     <string name="version">Versi</string>
     <string name="github">Github</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">Belikan Aku secangkir kopi</string>
-    <string name="developer_blog">Blog Pengembang</string>
-    <string name="developer_blog_tagline">Baca catatan pengembang, tutorial &amp; cerita di balik layar</string>
-    <string name="blog_promo_title">Sesuatu yang baru dari pengembang</string>
-    <string name="blog_promo_message">Saya baru saja meluncurkan blog pribadi saya di maxrave.dev — di sana saya membagikan kisah di balik SimpMusic, ulasan mendalam seputar teknologi musik, dan catatan teknis. Silakan baca jika Anda penasaran ✨</string>
     <string name="visit_blog">Kunjungi blog</string>
     <string name="title">Judul</string>
     <string name="custom_order">Urutan khusus</string>
@@ -222,7 +217,6 @@
     <string name="sort_by">Urutkan berdasarkan</string>
     <string name="older_first">Terlama dulu</string>
     <string name="newer_first">Terbaru dulu</string>
-    <string name="credit_app">Aplikasi musik sederhana yang menggunakan YouTube Music untuk backend \n\nSimpMusic adalah proyek sumber terbuka untuk streaming musik dari YouTube dan YouTube Music tanpa iklan dan pelacakan. SimpMusic menyediakan banyak fitur:\n\n - Streaming musik\n - Lirik yang disinkronkan\n - Personalisasi data\n - dll... \n\nSimpMusic selalu gratis dan tidak ada iklan\n\nDibangun dengan ❤️ oleh Tuan Minh Nguyen Duc (maxrave-dev)</string>
     <string name="issue_tracker">Pelacakan Masalah</string>
     <string name="featured_playlists">Daftar Putar Unggulan</string>
     <string name="featured_inArtist">Termasuk di</string>
@@ -286,7 +280,6 @@
     <string name="custom_color">Warna khusus</string>
     <string name="translucent_bottom_navigation_bar">Bilah navigasi bawah tembus pandang</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">Anda dapat melihat konten di bawah bilah bawah</string>
-    <string name="donation">Jika Anda menyukai pekerjaan saya, beri saya kopi</string>
     <string name="relax">Santai</string>
     <string name="sleep">Tidur</string>
     <string name="energize">Energik</string>
@@ -405,7 +398,6 @@
     <string name="no_playlist_found">Tidak ada daftar putar lokal yang ditemukan, silakan buat terlebih dahulu</string>
     <string name="list_all_cookies_of_this_page">Daftar semua cookie dari halaman ini</string>
     <string name="copied_to_clipboard">Disalin ke papan klip</string>
-    <string name="update_channel">Perbaharui saluran</string>
     <string name="enable_liquid_glass_effect">Aktifkan liquid glass (BETA)</string>
     <string name="enable_liquid_glass_effect_description">Aktifkan efek liquid glass iOS di beberapa posisi (Android 13+)</string>
     <string name="your_library">Pustaka Anda</string>
@@ -456,8 +448,6 @@
     <string name="quit_app">Keluar aplikasi</string>
     <string name="local_tracking_title">Riwayat mendengarkan pelacakan lokal</string>
     <string name="local_tracking_description">Catat riwayat mendengarkan Anda ke basis data lokal</string>
-    <string name="blog_notification_title">Pemberitahuan postingan blog</string>
-    <string name="blog_notification_description">Dapatkan pemberitahuan saat ada postingan blog baru yang diterbitkan</string>
     <string name="simpmusic_charts">Tangga lagu Orinify</string>
     <string name="crossfading">Memudar</string>
     <string name="search_for">Pencarian</string>

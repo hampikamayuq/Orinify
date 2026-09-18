@@ -98,11 +98,6 @@
     <string name="version">버전</string>
     <string name="github">Github</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">Buy me a coffee</string>
-    <string name="developer_blog">개발자 블로그</string>
-    <string name="developer_blog_tagline">개발 노트, 튜토리얼 &amp; 비하인드 스토리를 읽어보세요</string>
-    <string name="blog_promo_title">개발자의 새로운 소식</string>
-    <string name="blog_promo_message">SimpMusic의 탄생 비화, 음악 기술 심층 분석, 엔지니어링 노트 등을 공유하는 개인 블로그 maxrave.dev를 개설했습니다. 궁금하시면 읽어보세요. ✨️</string>
     <string name="visit_blog">블로그 방문하기</string>
     <string name="title">제목</string>
     <string name="custom_order">사용자 지정 순서</string>
@@ -220,7 +215,6 @@
     <string name="sort_by">정렬 기준</string>
     <string name="older_first">날짜순</string>
     <string name="newer_first">최신순</string>
-    <string name="credit_app">YouTube Music을 백엔드로 사용하는 간단한 음악 앱 \n\nSimpMusic은 광고나 추적 없이 YouTube나 YouTube Music에서 음악을 스트리밍하는 오픈 소스 프로젝트입니다. SimpMusic에서는 다양한 기능들을 이용할 수 있습니다.\n\n - 음악 스트리밍 \n - 가사 싱크\n - 데이터 개인화\n - 기타… \n\nSimpMusic은 항상 무료이며 광고도 없습니다\n\nTuan Minh Nguyen Duc (maxrave-dev)가 ❤️을 담아 만듦</string>
     <string name="issue_tracker">이슈 트래커</string>
     <string name="featured_playlists">추천 재생목록</string>
     <string name="featured_inArtist">추천</string>
@@ -289,7 +283,6 @@
     <string name="custom_color">사용자 지정 색상</string>
     <string name="translucent_bottom_navigation_bar">반투명 하단 내비게이션 바</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">하단 바 밑에 있는 콘텐츠를 확인 가능</string>
-    <string name="donation">앱이 마음에 드시면, 커피 한 잔으로 응원해주세요</string>
     <string name="relax">휴식</string>
     <string name="sleep">잠잘 때</string>
     <string name="energize">에너지 충전</string>
@@ -408,7 +401,6 @@
     <string name="no_playlist_found">로컬 재생목록이 없습니다. 먼저 하나 만들어 주십시오</string>
     <string name="list_all_cookies_of_this_page">이 페이지의 모든 쿠키 나열</string>
     <string name="copied_to_clipboard">클립보드에 복사 완료</string>
-    <string name="update_channel">업데이트 채널</string>
     <string name="enable_liquid_glass_effect">리퀴드 글래스 켜기 (베타)</string>
     <string name="enable_liquid_glass_effect_description">일부 영역에 iOS 리퀴드 글래스 효과 적용 (Android 13 이상)</string>
     <string name="your_library">내 라이브러리</string>
@@ -488,8 +480,6 @@
     <string name="quit_app">앱 종료</string>
     <string name="local_tracking_title">로컬 재생 기록 추적</string>
     <string name="local_tracking_description">로컬 데이터베이스에 나의 재생 기록 저장</string>
-    <string name="blog_notification_title">블로그 포스트 알림</string>
-    <string name="blog_notification_description">새로운 블로그가 올라오면 알림 받기</string>
     <string name="simpmusic_charts">Simpmusic 차트</string>
     <string name="crossfading">크로스페이드 중</string>
     <string name="search_for">검색</string>

@@ -98,11 +98,6 @@
     <string name="version">Version</string>
     <string name="github">Github</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">Spendiere mir einen Kaffee</string>
-    <string name="developer_blog">Entwickler-Blog</string>
-    <string name="developer_blog_tagline">Lesen Sie Entwicklernotizen, Tutorials &amp; hinter den Kulissen</string>
-    <string name="blog_promo_title">Neues vom Entwickler</string>
-    <string name="blog_promo_message">Ich habe gerade meinen persönlichen Blog unter maxrave.dev gestartet – dort teile ich die Geschichte hinter SimpMusic, ausführliche Einblicke in die Musiktechnologie und technische Notizen. Schaut doch mal rein, wenn ihr neugierig seid ✨</string>
     <string name="visit_blog">Blog besuchen</string>
     <string name="title">Titel</string>
     <string name="custom_order">Individuelle Reinfolge</string>
@@ -221,7 +216,6 @@
     <string name="sort_by">Sortieren nach</string>
     <string name="older_first">Ältere zuerst</string>
     <string name="newer_first">Neue zuerst</string>
-    <string name="credit_app">Eine einfache Musik-App mit YouTube Music als Backend \n\nSimpMusic ist ein Open-Source-Projekt zum Streamen von Musik von YouTube und YouTube Music ohne Werbung und Tracking. SimpMusic bietet viele Funktionen:\n\n - Musik streamen \n - Synchronisierte Liedtexte\n - Daten personalisieren\n - etc… \n\nSimpMusic ist immer kostenlos und ohne Werbung\n\nErstellen Sie mit ❤️ von Tuan Minh Nguyen Duc (maxrave-dev)</string>
     <string name="issue_tracker">Issue-Tracker</string>
     <string name="featured_playlists">Empfohlene Playlists</string>
     <string name="featured_inArtist">Zu hören in</string>
@@ -312,7 +306,6 @@
     <string name="custom_color">Benutzerdefinierte Farbe</string>
     <string name="translucent_bottom_navigation_bar">Durchsichtige untere Navigationsleiste</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">Du kannst den Inhalt unter der Navigationsleiste sehen</string>
-    <string name="donation">Wenn du meine Arbeit magst, fühl dich frei mir einen Kaffee zu spendieren</string>
     <string name="relax">Entspannen</string>
     <string name="sleep">Schlafen</string>
     <string name="energize">Energie anziehen</string>
@@ -441,7 +434,6 @@
     <string name="no_playlist_found">Keine lokalen Playlisten gefunden, bitte erstelle zuerst eine</string>
     <string name="list_all_cookies_of_this_page">Alle Cookies dieser Seite auflisten</string>
     <string name="copied_to_clipboard">In die Zwischenablage kopiert</string>
-    <string name="update_channel">Update-Kanal</string>
     <string name="enable_liquid_glass_effect">Liquid-Glass-Effekt aktivieren (BETA)</string>
     <string name="enable_liquid_glass_effect_description">Aktiviere den Liquid-Glass-Effekt von iOS in bestimmten Positionen (Android 13+).</string>
     <string name="your_library">Deine Bibliothek</string>
@@ -548,8 +540,6 @@
     <string name="quit_app">App beenden</string>
     <string name="local_tracking_title">Lokale Aufzeichnung des Wiedergabeverlaufs</string>
     <string name="local_tracking_description">Zeichne den Wiedergabeverlauf in der lokalen Datenbank auf</string>
-    <string name="blog_notification_title">Benachrichtigungen zu Blogbeiträgen</string>
-    <string name="blog_notification_description">Werde benachrichtigt wenn ein neuer Blog-Beitrag veröffentlicht wird</string>
     <string name="simpmusic_charts">Orinify Charts</string>
     <string name="crossfading">Crossfading (überblenden)</string>
     <string name="search_for">Suchen nach</string>

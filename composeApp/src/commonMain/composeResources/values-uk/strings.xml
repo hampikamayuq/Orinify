@@ -98,11 +98,6 @@
     <string name="version">Версія</string>
     <string name="github">Github</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">Купіть мені каву</string>
-    <string name="developer_blog">Блог розробника</string>
-    <string name="developer_blog_tagline">Читайте нотатки розробника, навчальні посібники та закулісся</string>
-    <string name="blog_promo_title">Щось нове від розробника</string>
-    <string name="blog_promo_message">Я щойно запустив свій особистий блог на maxrave.dev — ділюся історією SimpMusic, глибоким зануренням у музичні технології та інженерними нотатками. Почитайте, якщо вам цікаво ✨</string>
     <string name="visit_blog">Відвідати блог</string>
     <string name="title">Назва</string>
     <string name="custom_order">Власний порядок</string>
@@ -220,7 +215,6 @@
     <string name="sort_by">Упорядкувати за</string>
     <string name="older_first">Спочатку старіші</string>
     <string name="newer_first">Спочатку новіші</string>
-    <string name="credit_app">Простий музичний застосунок з використанням YouTube Music для бекенду \n\nSimpMusic - це проєкт з відкритим вихідним кодом для потокової передачі музики з YouTube та YouTube Music без реклами та відстеження. SimpMusic надає багато можливостей:\n\n - Потокова музика\n - Синхронізовані тексти\n - Персоналізація даних\n - тощо... \n\nSimpMusic завжди безкоштовний і без реклами\n\nСтворено з ❤️ від Tuan Minh Nguyen Duc (maxrave-dev)</string>
     <string name="issue_tracker">Відстежувач випусків</string>
     <string name="featured_playlists">Рекомендовані плейлисти</string>
     <string name="featured_inArtist">Рекомендовано</string>
@@ -280,7 +274,6 @@
     <string name="custom_color">Власний колір</string>
     <string name="translucent_bottom_navigation_bar">Напівпрозора нижня панель навігації</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">Ви можете побачити вміст під нижньою панеллю</string>
-    <string name="donation">Якщо ви оцінили мою роботу, дайте мені на каву</string>
     <string name="relax">Відпочинок</string>
     <string name="sleep">Сон</string>
     <string name="energize">Енергія</string>
@@ -398,7 +391,6 @@
     <string name="no_playlist_found">Локальних плейлистів не знайдено. Для початку створіть їх</string>
     <string name="list_all_cookies_of_this_page">Список усіх cookies цієї сторінки</string>
     <string name="copied_to_clipboard">Скопійовано в буфер обміну</string>
-    <string name="update_channel">Канал оновлень</string>
     <string name="enable_liquid_glass_effect">Увімкнути liquid glass (БЕТА)</string>
     <string name="enable_liquid_glass_effect_description">Увімкнути ефект рідкого скла iOS у певному положенні (Android 13+)</string>
     <string name="your_library">Ваша бібліотека</string>
@@ -449,8 +441,6 @@
     <string name="quit_app">Вийти</string>
     <string name="local_tracking_title">Локальне відстеження історії прослуховування</string>
     <string name="local_tracking_description">Запис історії прослуховування в локальну базу даних</string>
-    <string name="blog_notification_title">Сповіщення про публікації в блозі</string>
-    <string name="blog_notification_description">Отримуйте сповіщення про публікацію нової публікації в блозі</string>
     <string name="simpmusic_charts">Чарти Orinify</string>
     <string name="crossfading">Кроссфейдинг</string>
     <string name="search_for">Пошук</string>

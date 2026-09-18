@@ -24,5 +24,11 @@ object AppLinks {
      */
     const val WEB_HOST = "simpmusic.org"
 
+    /** Where this fork lives, and what it is a fork of. The About screen and Settings read these. */
+    const val REPO = "https://github.com/hampikamayuq/Orinify"
+    const val ISSUES = "$REPO/issues"
+    const val UPSTREAM_REPO = "https://github.com/maxrave-dev/SimpMusic"
+    const val UPSTREAM_SPONSOR = "https://github.com/sponsors/maxrave-dev"
+
     fun uri(path: String) = "$SCHEME://$path"
 }

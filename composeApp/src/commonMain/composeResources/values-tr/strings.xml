@@ -98,7 +98,6 @@
     <string name="version">Sürüm</string>
     <string name="github">GitHub</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">Bana bir kahve ısmarla</string>
     <string name="title">Başlık</string>
     <string name="custom_order">Özel sipariş</string>
     <string name="album">Albüm</string>
@@ -213,7 +212,6 @@
     <string name="sort_by">Şuna göre sırala</string>
     <string name="older_first">Eskiden Yeniye</string>
     <string name="newer_first">Yeniden Eskiye</string>
-    <string name="credit_app">Arka uç olarak YouTube Music'i kullanan basit bir müzik uygulaması \n\nSimpMusic, reklamlar ve izleme olmadan YouTube ve YouTube Music'ten müzik akışı sağlayan açık kaynaklı bir projedir. SimpMusic birçok özellik sunar:\n\n - Müzik akışı \n - Senkronize şarkı sözleri\n - Verileri kişiselleştirin\n - vb… \n\nSimpMusic her zaman ücretsizdir ve reklam içermez\n\nTuan Minh Nguyen Duc'tan ❤️ ile oluşturun (maxrave-dev)</string>
     <string name="issue_tracker">Sorun Takibi</string>
     <string name="featured_playlists">Öne Çıkan Oynatma Listeleri</string>
     <string name="featured_inArtist">Bulunduğu listeler</string>
@@ -264,7 +262,6 @@
     <string name="user_interface">Arayüz</string>
     <string name="translucent_bottom_navigation_bar">Yarı saydam alt gezinme çubuğu</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">İçeriği alt çubuğun altında görebilirsiniz</string>
-    <string name="donation">Eğer işimi seviyorsanız bana bir kahve verin</string>
     <string name="relax">Rahatlama</string>
     <string name="sleep">Uyku</string>
     <string name="energize">Enerjik</string>
@@ -375,7 +372,6 @@
     <string name="no_playlist_found">Yerel çalma listesi bulunamadı, lütfen önce bir tane oluşturun</string>
     <string name="list_all_cookies_of_this_page">Bu sayfadaki tüm çerezleri listele</string>
     <string name="copied_to_clipboard">Panoya kopyalandı</string>
-    <string name="update_channel">Kanalı güncelle</string>
     <string name="enable_liquid_glass_effect">Sıvı camı etkinleştir (BETA)</string>
     <string name="enable_liquid_glass_effect_description">Belirli bir konumda iOS'un sıvı cam efektini etkinleştirin (Android 13+)</string>
     <string name="your_library">Kitaplığınız</string>

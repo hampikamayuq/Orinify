@@ -98,11 +98,6 @@
     <string name="version">Versão</string>
     <string name="github">GitHub</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">Compre-me um café</string>
-    <string name="developer_blog">Blog do Desenvolvedor</string>
-    <string name="developer_blog_tagline">Leia notas de desenvolvimento, tutoriais &amp; nos bastidores</string>
-    <string name="blog_promo_title">Algo novo do desenvolvimento</string>
-    <string name="blog_promo_message">Acabei de lançar meu blog pessoal no maxrave. ev — compartilhando a história por trás da SimpMusic, mergulhos profundos na música e notas de engenharia. Dê uma lida se você estiver curioso ✨</string>
     <string name="visit_blog">Visite o Blog</string>
     <string name="title">Título</string>
     <string name="custom_order">Manual</string>
@@ -220,7 +215,6 @@
     <string name="sort_by"></string>
     <string name="older_first">Mais Antigas Primeiro</string>
     <string name="newer_first">Mais Recentes Primeiro</string>
-    <string name="credit_app">A simple music app using YouTube Music for backend \n\nSimpMusic is an open source project to stream music from YouTube and YouTube Music without ads and tracking. SimpMusic provides many features:\n\n - Streaming music \n - Synced lyrics\n - Personalize data\n - etc… \n\nSimpMusic is always free and no ads\n\nBuild with ❤️ from Tuan Minh Nguyen Duc (maxrave-dev)</string>
     <string name="issue_tracker">Rastreador de problemas</string>
     <string name="featured_playlists">Listas de reprodução em destaque</string>
     <string name="featured_inArtist">Destacado</string>
@@ -278,7 +272,6 @@
     <string name="theme_color_wallpaper">Papel de parede</string>
     <string name="translucent_bottom_navigation_bar">Barra de navegação inferior translúcida</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">Você pode ver o conteúdo abaixo da barra inferior</string>
-    <string name="donation">Se curtiu o meu trabalho, me paga um café</string>
     <string name="relax">Relaxante</string>
     <string name="sleep">Suspensão</string>
     <string name="energize">Inspirar</string>
@@ -396,7 +389,6 @@
     <string name="no_playlist_found">Não foram encontradas listas de reprodução locais, por favor crie uma primeiro</string>
     <string name="list_all_cookies_of_this_page">Listar todos os cookies desta página</string>
     <string name="copied_to_clipboard">Copiado para a área de transferência</string>
-    <string name="update_channel">Canal De Atualizações</string>
     <string name="enable_liquid_glass_effect">Enable liquid glass (BETA)</string>
     <string name="enable_liquid_glass_effect_description">Ativar o efeito de vidro líquido do iOS em alguma posição (Android 13+)</string>
     <string name="your_library">Your library</string>
@@ -459,4 +451,11 @@
     <string name="listen_to_downloaded">Ouvir músicas baixadas</string>
     <string name="max_selection_reached">Você pode selecionar até %1$d músicas de cada vez</string>
     <!-- Listen Together -->
+    <string name="credit_app">Um cliente do YouTube Music que conhece quem ouve.\n\nO Orinify toca música do YouTube Music sem anúncios e monta Redescobrir, Você pode gostar, Mixes por artista, Tocadas recentemente, Wrapped e os recaps mensais a partir de um histórico de escuta que nunca sai deste celular.\n\nÉ um fork do SimpMusic, projeto de código aberto de Tuan Minh Nguyen Duc (maxrave-dev), e segue sob a mesma licença GPL-3.0.</string>
+    <string name="source_code">Código-fonte</string>
+    <string name="based_on_simpmusic">Baseado no SimpMusic</string>
+    <string name="based_on_simpmusic_subtitle">Código aberto, de maxrave-dev. Abrir o projeto original</string>
+    <string name="support_original_developer">Apoie o desenvolvedor original</string>
+    <string name="support_original_developer_subtitle">Patrocine maxrave-dev, que construiu a base disto</string>
+    <string name="import_data_intro">A importação traz playlists convertidas do Spotify ou de outro cliente do YT Music.\nFerramenta de conversão, do SimpMusic: https://www.simpmusic.org/tools\nSó arquivos de playlist no formato do SimpMusic podem ser importados</string>
 </resources>

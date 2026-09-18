@@ -145,8 +145,6 @@ class SettingsViewModel(
     val proxyPassword: StateFlow<String> = _proxyPassword
     private var _autoCheckUpdate = MutableStateFlow(false)
     val autoCheckUpdate: StateFlow<Boolean> = _autoCheckUpdate
-    private var _updateChannel: MutableStateFlow<String> = MutableStateFlow(DataStoreManager.GITHUB)
-    val updateChannel: StateFlow<String> = _updateChannel
     private val _aiProvider = MutableStateFlow<String>(DataStoreManager.AI_PROVIDER_OPENAI)
     val aiProvider: StateFlow<String> = _aiProvider
     private val _isHasApiKey = MutableStateFlow<Boolean>(false)
@@ -228,8 +226,6 @@ class SettingsViewModel(
     private val _localTrackingEnabled = MutableStateFlow<Boolean>(false)
     val localTrackingEnabled: StateFlow<Boolean> = _localTrackingEnabled
 
-    private val _blogNotificationEnabled = MutableStateFlow(true)
-    val blogNotificationEnabled: StateFlow<Boolean> = _blogNotificationEnabled
 
     // Auto Backup
     private val _autoBackupEnabled = MutableStateFlow<Boolean>(false)
@@ -324,7 +320,6 @@ class SettingsViewModel(
         getAutoDownloadLikedSongs()
         getContributorNameAndEmail()
         getBackupDownloaded()
-        getUpdateChannel()
         getEnableLiquidGlass()
         getExplicitContentEnabled()
         getDiscordLoggedIn()
@@ -337,7 +332,6 @@ class SettingsViewModel(
         getDownloadQuality()
         getVideoDownloadQuality()
         getLocalTrackingEnabled()
-        getBlogNotificationEnabled()
         getAutoBackupEnabled()
         getAutoBackupFrequency()
         getAutoBackupMaxFiles()
@@ -363,21 +357,6 @@ class SettingsViewModel(
         viewModelScope.launch {
             dataStoreManager.setLocalTrackingEnabled(enabled)
             getLocalTrackingEnabled()
-        }
-    }
-
-    private fun getBlogNotificationEnabled() {
-        viewModelScope.launch {
-            dataStoreManager.blogNotificationEnabled.collect { enabled ->
-                _blogNotificationEnabled.value = enabled == DataStoreManager.TRUE
-            }
-        }
-    }
-
-    fun setBlogNotificationEnabled(enabled: Boolean) {
-        viewModelScope.launch {
-            dataStoreManager.setBlogNotificationEnabled(enabled)
-            getBlogNotificationEnabled()
         }
     }
 
@@ -651,20 +630,6 @@ class SettingsViewModel(
         }
     }
 
-    private fun getUpdateChannel() {
-        viewModelScope.launch {
-            dataStoreManager.updateChannel.collect { channel ->
-                _updateChannel.value = channel
-            }
-        }
-    }
-
-    fun setUpdateChannel(channel: String) {
-        viewModelScope.launch {
-            dataStoreManager.setUpdateChannel(channel)
-            getUpdateChannel()
-        }
-    }
 
     private fun getBackupDownloaded() {
         viewModelScope.launch {

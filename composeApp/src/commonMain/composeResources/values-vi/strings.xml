@@ -98,11 +98,6 @@
     <string name="version">Phiên bản</string>
     <string name="github">Github</string>
     <string name="maxrave_dev">maxrave-dev</string>
-    <string name="buy_me_a_coffee">Hỗ trợ tôi</string>
-    <string name="developer_blog">Blog của nhà phát triển</string>
-    <string name="developer_blog_tagline">Đọc các ghi chép của nhà phát triển, hướng dẫn &amp; đằng sau các tính năng</string>
-    <string name="blog_promo_title">Một vài điều mới đến từ nhà phát triển</string>
-    <string name="blog_promo_message">Tôi vừa ra mắt blog cá nhân của mình tại maxrave.dev — nơi chia sẻ câu chuyện đằng sau SimpMusic, những phân tích chuyên sâu về công nghệ âm nhạc và những ghi chú kỹ thuật. Hãy ghé thăm nếu bạn tò mò nhé ✨</string>
     <string name="visit_blog">Ghé thăm blog</string>
     <string name="title">Tiêu đề</string>
     <string name="custom_order">Bộ lọc tuỳ chỉnh</string>
@@ -221,7 +216,6 @@
     <string name="sort_by">Sắp xếp theo</string>
     <string name="older_first">Cũ trước</string>
     <string name="newer_first">Mới trước</string>
-    <string name="credit_app">Một ứng dụng âm nhạc đơn giản sử dụng dữ liệu từ YouTube Music \n\nSimpMusic là một dự án nguồn mở để phát nhạc từ YouTube và YouTube Music mà không bị quảng cáo và theo dõi. SimpMusic cung cấp nhiều tính năng:\n\n - Phát nhạc \n - Lời bài hát được đồng bộ hóa\n - Cá nhân hóa dữ liệu\n - v.v… \n\nSimpMusic luôn miễn phí và không có quảng cáo\n\nXây dựng với ❤️ bởi Nguyên Đức Tuấn Minh (maxrave-dev)</string>
     <string name="issue_tracker">Theo dõi lỗi</string>
     <string name="featured_playlists">Danh sách phát nổi bật</string>
     <string name="featured_inArtist">Nổi bật</string>
@@ -310,7 +304,6 @@
     <string name="custom_color">Màu tùy chỉnh</string>
     <string name="translucent_bottom_navigation_bar">Thanh điều hướng mờ</string>
     <string name="you_can_see_the_content_below_the_bottom_bar">Bạn có thể xem nội dung phía dưới thanh điều hướng</string>
-    <string name="donation">Nếu bạn yêu thích những gi mà tác giả đã làm, hãy gửi cho họ một ly cà phê</string>
     <string name="relax">Thư giãn</string>
     <string name="sleep">Dễ ngủ</string>
     <string name="energize">Nạp năng lượng</string>
@@ -439,7 +432,6 @@
     <string name="no_playlist_found">Không tìm thấy bất kỳ danh sách phát nội bộ nào, hãy tạo một danh sách phát trước</string>
     <string name="list_all_cookies_of_this_page">Danh sách cookie của trang này</string>
     <string name="copied_to_clipboard">Đã sao chép vào bộ nhớ tạm</string>
-    <string name="update_channel">Kênh cập nhật</string>
     <string name="enable_liquid_glass_effect">Bật liquid glass (BETA)</string>
     <string name="enable_liquid_glass_effect_description">Bật thiết kế Liquid glass trong một số vị trí (Android 13+)</string>
     <string name="your_library">Thư viện của bạn</string>
@@ -530,8 +522,6 @@
     <string name="quit_app">Thoát ứng dụng</string>
     <string name="local_tracking_title">Theo dõi lịch sử nghe cục bộ</string>
     <string name="local_tracking_description">Ghi lại lịch sử nghe nhạc vào cơ sở dữ liệu cục bộ</string>
-    <string name="blog_notification_title">Thông báo về các bài blog mới</string>
-    <string name="blog_notification_description">Nhận thông báo khi có bài blog mới được phát hành</string>
     <string name="simpmusic_charts">Orinify Charts</string>
     <string name="crossfading">Đang chuyển bài mượt mà</string>
     <string name="search_for">Tìm kiếm cho</string>
