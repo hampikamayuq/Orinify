@@ -577,7 +577,7 @@ internal class PlaylistRepositoryImpl(
                     val listItem = mutableListOf<PlaylistsResult>()
                     if (input.isNullOrEmpty()) {
                         Logger.w("Library", "No playlists found")
-                        emit(null)
+                        emit(emptyList())
                         return@onSuccess
                     }
                     listItem.addAll(
@@ -629,7 +629,7 @@ internal class PlaylistRepositoryImpl(
                             )
                         }
                     } else {
-                        emit(null)
+                        emit(emptyList())
                     }
                 }.onFailure { e ->
                     Logger.e("Library", "Error: ${e.message}")
@@ -638,13 +638,12 @@ internal class PlaylistRepositoryImpl(
                     val isNeeded =
                         dataStoreManager.keepYouTubePlaylistOffline.first() == DataStoreManager.TRUE &&
                             dataStoreManager.loggedIn.first() == DataStoreManager.TRUE && account != null
-                    if (isNeeded) {
-                        val list =
+                    val offline =
+                        if (isNeeded) {
                             getYourYouTubePlaylistList("${account.email}_${account.pageId ?: ""}")
                                 .lastOrNull()
-                        if (list != null) {
-                            emit(
-                                list.listBrowseIds.mapNotNull { id ->
+                                ?.listBrowseIds
+                                ?.mapNotNull { id ->
                                     getPlaylist(id).lastOrNull()?.let {
                                         PlaylistsResult(
                                             author = it.author ?: "",
@@ -663,14 +662,13 @@ internal class PlaylistRepositoryImpl(
                                             title = it.title,
                                         )
                                     }
-                                },
-                            )
+                                }
                         } else {
-                            emit(null)
+                            null
                         }
-                    } else {
-                        emit(null)
-                    }
+                    // null is reserved for "failed, nothing cached": an offline list whose rows
+                    // have all been swept is no copy at all, not an account with no playlists.
+                    emit(offline?.takeIf { it.isNotEmpty() })
                 }
         }.flowOn(Dispatchers.IO)
 
@@ -696,7 +694,7 @@ internal class PlaylistRepositoryImpl(
                     val listItem = mutableListOf<PlaylistsResult>()
                     if (input.isNullOrEmpty()) {
                         Logger.w("Mixed For You", "No playlists found")
-                        emit(null)
+                        emit(emptyList())
                         return@onSuccess
                     }
                     listItem.addAll(
@@ -736,8 +734,13 @@ internal class PlaylistRepositoryImpl(
                     if (listItem.isNotEmpty()) {
                         emit(listItem)
                     } else {
-                        emit(null)
+                        emit(emptyList())
                     }
+                }.onFailure { e ->
+                    // No offline copy for mixes; without this branch the flow completed with no
+                    // emission at all and the caller sat in Loading forever.
+                    Logger.e("Mixed For You", "Error: ${e.message}")
+                    emit(null)
                 }
         }.flowOn(Dispatchers.IO)
 

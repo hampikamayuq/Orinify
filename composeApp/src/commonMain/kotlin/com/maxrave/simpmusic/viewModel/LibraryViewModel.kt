@@ -233,10 +233,10 @@ class LibraryViewModel(
         _youTubePlaylist.value = LocalResource.Loading()
         youTubePlaylistJob =
             relaunch(youTubePlaylistJob) {
-                // Still Success on null: the repository emits null for BOTH "no playlists" and a
-                // failed fetch with no offline copy, so a failure cannot be told apart here.
+                // null is the repository's failure signal; an empty account arrives as emptyList.
                 playlistRepository.getLibraryPlaylist().collect { data ->
-                    _youTubePlaylist.value = LocalResource.Success(data ?: emptyList())
+                    _youTubePlaylist.value =
+                        if (data != null) LocalResource.Success(data) else LocalResource.Error("Unknown error")
                 }
             }
     }
@@ -246,7 +246,8 @@ class LibraryViewModel(
         mixForYouJob =
             relaunch(mixForYouJob) {
                 playlistRepository.getMixedForYou().collect { data ->
-                    _youTubeMixForYou.value = LocalResource.Success(data ?: emptyList())
+                    _youTubeMixForYou.value =
+                        if (data != null) LocalResource.Success(data) else LocalResource.Error("Unknown error")
                 }
             }
     }

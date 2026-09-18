@@ -68,8 +68,15 @@ interface PlaylistRepository {
         viewString: String,
     ): Flow<Resource<Pair<PlaylistBrowse, String?>>>
 
+    /**
+     * `null` means the fetch failed and nothing is cached; an empty list means the account has
+     * no playlists.
+     */
     fun getLibraryPlaylist(): Flow<List<PlaylistsResult>?>
 
+    /**
+     * `null` means the fetch failed; an empty list means there are no mixes.
+     */
     fun getMixedForYou(): Flow<List<PlaylistsResult>?>
 
     fun updateYourYouTubePlaylistTitle(
