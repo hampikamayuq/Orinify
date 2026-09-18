@@ -74,6 +74,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -201,6 +202,7 @@ import simpmusic.composeapp.generated.resources.home_offline_title
 import simpmusic.composeapp.generated.resources.let_s_pick_a_playlist_for_you
 import simpmusic.composeapp.generated.resources.let_s_start_with_a_radio
 import simpmusic.composeapp.generated.resources.log_in_warning
+import simpmusic.composeapp.generated.resources.might_like_empty
 import simpmusic.composeapp.generated.resources.notification
 import simpmusic.composeapp.generated.resources.party
 import simpmusic.composeapp.generated.resources.quick_picks
@@ -255,6 +257,7 @@ fun HomeScreen(
     val personalShelves by personalViewModel.songShelves.collectAsStateWithLifecycle()
     val artistMixes by personalViewModel.artistMixes.collectAsStateWithLifecycle()
     val loadingArtistMix by personalViewModel.loadingArtistMix.collectAsStateWithLifecycle()
+    val personalLoaded by personalViewModel.loaded.collectAsStateWithLifecycle()
     val scrollState = rememberLazyListState()
     val isScrollingUp by scrollState.isScrollingUp()
     val accountInfo by viewModel.accountInfo.collectAsStateWithLifecycle()
@@ -573,6 +576,25 @@ fun HomeScreen(
                                     loadingChannelId = loadingArtistMix,
                                     onClick = { artist -> personalViewModel.playArtistMix(artist) },
                                 )
+                            }
+                            // Principle 3: an empty personal list is a state, not a bug, and it
+                            // has to say so. Tracking is on and every source has answered with
+                            // nothing — a fresh install, or a cleared history — so one quiet line
+                            // where the shelves will be, never a heading over nothing and never
+                            // while the queries are still running.
+                            if (personalLoaded && personalShelves.isEmpty() && artistMixes.isEmpty()) {
+                                item(key = "personal:empty") {
+                                    Text(
+                                        text = stringResource(Res.string.might_like_empty),
+                                        style = typo().bodySmall,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 15.dp, vertical = 12.dp)
+                                                .alpha(0.7f),
+                                    )
+                                }
                             }
                         }
                         // The key used to carry `mainHomeThumbnail`, which is DERIVED from this

@@ -89,6 +89,14 @@ class PersonalHomeViewModel(
     private val _loadingArtistMix: MutableStateFlow<String?> = MutableStateFlow(null)
     val loadingArtistMix: StateFlow<String?> get() = _loadingArtistMix.asStateFlow()
 
+    /**
+     * True once every source of a [load] has answered, empty or not. Home needs it to tell "not
+     * enough listening yet" from "still querying": Principle 3 says an empty personal list must
+     * say so, and saying it during the first 200ms of every open would be a lie that flickers.
+     */
+    private val _loaded: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val loaded: StateFlow<Boolean> get() = _loaded.asStateFlow()
+
     init {
         load()
     }
@@ -102,14 +110,16 @@ class PersonalHomeViewModel(
      */
     fun load() {
         viewModelScope.launch {
+            _loaded.value = false
             if (dataStoreManager.localTrackingEnabled.firstOrNull() != DataStoreManager.TRUE) {
                 _songShelves.value = emptyList()
                 _artistMixes.value = emptyList()
+                _loaded.value = true
                 return@launch
             }
             val rediscover = async { rediscoverSongs() }
             val mightLike = async { mightLikeSongs() }
-            launch { _artistMixes.value = topArtists() }
+            val artists = launch { _artistMixes.value = topArtists() }
             val shelves = mutableListOf<HomeItem>()
             rediscover.await().takeIf { it.isNotEmpty() }?.let {
                 shelves += songShelf(it, getString(Res.string.rediscover), getString(Res.string.rediscover_subtitle))
@@ -121,6 +131,8 @@ class PersonalHomeViewModel(
                 shelves += songShelf(it, getString(Res.string.might_like), getString(Res.string.might_like_subtitle))
                 _songShelves.value = shelves.toList()
             }
+            artists.join()
+            _loaded.value = true
         }
     }
 
