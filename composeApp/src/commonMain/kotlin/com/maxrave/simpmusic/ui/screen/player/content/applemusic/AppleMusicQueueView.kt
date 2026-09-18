@@ -49,6 +49,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -69,6 +72,7 @@ import com.maxrave.simpmusic.ui.icon.Shuffle
 import com.maxrave.simpmusic.ui.icon.SimpIcons
 import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentActions
 import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentState
+import com.maxrave.simpmusic.ui.theme.seed
 import com.maxrave.simpmusic.viewModel.UIEvent
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.map
@@ -76,9 +80,12 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.add_to_playlist
 import simpmusic.composeapp.generated.resources.continue_playing
 import simpmusic.composeapp.generated.resources.endless_queue
 import simpmusic.composeapp.generated.resources.now_playing
+import simpmusic.composeapp.generated.resources.shuffle
+import simpmusic.composeapp.generated.resources.song_info
 
 /**
  * The QUEUE body: compact header, [Info][PlaylistAdd][Shuffle][Repeat] pills, a "Continue
@@ -142,8 +149,6 @@ internal fun AppleMusicQueueView(
         AppleMusicQueuePillsRow(
             state = state,
             actions = actions,
-            activePillContainer = activePillContainer,
-            activePillContent = activePillContent,
             modifier = Modifier.padding(top = 4.dp, bottom = 20.dp),
         )
         AppleMusicContinuePlayingHeader(
@@ -177,9 +182,10 @@ internal fun AppleMusicQueueView(
         }
 
         // Endless/radio queues page in as you scroll — same trigger QueueBottomSheet uses.
-        val loadMoreState by remember {
-            derivedStateOf { musicServiceHandler.queueData.value?.queueState ?: QueueData.StateSource.STATE_CREATED }
-        }
+        // Collected, not derived from `.value`: a StateFlow's value is not snapshot state, so a
+        // derivedStateOf over it never re-evaluated and the gate froze at whatever it read first.
+        val queueData by musicServiceHandler.queueData.collectAsStateWithLifecycle()
+        val loadMoreState = queueData?.queueState ?: QueueData.StateSource.STATE_CREATED
         val shouldLoadMore by remember {
             derivedStateOf {
                 val layoutInfo = lazyListState.layoutInfo
@@ -301,8 +307,6 @@ internal fun AppleMusicQueueView(
 private fun AppleMusicQueuePillsRow(
     state: NowPlayingContentState,
     actions: NowPlayingContentActions,
-    activePillContainer: Color,
-    activePillContent: Color,
     modifier: Modifier = Modifier,
 ) {
     val repeatState = state.controllerState.repeatState
@@ -312,48 +316,49 @@ private fun AppleMusicQueuePillsRow(
     ) {
         AppleMusicQueuePill(
             icon = SimpIcons.Info,
-            active = false,
-            activeContainer = activePillContainer,
-            activeContent = activePillContent,
+            contentDescription = stringResource(Res.string.song_info),
             onClick = { actions.onShowInfo() },
             modifier = Modifier.weight(1f),
         )
         AppleMusicQueuePill(
             icon = SimpIcons.PlaylistAdd,
-            active = false,
-            activeContainer = activePillContainer,
-            activeContent = activePillContent,
+            contentDescription = stringResource(Res.string.add_to_playlist),
             onClick = { actions.onShowAddToPlaylist() },
             modifier = Modifier.weight(1f),
         )
         AppleMusicQueuePill(
             icon = SimpIcons.Shuffle,
-            active = state.controllerState.isShuffle,
-            activeContainer = activePillContainer,
-            activeContent = activePillContent,
+            contentDescription = stringResource(Res.string.shuffle),
+            isActive = state.controllerState.isShuffle,
             onClick = { actions.onUIEvent(UIEvent.Shuffle) },
             modifier = Modifier.weight(1f),
         )
         AppleMusicQueuePill(
             icon = if (repeatState is RepeatState.One) SimpIcons.RepeatOne else SimpIcons.Repeat,
-            active = repeatState !is RepeatState.None,
-            activeContainer = activePillContainer,
-            activeContent = activePillContent,
+            contentDescription = stringResource(repeatState.repeatLabelRes()),
+            isActive = repeatState !is RepeatState.None,
             onClick = { actions.onUIEvent(UIEvent.Repeat) },
             modifier = Modifier.weight(1f),
         )
     }
 }
 
+/**
+ * [isActive] null for the two plain actions (Info, PlaylistAdd): they have no on/off, so nothing
+ * is announced as "not selected". The lit pill is the ACCENT, not the artwork pair the dock
+ * uses — shuffle and repeat are the listener's own settings, not the record's — with dark ink
+ * on it, since the accent is tuned for dark-on-light legibility and the accent on a light pill
+ * falls under 3:1.
+ */
 @Composable
 private fun AppleMusicQueuePill(
     icon: ImageVector,
-    active: Boolean,
-    activeContainer: Color,
-    activeContent: Color,
+    contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    isActive: Boolean? = null,
 ) {
+    val lit = isActive == true
     Box(
         modifier =
             modifier
@@ -362,14 +367,15 @@ private fun AppleMusicQueuePill(
                 .appleMusicPressInflate(pressedScale = 1.08f)
                 .height(40.dp)
                 .clip(RoundedCornerShape(20.dp))
-                .background(if (active) activeContainer else AppleMusicPillInactive)
-                .clickable(onClick = onClick),
+                .background(if (lit) seed else AppleMusicPillInactive)
+                .clickable(role = Role.Button, onClick = onClick)
+                .semantics { if (isActive != null) selected = isActive },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = "",
-            tint = if (active) activeContent else Color.White,
+            contentDescription = contentDescription,
+            tint = if (lit) Color.Black.copy(alpha = 0.8f) else Color.White,
             modifier = Modifier.size(20.dp),
         )
     }

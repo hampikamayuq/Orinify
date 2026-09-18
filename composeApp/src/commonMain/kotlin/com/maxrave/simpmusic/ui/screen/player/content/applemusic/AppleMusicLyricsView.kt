@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -31,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -39,6 +41,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,6 +53,8 @@ import com.maxrave.simpmusic.ui.component.LyricsView
 import com.maxrave.simpmusic.ui.component.lyrics.ShareLyricsSheet
 import com.maxrave.simpmusic.ui.component.lyrics.toShareLyricsLines
 import com.maxrave.simpmusic.ui.icon.OpenInFull
+import com.maxrave.simpmusic.ui.icon.Pause
+import com.maxrave.simpmusic.ui.icon.PlayArrow
 import com.maxrave.simpmusic.ui.icon.Share
 import com.maxrave.simpmusic.ui.icon.SimpIcons
 import com.maxrave.simpmusic.ui.icon.ThumbsUpDown
@@ -64,15 +69,20 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.ai_translated
+import simpmusic.composeapp.generated.resources.fullscreen
 import simpmusic.composeapp.generated.resources.line_synced
 import simpmusic.composeapp.generated.resources.lyrics_provider_betterlyrics
 import simpmusic.composeapp.generated.resources.lyrics_provider_lrc
 import simpmusic.composeapp.generated.resources.lyrics_provider_simpmusic
 import simpmusic.composeapp.generated.resources.lyrics_provider_youtube
 import simpmusic.composeapp.generated.resources.offline_mode
+import simpmusic.composeapp.generated.resources.pause
+import simpmusic.composeapp.generated.resources.play
 import simpmusic.composeapp.generated.resources.rich_synced
+import simpmusic.composeapp.generated.resources.share_lyrics
 import simpmusic.composeapp.generated.resources.spotify_lyrics_provider
 import simpmusic.composeapp.generated.resources.unsynced
+import simpmusic.composeapp.generated.resources.vote_for_lyrics
 
 /**
  * The LYRICS body: compact header, the app's own [LyricsView] — the SAME renderer the other
@@ -255,10 +265,59 @@ internal fun AppleMusicLyricsView(
                         // always gated theirs; this one did not, so it invited a rating on
                         // YouTube/LRCLIB/Spotify lyrics that had nowhere to go.
                         if (lyricsData.canVote()) {
-                            AppleMusicFloatingCircleButton(icon = SimpIcons.ThumbsUpDown, onClick = { actions.onShowVoteDialog() })
+                            AppleMusicFloatingCircleButton(
+                                icon = SimpIcons.ThumbsUpDown,
+                                contentDescription = stringResource(Res.string.vote_for_lyrics),
+                                onClick = { actions.onShowVoteDialog() },
+                            )
                         }
-                        AppleMusicFloatingCircleButton(icon = SimpIcons.Share, onClick = { showShareSheet = true })
-                        AppleMusicFloatingCircleButton(icon = SimpIcons.OpenInFull, onClick = { actions.onShowFullscreenLyrics() })
+                        AppleMusicFloatingCircleButton(
+                            icon = SimpIcons.Share,
+                            contentDescription = stringResource(Res.string.share_lyrics),
+                            onClick = { showShareSheet = true },
+                        )
+                        AppleMusicFloatingCircleButton(
+                            icon = SimpIcons.OpenInFull,
+                            contentDescription = stringResource(Res.string.fullscreen),
+                            onClick = { actions.onShowFullscreenLyrics() },
+                        )
+                    }
+                }
+                // Play/pause never leaves the page. When the cluster below has folded away it
+                // stands in at the bottom centre, dimmed so it reads as a resting control over
+                // the lyrics rather than a second transport; any tap on it also counts as reaching
+                // for the player, so the full cluster comes back with it.
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = !showCluster,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                ) {
+                    val isPlaying = state.controllerState.isPlaying
+                    Box(
+                        modifier =
+                            Modifier
+                                .padding(
+                                    bottom =
+                                        with(localDensity) { WindowInsets.systemBars.getBottom(localDensity).toDp() } + 16.dp,
+                                ).appleMusicPressInflate()
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .alpha(HIDDEN_PLAY_PAUSE_ALPHA)
+                                .background(Color.White.copy(alpha = 0.24f))
+                                .clickable(role = Role.Button) {
+                                    actions.onUIEvent(UIEvent.PlayPause)
+                                    showCluster = true
+                                    interactionTick++
+                                },
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = if (isPlaying) SimpIcons.Pause else SimpIcons.PlayArrow,
+                            contentDescription = stringResource(if (isPlaying) Res.string.pause else Res.string.play),
+                            tint = Color.White,
+                            modifier = Modifier.size(32.dp),
+                        )
                     }
                 }
             }
@@ -300,26 +359,39 @@ internal fun AppleMusicLyricsView(
     }
 }
 
-// Long enough to read a line or two and reach for a control, short enough that the page clears
-// itself while you are just listening.
-private const val CLUSTER_AUTO_HIDE_MS = 8_000L
+// Long enough to read a verse and reach for a control, short enough that the page clears
+// itself while you are just listening. 8s cleared it mid-reach for anyone reading slowly.
+private const val CLUSTER_AUTO_HIDE_MS = 15_000L
 
+// The stand-in play/pause over the lyrics once the cluster has hidden: present, not prominent.
+private const val HIDDEN_PLAY_PAUSE_ALPHA = 0.6f
+
+/** 48dp target around the 38dp circle, so the button reads exactly as it did while meeting the minimum. */
 @Composable
 private fun AppleMusicFloatingCircleButton(
     icon: ImageVector,
+    contentDescription: String,
     onClick: () -> Unit,
 ) {
     Box(
         modifier =
             Modifier
                 .appleMusicPressInflate()
-                .size(38.dp)
+                .size(48.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.24f))
-                .clickable(onClick = onClick),
+                .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(imageVector = icon, contentDescription = "", tint = Color.White, modifier = Modifier.size(18.dp))
+        Box(
+            modifier =
+                Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.24f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(imageVector = icon, contentDescription = contentDescription, tint = Color.White, modifier = Modifier.size(18.dp))
+        }
     }
 }
 

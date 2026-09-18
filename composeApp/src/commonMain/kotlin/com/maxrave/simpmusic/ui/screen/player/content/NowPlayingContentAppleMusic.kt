@@ -60,6 +60,10 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -84,6 +88,7 @@ import com.maxrave.simpmusic.extension.smoothScrimBrush
 import com.maxrave.simpmusic.getPlatform
 import com.maxrave.simpmusic.ui.component.ExplicitBadge
 import com.maxrave.simpmusic.ui.component.LiquidGlassIconButton
+import com.maxrave.simpmusic.ui.component.marqueeIterations
 import com.maxrave.simpmusic.ui.component.rememberHolderPainter
 import com.maxrave.simpmusic.ui.screen.player.content.applemusic.AppleMusicBottomCluster
 import com.maxrave.simpmusic.ui.screen.player.content.applemusic.AppleMusicHeaderActions
@@ -105,7 +110,15 @@ import com.maxrave.simpmusic.ui.theme.typo
 import com.maxrave.simpmusic.viewModel.SharedViewModel
 import com.maxrave.simpmusic.viewModel.UIEvent
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.album_artwork
+import simpmusic.composeapp.generated.resources.close_player
+import simpmusic.composeapp.generated.resources.forward_5s
+import simpmusic.composeapp.generated.resources.fullscreen
+import simpmusic.composeapp.generated.resources.rewind_5s
+import simpmusic.composeapp.generated.resources.subtitles
 
 /**
  * The Apple Music Now Playing style: a style-internal dock (Lyrics · Cast · Queue) swaps the
@@ -269,6 +282,7 @@ fun NowPlayingContentAppleMusic(
             // Grabber. It sits ABOVE the Crossfade, not inside a view, so it stays put across a tab
             // switch instead of fading with the body — and so Queue/Lyrics get it too. The shell's
             // ModalBottomSheet passes dragHandle = {} for every style, so nothing above this draws one.
+            val closeLabel = stringResource(Res.string.close_player)
             Box(
                 modifier =
                     Modifier
@@ -278,7 +292,12 @@ fun NowPlayingContentAppleMusic(
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() },
-                        ) { actions.onDismiss() },
+                        ) { actions.onDismiss() }
+                        // A 36x5 bar is nothing to TalkBack; name what the tap does.
+                        .semantics {
+                            contentDescription = closeLabel
+                            role = Role.Button
+                        },
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
@@ -454,7 +473,8 @@ private fun AppleMusicMainView(
             ) {
                 Spacer(modifier = Modifier.height(20.dp))
                 AppleMusicMainTitleRow(state = state, actions = actions, typography = typography)
-                Spacer(modifier = Modifier.height(16.dp))
+                // 10, not 16: the artist line now carries 6dp of its own below, as tap padding.
+                Spacer(modifier = Modifier.height(10.dp))
                 AppleMusicBottomCluster(
                     state = state,
                     actions = actions,
@@ -537,12 +557,15 @@ private fun AppleMusicMainView(
                                             text = lineText,
                                             style = typography.idleLyric,
                                             maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
                                             modifier =
                                                 Modifier
                                                     .fillMaxWidth()
                                                     .padding(horizontal = 20.dp, vertical = 2.dp)
-                                                    .basicMarquee(iterations = Int.MAX_VALUE, animationMode = MarqueeAnimationMode.Immediately)
-                                                    .focusable(),
+                                                    .basicMarquee(
+                                                        iterations = marqueeIterations(Int.MAX_VALUE),
+                                                        animationMode = MarqueeAnimationMode.Immediately,
+                                                    ).focusable(),
                                         )
                                         val translatedLineText =
                                             state.screenData.lyricsData
@@ -557,12 +580,15 @@ private fun AppleMusicMainView(
                                                 text = translatedLineText,
                                                 style = typography.idleTranslated,
                                                 maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
                                                 modifier =
                                                     Modifier
                                                         .fillMaxWidth()
                                                         .padding(horizontal = 20.dp, vertical = 2.dp)
-                                                        .basicMarquee(iterations = Int.MAX_VALUE, animationMode = MarqueeAnimationMode.Immediately)
-                                                        .focusable(),
+                                                        .basicMarquee(
+                                                            iterations = marqueeIterations(Int.MAX_VALUE),
+                                                            animationMode = MarqueeAnimationMode.Immediately,
+                                                        ).focusable(),
                                             )
                                         }
                                     }
@@ -575,7 +601,8 @@ private fun AppleMusicMainView(
                             // floating over a canvas, the same job the Lyrics/Queue header does.
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                                // end = 8: the trailing 48dp ⋯ target carries 12dp of its own.
+                                modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp),
                             ) {
                                 AsyncImage(
                                     model =
@@ -598,22 +625,28 @@ private fun AppleMusicMainView(
                                         text = state.screenData.nowPlayingTitle,
                                         style = typography.compactTitle,
                                         maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
                                         modifier =
                                             Modifier
                                                 .fillMaxWidth()
-                                                .basicMarquee(iterations = Int.MAX_VALUE, animationMode = MarqueeAnimationMode.Immediately)
-                                                .focusable(),
+                                                .basicMarquee(
+                                                    iterations = marqueeIterations(Int.MAX_VALUE),
+                                                    animationMode = MarqueeAnimationMode.Immediately,
+                                                ).focusable(),
                                     )
                                     Spacer(modifier = Modifier.height(3.dp))
+                                    // Ellipsis, no marquee: only the title scrolls; two lines
+                                    // scrolling at once is motion with nothing to read.
                                     Text(
                                         text = state.screenData.artistName,
                                         style = typography.compactArtist,
                                         maxLines = 1,
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .basicMarquee(iterations = Int.MAX_VALUE, animationMode = MarqueeAnimationMode.Immediately)
-                                                .focusable(),
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                    ListenerStatsLine(
+                                        stats = state.screenData.listenerStats,
+                                        modifier = Modifier.padding(top = 2.dp),
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
@@ -714,7 +747,9 @@ internal fun AppleMusicMainTitleRow(
     typography: AppleMusicTypography,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+        // end = 8: the trailing 48dp ⋯ target carries 12dp of its own, so its glyph stays 20dp
+        // from the edge, level with the title on the left.
+        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -722,28 +757,37 @@ internal fun AppleMusicMainTitleRow(
                 text = state.screenData.nowPlayingTitle,
                 style = typography.mainTitle,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .basicMarquee(iterations = Int.MAX_VALUE, animationMode = MarqueeAnimationMode.Immediately)
-                        .focusable(),
+                        .basicMarquee(
+                            iterations = marqueeIterations(Int.MAX_VALUE),
+                            animationMode = MarqueeAnimationMode.Immediately,
+                        ).focusable(),
             )
-            Spacer(modifier = Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (state.screenData.isExplicit) {
                     ExplicitBadge(modifier = Modifier.size(20.dp).padding(end = 4.dp))
                 }
+                // Ellipsis, no marquee: this is a tap target, and a target that moves under the
+                // finger is not one. Padding INSIDE the clickable (the old 4dp spacer above is
+                // folded into it) so the target is ~28dp tall without moving the line.
                 Text(
                     text = state.screenData.artistName,
                     style = typography.mainArtist,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier =
                         Modifier
-                            .basicMarquee(iterations = Int.MAX_VALUE, animationMode = MarqueeAnimationMode.Immediately)
-                            .focusable()
-                            .clickable { actions.onNavigateToArtist() },
+                            .weight(1f, fill = false)
+                            .clickable { actions.onNavigateToArtist() }
+                            .padding(top = 4.dp, bottom = 6.dp),
                 )
             }
+            // The fork's own line, in the accent — the one colour on this page that is not the
+            // record's. Top padding is the artist's own bottom padding, so none here.
+            ListenerStatsLine(stats = state.screenData.listenerStats)
         }
         Spacer(modifier = Modifier.width(12.dp))
         AppleMusicHeaderActions(state = state, actions = actions)
@@ -794,7 +838,7 @@ private fun AppleMusicArtworkPage(
                             .diskCacheKey(artworkUrl + "BIGGER")
                             .crossfade(550)
                             .build(),
-                    contentDescription = "",
+                    contentDescription = stringResource(Res.string.album_artwork),
                     onSuccess = { actions.onArtworkBitmap(it.result.image.toImageBitmap()) },
                     onError = {
                         val fallback = artworkUrl?.replace("maxresdefault", "hqdefault")
@@ -875,7 +919,11 @@ private fun AppleMusicArtworkPage(
                                         onClick = { actions.onEnterFullscreenVideo() },
                                         modifier = Modifier.align(Alignment.TopEnd),
                                     ) {
-                                        Icon(imageVector = SimpIcons.Fullscreen, contentDescription = "", tint = Color.White)
+                                        Icon(
+                                            imageVector = SimpIcons.Fullscreen,
+                                            contentDescription = stringResource(Res.string.fullscreen),
+                                            tint = Color.White,
+                                        )
                                     }
                                     Row(
                                         modifier = Modifier.align(Alignment.Center).fillMaxWidth(),
@@ -887,7 +935,7 @@ private fun AppleMusicArtworkPage(
                                         ) {
                                             Icon(
                                                 imageVector = SimpIcons.Replay5,
-                                                contentDescription = "",
+                                                contentDescription = stringResource(Res.string.rewind_5s),
                                                 tint = Color.White,
                                                 modifier = Modifier.size(36.dp).alpha(0.8f),
                                             )
@@ -898,7 +946,7 @@ private fun AppleMusicArtworkPage(
                                         ) {
                                             Icon(
                                                 imageVector = SimpIcons.Forward5,
-                                                contentDescription = "",
+                                                contentDescription = stringResource(Res.string.forward_5s),
                                                 tint = Color.White,
                                                 modifier = Modifier.size(36.dp).alpha(0.8f),
                                             )
@@ -911,7 +959,7 @@ private fun AppleMusicArtworkPage(
                                         ) {
                                             Icon(
                                                 imageVector = if (showSubtitle) SimpIcons.SubtitlesOff else SimpIcons.Subtitles,
-                                                contentDescription = "",
+                                                contentDescription = stringResource(Res.string.subtitles),
                                                 tint = Color.White,
                                             )
                                         }
