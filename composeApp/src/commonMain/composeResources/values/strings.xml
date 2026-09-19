@@ -229,7 +229,7 @@
     <string name="credit_app">A YouTube Music client that knows the listener.\n\nOrinify streams music from YouTube Music without ads, and builds Rediscover, You might like, Artist mixes, Recently played, Wrapped and the monthly recaps from a listening history that never leaves this phone.\n\nIt is a fork of SimpMusic, an open source project by Tuan Minh Nguyen Duc (maxrave-dev), and stays under the same GPL-3.0 licence.</string>
     <string name="issue_tracker">Issue Tracker</string>
     <string name="copyright" translatable="false">Orinify is a fork of SimpMusic, ©2023–2025 Tuan Minh Nguyen Duc (maxrave-dev), GPL-3.0</string>
-    <string name="end_of_page_credit">©%1$s %2$s %3$s\n%4$s</string>
+    <string name="end_of_page_credit">©%1$s %2$s %3$s</string>
     <string name="featured_playlists">Featured Playlists</string>
     <string name="podcasts">Podcasts</string>
     <string name="featured_inArtist">Featured on</string>

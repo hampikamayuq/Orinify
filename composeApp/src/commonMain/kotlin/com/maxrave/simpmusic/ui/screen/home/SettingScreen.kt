@@ -197,8 +197,6 @@ import simpmusic.composeapp.generated.resources.audio_delay_description
 import simpmusic.composeapp.generated.resources.audio_reverb
 import simpmusic.composeapp.generated.resources.audio_reverb_description
 import simpmusic.composeapp.generated.resources.author
-import simpmusic.composeapp.generated.resources.based_on_simpmusic
-import simpmusic.composeapp.generated.resources.based_on_simpmusic_subtitle
 import simpmusic.composeapp.generated.resources.auto_backup
 import simpmusic.composeapp.generated.resources.auto_backup_description
 import simpmusic.composeapp.generated.resources.auto_check_for_update
@@ -394,8 +392,6 @@ import simpmusic.composeapp.generated.resources.socks
 import simpmusic.composeapp.generated.resources.sponsorBlock
 import simpmusic.composeapp.generated.resources.sponsor_block_intro
 import simpmusic.composeapp.generated.resources.spotify
-import simpmusic.composeapp.generated.resources.support_original_developer
-import simpmusic.composeapp.generated.resources.support_original_developer_subtitle
 import simpmusic.composeapp.generated.resources.spotify_canvas_cache
 import simpmusic.composeapp.generated.resources.spotify_lyrícs_info
 import simpmusic.composeapp.generated.resources.storage
@@ -2711,22 +2707,6 @@ fun SettingScreen(
                     subtitle = stringResource(Res.string.orinify_author),
                     onClick = {
                         uriHandler.openUri(AppLinks.REPO)
-                    },
-                )
-                // Principle 4: credit what is not ours. The fork keeps upstream's name and its
-                // sponsor link one row down from the author, where the author used to be.
-                SettingItem(
-                    title = stringResource(Res.string.based_on_simpmusic),
-                    subtitle = stringResource(Res.string.based_on_simpmusic_subtitle),
-                    onClick = {
-                        uriHandler.openUri(AppLinks.UPSTREAM_REPO)
-                    },
-                )
-                SettingItem(
-                    title = stringResource(Res.string.support_original_developer),
-                    subtitle = stringResource(Res.string.support_original_developer_subtitle),
-                    onClick = {
-                        uriHandler.openUri(AppLinks.UPSTREAM_SPONSOR)
                     },
                 )
                 SettingItem(
