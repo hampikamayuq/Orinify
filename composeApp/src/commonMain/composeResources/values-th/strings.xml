@@ -160,8 +160,8 @@
     <string name="save">บันทึก</string>
     <string name="sponsor_block_intro">SponsorBlock เป็นระบบที่ผู้คนกลุ่มหนึ่งสร้างมาสำหรับการข้ามส่วนที่น่ารำคาญของวิดีโอบน YouTube\nข้อมูลเพิ่มเติม: https://sponsor.ajay.app/\nในแอปOrinify SponsorBlock จะใช้งานได้เมื่ออุปกรณ์ออนไลน์อยู่เท่านั้น</string>
     <string name="skip_sponsor_part_of_video">ข้ามส่วนผู้สนับสนุนของวิดีโอ</string>
-    <string name="help_build_lyrics_database">มีส่วนร่วมในการสร้างฐานข้อมูลเนื้อเพลงกับ Orinify Lyrics</string>
-    <string name="help_build_lyrics_database_description">อัปโหลดเนื้อเพลงที่คุณบันทึกไว้ไปยังฐานข้อมูล Orinify Lyrics</string>
+    <string name="help_build_lyrics_database">มีส่วนร่วมในการสร้างฐานข้อมูลเนื้อเพลงกับ SimpMusic Lyrics</string>
+    <string name="help_build_lyrics_database_description">อัปโหลดเนื้อเพลงที่คุณบันทึกไว้ไปยังฐานข้อมูล SimpMusic Lyrics</string>
     <string name="sleep_timer">ตั้งเวลาปิดเครื่องเล่น - %1$s นาที</string>
     <string name="sleep_timer_end_of_song">ตั้งเวลาปิดเพลง – เมื่อเพลงจบ</string>
     <string name="sleep_timer_off">ตั้งเวลาปิดเครื่องเล่น</string>
@@ -390,8 +390,8 @@
     <string name="contributor_name">ชื่อผู้มีส่วนร่วม</string>
     <string name="contributor_email">อีเมลผู้ร่วมสนับสนุน</string>
     <string name="anonymous">ไม่ระบุชื่อ</string>
-    <string name="simpmusic_lyrics">Orinify Lyrics</string>
-    <string name="lyrics_provider_simpmusic">เนื้อเพลงจัดทำโดย Orinify Lyrics</string>
+    <string name="simpmusic_lyrics">SimpMusic Lyrics</string>
+    <string name="lyrics_provider_simpmusic">เนื้อเพลงจัดทำโดย SimpMusic Lyrics</string>
     <string name="backup_in_progress">กำลังสำรองข้อมูล</string>
     <string name="restore_in_progress">การกู้คืนกำลังดำเนินการ</string>
     <string name="backup_downloaded">สำรองข้อมูลที่ดาวน์โหลด</string>

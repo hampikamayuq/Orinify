@@ -161,8 +161,8 @@
     <string name="save">Lưu</string>
     <string name="sponsor_block_intro">SponsorBlock là một dự án mã nguồn mở sử dụng để bỏ qua các phần gây khó chịu của video trên YouTube.\nTìm hiểu thêm: https://sponsor.ajay.app/\nTrong Orinify, SponsorBlock chỉ khả dụng khi thiết bị của bạn trực tuyến</string>
     <string name="skip_sponsor_part_of_video">Bỏ qua phân đoạn được tài trợ của video</string>
-    <string name="help_build_lyrics_database">Giúp đỡ Orinify lyrics xây dựng cơ sở dữ liệu lời bài hát</string>
-    <string name="help_build_lyrics_database_description">Gửi lời bài hát đã lưu của bạn tới cơ sở dữ liệu của Orinify lyrics</string>
+    <string name="help_build_lyrics_database">Giúp đỡ SimpMusic lyrics xây dựng cơ sở dữ liệu lời bài hát</string>
+    <string name="help_build_lyrics_database_description">Gửi lời bài hát đã lưu của bạn tới cơ sở dữ liệu của SimpMusic lyrics</string>
     <string name="sleep_timer">Hẹn giờ ngủ - %1$s phút</string>
     <string name="sleep_timer_end_of_song">Hẹn giờ ngủ - Cuối bài hát</string>
     <string name="sleep_timer_off">Hẹn giờ ngủ</string>
@@ -413,8 +413,8 @@
     <string name="contributor_name">Tên người đóng góp</string>
     <string name="contributor_email">Email người đóng góp</string>
     <string name="anonymous">Ẩn danh</string>
-    <string name="simpmusic_lyrics">Orinify Lyrics</string>
-    <string name="lyrics_provider_simpmusic">Lời bài hát được cung cấp bởi Orinify Lyrics</string>
+    <string name="simpmusic_lyrics">SimpMusic Lyrics</string>
+    <string name="lyrics_provider_simpmusic">Lời bài hát được cung cấp bởi SimpMusic Lyrics</string>
     <string name="backup_in_progress">Đang sao lưu</string>
     <string name="restore_in_progress">Đang tiến hành khôi phục</string>
     <string name="backup_downloaded">Sao lưu dữ liệu đã tải xuống</string>

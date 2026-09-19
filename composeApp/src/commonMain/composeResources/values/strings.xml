@@ -171,8 +171,8 @@
     <string name="crop_cover">Crop cover</string>
     <string name="sponsor_block_intro">SponsorBlock is a crowd-sourced system for skipping annoying parts of YouTube videos.\nMore information: https://sponsor.ajay.app/\nIn Orinify, SponsorBlock is only available when the device is online</string>
     <string name="skip_sponsor_part_of_video">Skip sponsor part of video</string>
-    <string name="help_build_lyrics_database">Help Orinify lyrics build the lyrics database</string>
-    <string name="help_build_lyrics_database_description">Send your saved lyrics to Orinify lyrics's database</string>
+    <string name="help_build_lyrics_database">Help SimpMusic lyrics build the lyrics database</string>
+    <string name="help_build_lyrics_database_description">Send your saved lyrics to SimpMusic lyrics's database</string>
     <string name="sleep_timer">Sleep Timer - %1$s minute(s)</string>
     <string name="sleep_timer_end_of_song">Sleep Timer - End of song</string>
     <string name="sleep_timer_off">Sleep Timer</string>
@@ -482,8 +482,8 @@
     <string name="contributor_name">Contributor name</string>
     <string name="contributor_email">Contributor email</string>
     <string name="anonymous">Anonymous</string>
-    <string name="simpmusic_lyrics">Orinify Lyrics</string>
-    <string name="lyrics_provider_simpmusic">Lyrics provided by Orinify Lyrics</string>
+    <string name="simpmusic_lyrics">SimpMusic Lyrics</string>
+    <string name="lyrics_provider_simpmusic">Lyrics provided by SimpMusic Lyrics</string>
     <string name="backup_in_progress">Backup in progress</string>
     <string name="restore_in_progress">Restore in progress</string>
     <string name="backup_downloaded">Backup downloaded data</string>

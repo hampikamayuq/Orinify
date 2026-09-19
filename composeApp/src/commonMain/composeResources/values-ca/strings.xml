@@ -160,8 +160,8 @@
     <string name="save">Desa</string>
     <string name="sponsor_block_intro">SponsorBlock és un sistema de col·laboració oberta per saltar parts molestes dels vídeos de YouTube.\nMés informació: https://sponsor.ajay.app/\nA Orinify, SponsorBlock només està disponible quan el dispositiu està en línia </string>
     <string name="skip_sponsor_part_of_video">Omet la part del patrocinador del vídeo</string>
-    <string name="help_build_lyrics_database">Ajuda a Orinify lyrics a omplir la base de dades de lletres de cançons</string>
-    <string name="help_build_lyrics_database_description">Envia les lletres de cançons del dispositiu a la base de dades de Orinify lyrics</string>
+    <string name="help_build_lyrics_database">Ajuda a SimpMusic lyrics a omplir la base de dades de lletres de cançons</string>
+    <string name="help_build_lyrics_database_description">Envia les lletres de cançons del dispositiu a la base de dades de SimpMusic lyrics</string>
     <string name="sleep_timer">Temporitzador de repòs: %1$s minut(s)</string>
     <string name="sleep_timer_end_of_song">Temporitzador de la son - Final de la cançó</string>
     <string name="sleep_timer_off">Temporitzador</string>
@@ -363,8 +363,8 @@
     <string name="contributor_name">Nom de contribuïdor</string>
     <string name="contributor_email">Email de contribuïdor</string>
     <string name="anonymous">Anònim</string>
-    <string name="simpmusic_lyrics">Orinify Lyrics</string>
-    <string name="lyrics_provider_simpmusic">Lletra de cançó proporcionada per Orinify Lyrics</string>
+    <string name="simpmusic_lyrics">SimpMusic Lyrics</string>
+    <string name="lyrics_provider_simpmusic">Lletra de cançó proporcionada per SimpMusic Lyrics</string>
     <string name="backup_in_progress">Còpia de seguretat en progrés</string>
     <string name="restore_in_progress">Restauració en progrés</string>
     <string name="backup_downloaded">Fer una còpia de seguretat de les dades descarregades</string>

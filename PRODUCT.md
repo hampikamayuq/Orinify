@@ -119,10 +119,5 @@ These follow from *"publish it later if it turns out good"* and are unresolved t
 
 - **GPL-3.** The fork inherits it. Publishing means publishing this source, keeping the
   licence, and stating the changes made.
-- **Attribution.** Upstream credit survives in `credit_app` and the two promo strings, on
-  purpose. But commit `a131af1c` renamed *SimpMusic Lyrics* and *SimpMusic Charts* to
-  *Orinify Lyrics* and *Orinify Charts* on the owner's explicit instruction, and those are
-  maxrave's services, not this fork's. Private use, harmless. Published, it credits the
-  wrong provider and needs reverting for those two names.
 - **Translations.** 313 translated strings were renamed automatically and 100 unused keys
   deleted; no locale has been read by a speaker.

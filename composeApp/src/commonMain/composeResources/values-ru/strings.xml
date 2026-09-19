@@ -161,8 +161,8 @@
     <string name="save">Сохранить</string>
     <string name="sponsor_block_intro">SponsorBlock - это система пропуска раздражающих фрагментов видеороликов на YouTube.\nПодробнее: https://sponsor.ajay.app/\nВ Orinify SponsorBlock доступен, только когда устройство находится в сети</string>
     <string name="skip_sponsor_part_of_video">Пропустить спонсорскую часть видео</string>
-    <string name="help_build_lyrics_database">Помогите Orinify Lyrics создать базу данных текстов песен</string>
-    <string name="help_build_lyrics_database_description">Отправить сохраненные тексты песен в базу данных Orinify lyrics</string>
+    <string name="help_build_lyrics_database">Помогите SimpMusic Lyrics создать базу данных текстов песен</string>
+    <string name="help_build_lyrics_database_description">Отправить сохраненные тексты песен в базу данных SimpMusic lyrics</string>
     <string name="sleep_timer">Таймер сна - %1$s минут(ы)</string>
     <string name="sleep_timer_end_of_song">Таймер сна - Конец песни</string>
     <string name="sleep_timer_off">Таймер сна</string>
@@ -410,8 +410,8 @@
     <string name="contributor_name">Имя участника</string>
     <string name="contributor_email">Почта участника</string>
     <string name="anonymous">Анонимно</string>
-    <string name="simpmusic_lyrics">Orinify Lyrics</string>
-    <string name="lyrics_provider_simpmusic">Текст песни предоставлен Orinify Lyrics</string>
+    <string name="simpmusic_lyrics">SimpMusic Lyrics</string>
+    <string name="lyrics_provider_simpmusic">Текст песни предоставлен SimpMusic Lyrics</string>
     <string name="backup_in_progress">Выполняется резервное копирование</string>
     <string name="restore_in_progress">Выполняется восстановление</string>
     <string name="backup_downloaded">Резервное копирование загруженных данных</string>
