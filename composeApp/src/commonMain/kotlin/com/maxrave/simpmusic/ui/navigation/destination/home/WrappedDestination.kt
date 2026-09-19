@@ -3,12 +3,14 @@ package com.maxrave.simpmusic.ui.navigation.destination.home
 import kotlinx.serialization.Serializable
 
 /**
- * The Wrapped reel.
+ * The Wrapped reel for one calendar year.
  *
- * Carries no year argument on purpose: there is exactly one Wrapped — this year's — and the view
- * model resolves which that is. A year in the route would imply an archive the app does not keep,
- * and would let a deep link ask for a year with no [com.maxrave.domain.data.entities.analytics.PlaybackEventEntity]
- * rows behind it.
+ * The year travels in the route because the entry card can offer LAST year's reel — through
+ * January, or whenever the current year is still too thin to say anything — and the reel must
+ * open on the year the card showed, not on whatever the view model would pick again. A year no
+ * `playback_event` row can fill is not a crash: the view model composes it to `NotEnoughData`.
  */
 @Serializable
-object WrappedDestination
+data class WrappedDestination(
+    val year: Int,
+)

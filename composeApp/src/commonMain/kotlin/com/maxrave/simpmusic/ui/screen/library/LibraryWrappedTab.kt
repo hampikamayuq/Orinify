@@ -23,7 +23,7 @@ import com.maxrave.domain.utils.LocalResource
 import com.maxrave.simpmusic.ui.component.GridLibraryPlaylist
 import com.maxrave.simpmusic.ui.component.WrappedEntryCard
 import com.maxrave.simpmusic.ui.navigation.destination.home.WrappedDestination
-import com.maxrave.simpmusic.ui.screen.home.wrapped.formatCount
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.theme.typo
 import com.maxrave.simpmusic.viewModel.WrappedUiState
 import com.maxrave.simpmusic.viewModel.WrappedViewModel
@@ -85,7 +85,7 @@ fun LibraryWrappedTab(
                     {
                         WrappedEntryCard(
                             wrapped = state.wrapped,
-                            onClick = { navController.navigate(WrappedDestination) },
+                            onClick = { navController.navigate(WrappedDestination(state.wrapped.year)) },
                             modifier = cardModifier,
                         )
                     }

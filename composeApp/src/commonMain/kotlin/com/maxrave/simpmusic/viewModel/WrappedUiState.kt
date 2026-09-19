@@ -46,8 +46,17 @@ sealed interface WrappedUiState {
  */
 data class WrappedYear(
     val year: Int,
-    /** 365, or 366 — the denominator card 01 prints, never hardcoded. */
+    /** 365, or 366 — never hardcoded. */
     val daysInYear: Int,
+    /**
+     * Days the year has actually had: 1 Jan to today inclusive while [isCurrentYear], [daysInYear]
+     * once the year is over. Every "N of the year's days" figure divides by THIS, not by
+     * [daysInYear] — against 365 a reel opened in September reads as a listener who skipped a third
+     * of the year, when the third has not happened yet.
+     */
+    val daysElapsed: Int,
+    /** True while the year is still running, so the cards can say "so far" where it matters. */
+    val isCurrentYear: Boolean,
     val stats: AnalyticsPeriodStats,
     val previousStats: AnalyticsPeriodStats?,
     /** Up to five, already in rank order. Fewer than five is normal and cards must survive it. */

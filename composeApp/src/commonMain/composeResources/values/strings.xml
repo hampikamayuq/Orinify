@@ -814,4 +814,21 @@
     <string name="listener_last_heard_days_ago">last heard %1$s days ago</string>
     <string name="listener_last_heard_on">last heard %1$s</string>
     <string name="queue_empty">Nothing queued after this</string>
+    <string name="today">Today</string>
+    <string name="watch_again">Watch again</string>
+    <string name="done">Done</string>
+    <string name="earlier">Earlier</string>
+    <string name="am">AM</string>
+    <string name="pm">PM</string>
+    <string name="plays_over_time">Plays over time</string>
+    <string name="analytics_vs_span">vs %1$s</string>
+    <string name="wrapped_opening_days_so_far">%1$s of the %2$s days so far</string>
+    <string name="wrapped_archetype_regular_desc_so_far">%1$s of the year so far had music in it. You do not binge — you keep it on.</string>
+    <string name="wrapped_last_year_ready">Your %1$s is ready</string>
+    <string name="decade_label">%1$ss</string>
+    <string name="chart_ratio_alt">Songs %1$s, albums %2$s, artists %3$s</string>
+    <string name="chart_fingerprint_alt">Listening fingerprint: %1$s</string>
+    <string name="chart_clock_alt">Busiest hour %1$s, %2$s plays</string>
+    <string name="chart_bars_alt">%1$s: %2$s plays</string>
+    <string name="wrapped_card_of">Card %1$s of %2$s</string>
 </resources>

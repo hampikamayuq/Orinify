@@ -11,8 +11,11 @@ import com.maxrave.domain.repository.ArtistRepository
 import com.maxrave.domain.repository.SongRepository
 import com.maxrave.domain.utils.Resource
 import com.maxrave.simpmusic.viewModel.base.BaseViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.stateIn
@@ -35,6 +38,9 @@ class WrappedViewModel(
     private val artistRepository: ArtistRepository,
     private val albumRepository: AlbumRepository,
 ) : BaseViewModel() {
+    /** Null is the default rule ([composeDefault]); a year is exactly that year, no substitution. */
+    private val requestedYear = MutableStateFlow<Int?>(null)
+
     /**
      * Composed on the first collector, then held.
      *
@@ -42,11 +48,57 @@ class WrappedViewModel(
      * only to decide whether its Wrapped entry has anything to point at, and composing a year is
      * two full-range scans plus, for an artist never stored locally, a network round trip. Nothing
      * pays that until something is watching, and Lazily never restarts, so the year is composed
-     * once per instance however often the screen comes and goes.
+     * once per instance however often the screen comes and goes. [setYear] is the one thing that
+     * recomposes it, and `flatMapLatest` is what makes a second request cancel a first still
+     * running, so the year on screen is always the one asked for last.
      */
+    @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<WrappedUiState> =
-        flow { emit(composeYear(now().date.year)) }
-            .stateIn(viewModelScope, SharingStarted.Lazily, WrappedUiState.Loading)
+        requestedYear
+            .flatMapLatest { year ->
+                flow {
+                    if (year == null) {
+                        emit(composeDefault())
+                    } else if (!isShowing(year)) {
+                        // Loading first: the reel must not open on last year's cards while this
+                        // year's are still being composed.
+                        emit(WrappedUiState.Loading)
+                        emit(composeYear(year))
+                    }
+                }
+            }.stateIn(viewModelScope, SharingStarted.Lazily, WrappedUiState.Loading)
+
+    /**
+     * Compose exactly [year]. The reel is opened on the year the entry card showed, which the
+     * default rule may have picked as LAST year — so this never substitutes; a year with too little
+     * behind it surfaces as [WrappedUiState.NotEnoughData] and the screen says so.
+     */
+    fun setYear(year: Int) {
+        requestedYear.value = year
+    }
+
+    /** The composed year, when it is already on screen — skipping a recompose that would only flash Loading. */
+    private fun isShowing(year: Int): Boolean =
+        when (val state = uiState.value) {
+            is WrappedUiState.Ready -> state.wrapped.year == year
+            is WrappedUiState.NotEnoughData -> state.year == year
+            WrappedUiState.Loading -> false
+        }
+
+    /**
+     * This year, or — when this year is still too thin to say anything — last year's finished reel.
+     *
+     * Through January every listener's current year is a handful of days, and the entry card would
+     * otherwise spend the month counting down to a reel that already exists for the year just
+     * ended. Only [WrappedUiState.Ready] is worth substituting: two NotEnoughData screens are not
+     * better than one, and the current year is the one whose count-down is still moving.
+     */
+    private suspend fun composeDefault(): WrappedUiState {
+        val thisYear = now().date.year
+        val current = composeYear(thisYear)
+        if (current !is WrappedUiState.NotEnoughData) return current
+        return composeYear(thisYear - 1).takeIf { it is WrappedUiState.Ready } ?: current
+    }
 
     private suspend fun composeYear(year: Int): WrappedUiState {
         val (start, end) = yearRange(year)
@@ -70,10 +122,21 @@ class WrappedViewModel(
         val decadeCoverage = if (stats.plays > 0) stats.datedPlays / stats.plays.toFloat() else 0f
         val showDecades = decadeCoverage >= WrappedYear.DECADE_COVERAGE_FLOOR
 
+        val today = now().date
+        val daysInYear = LocalDate(year, 12, 31).dayOfYear
         return WrappedUiState.Ready(
             WrappedYear(
                 year = year,
-                daysInYear = LocalDate(year, 12, 31).dayOfYear,
+                daysInYear = daysInYear,
+                // A year still running has only had the days up to today; one that is over had
+                // them all. A year not yet begun has had none.
+                daysElapsed =
+                    when {
+                        year < today.year -> daysInYear
+                        year == today.year -> today.dayOfYear
+                        else -> 0
+                    },
+                isCurrentYear = year == today.year,
                 stats = stats,
                 previousStats = previousStats,
                 topTracks = topTracksOf(start, end),

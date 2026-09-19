@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import com.maxrave.simpmusic.ui.navigation.destination.home.AnalyticsDestination
 import com.maxrave.simpmusic.ui.navigation.destination.home.HomeDestination
 import com.maxrave.simpmusic.ui.navigation.destination.home.WrappedDestination
@@ -99,9 +100,11 @@ fun AppNavigationGraph(
         // gate on local tracking. ForceDarkContent for a different reason than Analytics: the reel
         // is drawn on its own near-black ground whatever the user's theme is, because it is an
         // event and because every card is also a share image that has to survive leaving the app.
-        composable<WrappedDestination> {
+        composable<WrappedDestination> { entry ->
+            val year = entry.toRoute<WrappedDestination>().year
             ForceDarkContent {
                 WrappedScreen(
+                    year = year,
                     navController = navController,
                     hideNavBar = hideNavBar,
                     // Deliberately not the fullscreen player's `showNavBar(true)` + open sheet:

@@ -488,4 +488,21 @@
     <string name="listener_last_heard_days_ago">última há %1$s dias</string>
     <string name="listener_last_heard_on">última em %1$s</string>
     <string name="queue_empty">Nada na fila depois desta</string>
+    <string name="today">Hoje</string>
+    <string name="watch_again">Ver de novo</string>
+    <string name="done">Concluído</string>
+    <string name="earlier">Antes</string>
+    <string name="am">AM</string>
+    <string name="pm">PM</string>
+    <string name="plays_over_time">Reproduções ao longo do tempo</string>
+    <string name="analytics_vs_span">vs %1$s</string>
+    <string name="wrapped_opening_days_so_far">%1$s dos %2$s dias até agora</string>
+    <string name="wrapped_archetype_regular_desc_so_far">%1$s do ano até agora teve música. Você não devora — você deixa tocando.</string>
+    <string name="wrapped_last_year_ready">Seu %1$s está pronto</string>
+    <string name="decade_label">anos %1$s</string>
+    <string name="chart_ratio_alt">Músicas %1$s, álbuns %2$s, artistas %3$s</string>
+    <string name="chart_fingerprint_alt">Impressão de escuta: %1$s</string>
+    <string name="chart_clock_alt">Hora de pico %1$s, %2$s reproduções</string>
+    <string name="chart_bars_alt">%1$s: %2$s reproduções</string>
+    <string name="wrapped_card_of">Card %1$s de %2$s</string>
 </resources>
