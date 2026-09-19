@@ -96,6 +96,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.compose.resources.getString
 import org.koin.core.component.inject
 import org.simpmusic.lastfm.completeLogin
@@ -655,13 +656,24 @@ class SharedViewModel(
         }
     }
 
-    fun getString(key: String): String? = runBlocking { dataStoreManager.getString(key).first() }
+    fun getString(key: String): String? =
+        runBlocking {
+            withTimeoutOrNull(STARTUP_DATASTORE_TIMEOUT_MS) { dataStoreManager.getString(key).first() }
+                ?: run {
+                    log("getString(\"$key\") timed out after ${STARTUP_DATASTORE_TIMEOUT_MS}ms, returning null", LogLevel.WARN)
+                    null
+                }
+        }
 
     fun putString(
         key: String,
         value: String,
     ) {
-        runBlocking { dataStoreManager.putString(key, value) }
+        runBlocking {
+            if (withTimeoutOrNull(STARTUP_DATASTORE_TIMEOUT_MS) { dataStoreManager.putString(key, value) } == null) {
+                log("putString(\"$key\") timed out after ${STARTUP_DATASTORE_TIMEOUT_MS}ms", LogLevel.WARN)
+            }
+        }
     }
 
     fun setSleepTimer(minutes: Int) {
@@ -955,8 +967,20 @@ class SharedViewModel(
     }
 
     fun getLocation() {
-        regionCode = runBlocking { dataStoreManager.location.first() }
-        language = runBlocking { dataStoreManager.getString(SELECTED_LANGUAGE).first() }
+        runBlocking {
+            regionCode =
+                withTimeoutOrNull(STARTUP_DATASTORE_TIMEOUT_MS) { dataStoreManager.location.first() }
+                    ?: run {
+                        log("getLocation(): region read timed out after ${STARTUP_DATASTORE_TIMEOUT_MS}ms", LogLevel.WARN)
+                        null
+                    }
+            language =
+                withTimeoutOrNull(STARTUP_DATASTORE_TIMEOUT_MS) { dataStoreManager.getString(SELECTED_LANGUAGE).first() }
+                    ?: run {
+                        log("getLocation(): language read timed out after ${STARTUP_DATASTORE_TIMEOUT_MS}ms", LogLevel.WARN)
+                        null
+                    }
+        }
     }
 
     private fun checkAllDownloadingLocalPlaylists() {
@@ -1906,7 +1930,14 @@ class SharedViewModel(
         _reloadDestination.value = null
     }
 
-    fun shouldCheckForUpdate(): Boolean = runBlocking { dataStoreManager.autoCheckForUpdates.first() == TRUE }
+    fun shouldCheckForUpdate(): Boolean =
+        runBlocking {
+            withTimeoutOrNull(STARTUP_DATASTORE_TIMEOUT_MS) { dataStoreManager.autoCheckForUpdates.first() == TRUE }
+                ?: run {
+                    log("shouldCheckForUpdate() timed out after ${STARTUP_DATASTORE_TIMEOUT_MS}ms, skipping this launch", LogLevel.WARN)
+                    false
+                }
+        }
 
     private var _downloadFileProgress = MutableStateFlow<DownloadProgress>(DownloadProgress.INIT)
     val downloadFileProgress: StateFlow<DownloadProgress> get() = _downloadFileProgress
@@ -2142,6 +2173,15 @@ enum class LyricsProvider {
 
 /** Long enough for the handler's insert of the previous play to have committed. */
 private const val LISTENER_STATS_RECHECK_MS = 2_000L
+
+/**
+ * Bounds every synchronous (`runBlocking`) DataStore read MainActivity performs on its cold-start
+ * path, before `setContent`. A DataStore [Flow] that stalls (corrupted preferences file, a slow
+ * first-run disk read) has no built-in timeout, so an unbounded `runBlocking` there blocks the
+ * main thread forever — an infinite black screen with no ANR dialog to explain it. Falling back to
+ * a safe default past this deadline turns that into a bounded delay instead.
+ */
+private const val STARTUP_DATASTORE_TIMEOUT_MS = 5_000L
 
 data class NowPlayingScreenData(
     val playlistName: String,
