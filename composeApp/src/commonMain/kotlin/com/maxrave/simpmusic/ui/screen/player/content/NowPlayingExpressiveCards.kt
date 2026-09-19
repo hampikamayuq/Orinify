@@ -67,6 +67,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -562,6 +564,7 @@ internal fun ExpressiveBelowTheFold(
                             text = stringResource(Res.string.lyrics),
                             style = typo().labelMedium,
                             color = colorScheme.onSurface,
+                            modifier = Modifier.semantics { heading() },
                         )
                         if (state.screenData.lyricsData?.translatedLyrics?.second == LyricsProvider.AI) {
                             Spacer(modifier = Modifier.width(8.dp))
@@ -742,7 +745,8 @@ internal fun ExpressiveBelowTheFold(
                             modifier =
                                 Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(15.dp),
+                                    .padding(15.dp)
+                                    .semantics { heading() },
                         )
                     }
                     Column(
@@ -792,6 +796,7 @@ internal fun ExpressiveBelowTheFold(
                         text = stringResource(Res.string.description),
                         style = typo().labelSmall,
                         color = colorScheme.onSurface,
+                        modifier = Modifier.semantics { heading() },
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     DescriptionView(

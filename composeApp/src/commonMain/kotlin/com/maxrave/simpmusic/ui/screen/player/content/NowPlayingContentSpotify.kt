@@ -97,6 +97,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -1276,6 +1277,7 @@ fun NowPlayingContentSpotify(
                                             text = stringResource(Res.string.lyrics),
                                             style = typo().labelMedium,
                                             color = Color.White,
+                                            modifier = Modifier.semantics { heading() },
                                         )
                                         if (state.screenData.lyricsData?.translatedLyrics?.second == LyricsProvider.AI) {
                                             Spacer(modifier = Modifier.width(8.dp))
@@ -1460,7 +1462,8 @@ fun NowPlayingContentSpotify(
                                             modifier =
                                                 Modifier
                                                     .align(Alignment.TopStart)
-                                                    .padding(15.dp),
+                                                    .padding(15.dp)
+                                                    .semantics { heading() },
                                         )
                                     }
                                     Column(
@@ -1510,6 +1513,7 @@ fun NowPlayingContentSpotify(
                                         text = stringResource(Res.string.description),
                                         style = typo().labelSmall,
                                         color = Color.White,
+                                        modifier = Modifier.semantics { heading() },
                                     )
                                     Spacer(modifier = Modifier.height(10.dp))
                                     DescriptionView(
