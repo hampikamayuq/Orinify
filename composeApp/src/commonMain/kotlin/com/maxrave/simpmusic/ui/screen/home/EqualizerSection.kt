@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -38,6 +39,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -137,6 +140,9 @@ fun EqualizerSection(viewModel: SettingsViewModel = koinViewModel()) {
                         Modifier
                             .clip(RoundedCornerShape(8.dp))
                             .clickable { presetMenuOpen = true }
+                            // The horizontal/vertical padding alone left an effective ~32-36dp
+                            // touch target; this floors it at the 48dp minimum.
+                            .defaultMinSize(minHeight = 48.dp)
                             .padding(horizontal = 8.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -324,7 +330,13 @@ private fun EqualizerCurve(
 
     Box(
         modifier =
-            modifier.pointerInput(count) {
+            modifier
+                // Pragmatic fix: a full per-band draggable-by-TalkBack-actions control is out of
+                // scope here. At minimum this stops TalkBack announcing a bare, unlabeled box — the
+                // preset picker and AutoEq picker above remain the accessible way to change the
+                // curve without touching this drag surface directly.
+                .semantics { contentDescription = "Equalizer curve, $count bands" }
+                .pointerInput(count) {
                 // Raw event loop rather than detectDragGestures: that one waits for the pointer to
                 // travel past a slop threshold before it reports anything, so a plain click set no
                 // band at all and the first few pixels of every drag were swallowed. Here the

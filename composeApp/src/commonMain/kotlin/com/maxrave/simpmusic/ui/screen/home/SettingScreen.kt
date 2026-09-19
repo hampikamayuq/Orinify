@@ -13,6 +13,8 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,6 +52,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -77,6 +80,10 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -126,6 +133,7 @@ import com.maxrave.simpmusic.ui.component.EndOfPage
 import com.maxrave.simpmusic.ui.component.LoadingDialog
 import com.maxrave.simpmusic.ui.component.RippleIconButton
 import com.maxrave.simpmusic.ui.component.SettingItem
+import com.maxrave.simpmusic.ui.component.marqueeIterations
 import com.maxrave.simpmusic.ui.component.rememberNowPlayingGlowTint
 import com.maxrave.simpmusic.ui.icon.ArrowBackIosNew
 import com.maxrave.simpmusic.ui.icon.Close
@@ -668,7 +676,12 @@ fun SettingScreen(
                 // 64dp item 0 would have switched branches while the glow was still half-visible.
                 Spacer(Modifier.height(64.dp))
                 Spacer(Modifier.height(16.dp))
-                Text(text = stringResource(Res.string.user_interface), style = typo().labelMedium, color = MaterialTheme.colorScheme.onBackground)
+                Text(
+                    text = stringResource(Res.string.user_interface),
+                    style = typo().labelMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.semantics { heading() },
+                )
                 val themeModeLabels =
                     listOf(
                         DataStoreManager.THEME_MODE_SYSTEM to stringResource(Res.string.theme_mode_system),
@@ -912,7 +925,7 @@ fun SettingScreen(
                     text = stringResource(Res.string.content),
                     style = typo().labelMedium,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                 )
                 SettingItem(
                     title = stringResource(Res.string.youtube_account),
@@ -1310,7 +1323,7 @@ fun SettingScreen(
                         text = stringResource(Res.string.audio),
                         style = typo().labelMedium,
                         color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(vertical = 8.dp),
+                        modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                     )
                     SettingItem(
                         title = stringResource(Res.string.normalize_volume),
@@ -1376,7 +1389,7 @@ fun SettingScreen(
                     text = stringResource(Res.string.playback),
                     style = typo().labelMedium,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                 )
                 // Under Playback rather than Audio because that whole group sits inside an
                 // Android-only branch — "Open system equalizer" is an Android feature — and this
@@ -1565,7 +1578,7 @@ fun SettingScreen(
                     text = stringResource(Res.string.listening_history),
                     style = typo().labelMedium,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                 )
                 SettingItem(
                     title = stringResource(Res.string.local_tracking_title),
@@ -1597,7 +1610,7 @@ fun SettingScreen(
                     text = stringResource(Res.string.lyrics),
                     style = typo().labelMedium,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                 )
                 SettingItem(
                     title = stringResource(Res.string.main_lyrics_provider),
@@ -1803,7 +1816,7 @@ fun SettingScreen(
                     text = stringResource(Res.string.ai),
                     style = typo().labelMedium,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                 )
                 SettingItem(
                     title = stringResource(Res.string.ai_provider),
@@ -1979,7 +1992,7 @@ fun SettingScreen(
                     text = stringResource(Res.string.spotify),
                     style = typo().labelMedium,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                 )
                 SettingItem(
                     // The title follows the state: a row that still reads "Log in" while logged in
@@ -2034,7 +2047,7 @@ fun SettingScreen(
                     text = stringResource(Res.string.discord_integration),
                     style = typo().labelMedium,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                 )
                 SettingItem(
                     title =
@@ -2076,7 +2089,7 @@ fun SettingScreen(
                         text = stringResource(Res.string.lastfm_integration),
                         style = typo().labelMedium,
                         color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(vertical = 8.dp),
+                        modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                     )
                     SettingItem(
                         title =
@@ -2116,7 +2129,7 @@ fun SettingScreen(
                     text = stringResource(Res.string.sponsorBlock),
                     style = typo().labelMedium,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                 )
                 SettingItem(
                     title = stringResource(Res.string.enable_sponsor_block),
@@ -2194,7 +2207,7 @@ fun SettingScreen(
                         text = stringResource(Res.string.storage),
                         style = typo().labelMedium,
                         color = MaterialTheme.colorScheme.onBackground,
-                        modifier = Modifier.padding(vertical = 8.dp),
+                        modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                     )
                     SettingItem(
                         title = stringResource(Res.string.player_cache),
@@ -2505,7 +2518,7 @@ fun SettingScreen(
                     text = stringResource(Res.string.backup),
                     style = typo().labelMedium,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                 )
                 SettingItem(
                     title = stringResource(Res.string.backup_downloaded),
@@ -2672,7 +2685,7 @@ fun SettingScreen(
                     text = stringResource(Res.string.about_us),
                     style = typo().labelMedium,
                     color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 8.dp).semantics { heading() },
                 )
                 SettingItem(
                     title = stringResource(Res.string.version),
@@ -2810,6 +2823,9 @@ fun SettingScreen(
                                     modifier =
                                         Modifier
                                             .padding(4.dp)
+                                            // Grows the tappable area to 48dp while the visual
+                                            // swatch below stays 36dp, centered inside it.
+                                            .minimumInteractiveComponentSize()
                                             .size(36.dp)
                                             .clip(CircleShape)
                                             .background(color)
@@ -2817,7 +2833,13 @@ fun SettingScreen(
                                                 width = if (isSelected) 3.dp else 0.dp,
                                                 color = if (isSelected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
                                                 shape = CircleShape,
-                                            ).clickable { pendingHex = hex.takeLast(6) },
+                                            ).semantics {
+                                                contentDescription = "Color #${hex.takeLast(6)}"
+                                            }.selectable(
+                                                selected = isSelected,
+                                                role = Role.RadioButton,
+                                                onClick = { pendingHex = hex.takeLast(6) },
+                                            ),
                                 )
                             }
                         }
@@ -2898,7 +2920,13 @@ fun SettingScreen(
                                         .align(Alignment.CenterStart)
                                         .fillMaxHeight(),
                             ) {
-                                Icon(SimpIcons.Close, null, tint = MaterialTheme.colorScheme.onSurface)
+                                Icon(
+                                    SimpIcons.Close,
+                                    // No dedicated "close dialog" string key exists; matches the
+                                    // hardcoded pattern used for back buttons elsewhere in the app.
+                                    contentDescription = "Close",
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                )
                             }
                             Text(
                                 stringResource(Res.string.youtube_account),
@@ -2933,7 +2961,11 @@ fun SettingScreen(
                                             .padding(vertical = 8.dp)
                                             .clickable {
                                                 viewModel.setUsedAccount(it)
-                                            },
+                                            }
+                                            // Bespoke row (not SettingItem), so it needs its own
+                                            // merge: the avatar's contentDescription and the name
+                                            // Text below would otherwise both be announced.
+                                            .semantics(mergeDescendants = true) {},
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Spacer(Modifier.width(24.dp))
@@ -2946,7 +2978,9 @@ fun SettingScreen(
                                                 .build(),
                                         placeholder = rememberVectorPainter(SimpIcons.PeopleAlt),
                                         error = rememberVectorPainter(SimpIcons.PeopleAlt),
-                                        contentDescription = it.name,
+                                        // Decorative now that the row is merged and the name Text
+                                        // already carries it — avoids the duplicate announcement.
+                                        contentDescription = null,
                                         modifier =
                                             Modifier
                                                 .size(48.dp)
@@ -3104,16 +3138,22 @@ fun SettingScreen(
                             Row(
                                 Modifier
                                     .padding(vertical = 4.dp)
-                                    .clickable {
-                                        onSelect.invoke()
-                                    }.fillMaxWidth(),
+                                    // The Row is the single interactive+semantic unit: TalkBack
+                                    // gets one stop per row instead of one for the Row's own
+                                    // clickable and a second for the RadioButton's onClick.
+                                    .selectable(
+                                        selected = item.first,
+                                        role = Role.RadioButton,
+                                        onClick = {
+                                            onSelect.invoke()
+                                        },
+                                    ).fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 RadioButton(
                                     selected = item.first,
-                                    onClick = {
-                                        onSelect.invoke()
-                                    },
+                                    // Click handled by the Row's selectable() above.
+                                    onClick = null,
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(
@@ -3125,7 +3165,7 @@ fun SettingScreen(
                                             .fillMaxWidth()
                                             .wrapContentHeight(align = Alignment.CenterVertically)
                                             .basicMarquee(
-                                                iterations = Int.MAX_VALUE,
+                                                iterations = marqueeIterations(Int.MAX_VALUE),
                                                 animationMode = MarqueeAnimationMode.Immediately,
                                             ).focusable(),
                                 )
@@ -3157,16 +3197,22 @@ fun SettingScreen(
                             Row(
                                 Modifier
                                     .padding(vertical = 4.dp)
-                                    .clickable {
-                                        onCheck.invoke()
-                                    }.fillMaxWidth(),
+                                    // The Row is the single interactive+semantic unit: TalkBack
+                                    // gets one stop per row instead of one for the Row's own
+                                    // clickable and a second for the Checkbox's onCheckedChange.
+                                    .toggleable(
+                                        value = item.first,
+                                        role = Role.Checkbox,
+                                        onValueChange = {
+                                            onCheck.invoke()
+                                        },
+                                    ).fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Checkbox(
                                     checked = item.first,
-                                    onCheckedChange = {
-                                        onCheck.invoke()
-                                    },
+                                    // Click handled by the Row's toggleable() above.
+                                    onCheckedChange = null,
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(text = item.second, style = typo().bodyMedium, maxLines = 1)
@@ -3281,9 +3327,12 @@ fun SettingScreen(
                                     RippleIconButton(
                                         SimpIcons.ArrowBackIosNew,
                                         Modifier
-                                            .size(32.dp),
+                                            .size(48.dp),
                                         true,
                                         tint = MaterialTheme.colorScheme.onSurface,
+                                        // No back/close string key exists; other back buttons in the
+                                        // app (e.g. AnalyticsScreen's header) hardcode this too.
+                                        contentDescription = "Back",
                                     ) {
                                         coroutineScope.launch {
                                             sheetState.hide()
@@ -3326,9 +3375,12 @@ fun SettingScreen(
                     RippleIconButton(
                         SimpIcons.ArrowBackIosNew,
                         Modifier
-                            .size(32.dp),
+                            .size(48.dp),
                         true,
                         tint = MaterialTheme.colorScheme.onSurface,
+                        // No back/close string key exists; other back buttons in the app
+                        // (e.g. AnalyticsScreen's header) hardcode this too.
+                        contentDescription = "Back",
                     ) {
                         navController.navigateUp()
                     }

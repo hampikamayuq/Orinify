@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -609,9 +610,16 @@ fun String.hexToColorOrNull(): Color? =
         Color(argb)
     }.getOrNull()
 
+// All three call sites (SettingItem.kt, AppBottomNavigationBar.kt) invoke this from inside a
+// @Composable function — SettingItem's are through the inline `let`, which preserves the
+// composable calling context. The old hardcoded Color.Gray (#FF888888) measured ~3.96:1 on a
+// light-theme white surface, below the 4.5:1 WCAG AA minimum for normal text. Deriving from
+// onSurface at the Material "disabled content" alpha (0.38) instead tracks both themes' actual
+// surface color rather than guessing a single fixed value that only happens to work on one of them.
+@Composable
 fun TextStyle.greyScale(): TextStyle =
     this.copy(
-        color = Color.Gray,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
     )
 
 @Composable
