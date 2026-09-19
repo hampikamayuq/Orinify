@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.maxrave.simpmusic.extension.greyScale
 import com.maxrave.simpmusic.ui.theme.typo
@@ -42,6 +43,9 @@ fun SettingItem(
     // setUsedAccount, logOutAllYouTube, setAIApiKey), which is a real event and cannot misfire.
     Box(
         Modifier
+            // Merges title, subtitle and the switch's On/Off state into one semantic node, so
+            // TalkBack announces the row as a single stop instead of 2-3 disjoint ones.
+            .semantics(mergeDescendants = true) {}
             .then(
                 if (onClick != null && isEnable) {
                     Modifier.clickable { onClick.invoke() }

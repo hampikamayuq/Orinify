@@ -70,6 +70,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -2062,6 +2063,13 @@ fun HeartCheckBox(
     Box(
         modifier =
             Modifier
+                // Pads the touch target out to 48dp regardless of the visual icon size, the same
+                // way a standard IconButton does it — the icon itself stays small, but the real
+                // hit target does not. Must come BEFORE .size(): matches
+                // androidx.compose.material3.IconButton's own modifier order, since a
+                // .size() applied further out would just clamp the node back down to
+                // the small icon size and cancel this out.
+                .minimumInteractiveComponentSize()
                 .size(size.dp)
                 // Before .clip: the burst draws outside the button bounds and the circle clip
                 // would trim it to the heart's own circle.
