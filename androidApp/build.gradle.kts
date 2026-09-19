@@ -7,6 +7,29 @@ val isFullBuild: Boolean =
         false
     }
 
+// Release signing credentials come from local.properties (gitignored) so the upload
+// keystore's passwords never land in source control. CI can instead export them as
+// environment variables of the same names.
+val localProperties =
+    Properties().apply {
+        val file = rootProject.file("local.properties")
+        if (file.exists()) {
+            load(file.inputStream())
+        }
+    }
+
+fun releaseSigningProperty(key: String): String? = localProperties.getProperty(key) ?: System.getenv(key)
+
+val releaseStoreFile = releaseSigningProperty("RELEASE_STORE_FILE")
+val releaseStorePassword = releaseSigningProperty("RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = releaseSigningProperty("RELEASE_KEY_ALIAS")
+val releaseKeyPassword = releaseSigningProperty("RELEASE_KEY_PASSWORD")
+val hasReleaseSigningConfig =
+    !releaseStoreFile.isNullOrBlank() &&
+        !releaseStorePassword.isNullOrBlank() &&
+        !releaseKeyAlias.isNullOrBlank() &&
+        !releaseKeyPassword.isNullOrBlank()
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.sentry.gradle)
@@ -90,6 +113,17 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseSigningConfig) {
+            create("release") {
+                storeFile = rootProject.file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -98,6 +132,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            if (hasReleaseSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             splits {
                 abi {
                     isEnable = true

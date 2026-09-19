@@ -19,6 +19,9 @@ crowdin.yml
 .kotlin/
 .idea
 /simpmusic.jks
+/orinify-upload.jks
+*.jks
+*.keystore
 /ffmpeg-kit/build/
 
 #dev files
