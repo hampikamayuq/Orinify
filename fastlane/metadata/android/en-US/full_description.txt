@@ -1,19 +1,32 @@
-Not a simple music player, it's SimpMusic
+A personal fork of SimpMusic, built on the same open source core
 
-<br><b>Features:</b>
+<br><b>What this fork adds:</b>
+
+- Rediscover: tracks you played a lot and haven't touched in months
+- You might like: radio seeded from your own recent listening
+- Artist mixes: one radio per artist, ranked by your own play count
+- Wrapped, monthly recap playlists, and an on-device Analytics tab
+- All from a listening history that stays on the device
+
+<br><b>Everything from SimpMusic:</b>
 
 - Play music from YouTube Music or YouTube for free, without ads and in the background
-- Browsing Home, Charts, Podcast, Moods & Genre with YouTube Music data at high speed
+- Three Now Playing styles: Classic, Material 3 Expressive and Apple Music
+- Ten-band equalizer with presets and AutoEq headphone profiles, plus Delay and Reverb
+- Browsing Home, Charts, Podcasts, Moods & Genres with YouTube Music data at high speed
 - Search everything on YouTube
-- Analyze your playing data, create custom playlists, and sync with YouTube Music...
-- Spotify Canvas supported
-- Play 1080p video option with subtitle
-- AI song suggestions
+- Spotify Canvas and Animated Album Art supported
+- Play 1080p video with subtitles
+- AI song suggestions and AI lyrics translation (\*)
+- Listen Together: shared rooms that play in sync with friends
 - Notifications from followed artists
 - Caching and offline playback support
-- Synced lyrics from SimpMusic Lyrics, LRCLIB, Spotify (require login) and YouTube Transcript - AI lyrics translation (BETA) (\*)
-- Personalize data (\**) and multi-YouTube-account support
+- Synced lyrics from SimpMusic Lyrics, LRCLIB, Spotify (requires login) and YouTube Transcript,
+  with romanization for 12 languages
+- Multi-YouTube-account support
 - Supports SponsorBlock and Return YouTube Dislike
 - Sleep Timer
 - Android Auto with online content
 - And many more!
+
+<br>(\*) Use your own OpenAI or Gemini API key
