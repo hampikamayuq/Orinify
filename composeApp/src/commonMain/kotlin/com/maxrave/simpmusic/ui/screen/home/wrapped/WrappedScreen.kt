@@ -58,6 +58,7 @@ import com.kyant.backdrop.highlight.Highlight
 import com.materialkolor.PaletteStyle
 import com.materialkolor.rememberDynamicColorScheme
 import com.maxrave.simpmusic.Platform
+import com.maxrave.simpmusic.expect.isAccessibilityServiceActive
 import com.maxrave.simpmusic.expect.saveImageToDevice
 import com.maxrave.simpmusic.expect.shareImage
 import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
@@ -316,7 +317,12 @@ private fun WrappedReel(
                 // banking a second's worth of progress and consuming the card on release.
                 val delta = if (lastFrame == 0L) 0L else frame - lastFrame
                 lastFrame = frame
-                if (!pressed && !busy && !pagerState.isScrollInProgress) elapsed += delta
+                // Touch exploration (TalkBack and equivalents) turns a tap into "hear it, then
+                // double-tap", so a card's announcement routinely outlasts the fixed hold below —
+                // held alongside the existing press/busy/scroll guards, not in place of them.
+                if (!pressed && !busy && !pagerState.isScrollInProgress && !isAccessibilityServiceActive()) {
+                    elapsed += delta
+                }
             }
             progress = (elapsed.toFloat() / holdMs).coerceIn(0f, 1f)
         }

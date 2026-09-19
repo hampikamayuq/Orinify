@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -59,9 +61,19 @@ fun WrappedTopAlbumsCard(
             Spacer(Modifier.weight(SPACE_ABOVE_MOSAIC))
             Column(Modifier.weight(MOSAIC_BANNER_WEIGHT + runnersUp.mosaicRowWeight())) {
                 LeaderBanner(leader, Modifier.weight(MOSAIC_BANNER_WEIGHT))
-                runnersUp.chunked(MOSAIC_ROW_TILES).forEach { row ->
-                    Row(Modifier.fillMaxWidth().weight(MOSAIC_ROW_WEIGHT)) {
-                        row.forEach { album ->
+                // Runner-up tiles carry no visible text of their own — unlike the runner-up rows in
+                // WrappedTopTracksCard/WrappedTopArtistsCard, which sit next to a title Text — so
+                // WrappedArtwork's own null contentDescription leaves ranks 2-5 unreadable to a
+                // screen reader. Each row is merged into one node naming its own rank and title.
+                runnersUp.withIndex().chunked(MOSAIC_ROW_TILES).forEach { row ->
+                    val rowDescription = row.joinToString(", ") { (index, album) -> "${index + 2}. ${album.album.title}" }
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(MOSAIC_ROW_WEIGHT)
+                            .semantics(mergeDescendants = true) { contentDescription = rowDescription },
+                    ) {
+                        row.forEach { (_, album) ->
                             WrappedArtwork(
                                 url = album.album.thumbnails,
                                 modifier = Modifier.weight(1f).fillMaxHeight(),

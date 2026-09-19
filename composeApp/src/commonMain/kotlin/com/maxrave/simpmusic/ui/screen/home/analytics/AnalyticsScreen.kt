@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -51,6 +52,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -926,6 +928,9 @@ private fun PeriodNavigator(
                 TextButton(
                     onClick = { onStep(uiState.periodOffset) },
                     contentPadding = PaddingValues(horizontal = 8.dp),
+                    // horizontal-only padding drops the button under the 48dp minimum touch target
+                    // that the arrow buttons either side of it already meet.
+                    modifier = Modifier.heightIn(min = 48.dp),
                 ) {
                     Text(stringResource(Res.string.today), style = typo().labelSmall, color = seed, maxLines = 1)
                 }
@@ -1197,7 +1202,7 @@ private fun SectionHeader(
             // set in the same 16sp Bold weighed the same as a datum.
             style = typo().titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).semantics { heading() },
         )
         if (onMore != null) {
             TextButton(

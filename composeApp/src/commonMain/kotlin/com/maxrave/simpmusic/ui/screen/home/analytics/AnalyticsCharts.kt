@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -59,6 +60,7 @@ import simpmusic.composeapp.generated.resources.analytics_songs
 import simpmusic.composeapp.generated.resources.analytics_this_period
 import simpmusic.composeapp.generated.resources.analytics_vs_span
 import simpmusic.composeapp.generated.resources.artists
+import simpmusic.composeapp.generated.resources.chart_bars_alt
 import simpmusic.composeapp.generated.resources.chart_clock_alt
 import simpmusic.composeapp.generated.resources.chart_fingerprint_alt
 import simpmusic.composeapp.generated.resources.chart_ratio_alt
@@ -496,14 +498,22 @@ fun DecadeChart(
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(7.dp)) {
         stats.decades.forEach { row ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            val label =
+                if (row.decade < 1960) {
+                    stringResource(Res.string.analytics_decade_pre, 1960)
+                } else {
+                    stringResource(Res.string.decade_label, row.decade.toString())
+                }
+            val count = formatCount(row.plays)
+            val description = stringResource(Res.string.chart_bars_alt, label, count)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                // One announcement per row, matching DateRangeSection: a bar and its count read
+                // apart otherwise, since neither Text carries the other's meaning on its own.
+                modifier = Modifier.clearAndSetSemantics { contentDescription = description },
+            ) {
                 Text(
-                    text =
-                        if (row.decade < 1960) {
-                            stringResource(Res.string.analytics_decade_pre, 1960)
-                        } else {
-                            stringResource(Res.string.decade_label, row.decade.toString())
-                        },
+                    text = label,
                     style = typo().bodySmall,
                     maxLines = 1,
                     modifier = Modifier.width(88.dp),
@@ -524,7 +534,7 @@ fun DecadeChart(
                     )
                 }
                 Text(
-                    formatCount(row.plays),
+                    count,
                     style = typo().bodySmall,
                     maxLines = 1,
                     modifier = Modifier.padding(start = 10.dp).width(40.dp),

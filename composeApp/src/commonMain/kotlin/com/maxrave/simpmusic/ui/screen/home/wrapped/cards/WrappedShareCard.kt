@@ -417,6 +417,9 @@ private fun ShareActions(
             onClick = onSave,
             shape = CircleShape,
             contentPadding = ACTION_CONTENT_PADDING,
+            // ACTION_CONTENT_PADDING alone lands at ~44dp; the platform's 48dp minimum touch target
+            // is asserted explicitly rather than left to the padding to happen to clear it.
+            modifier = Modifier.heightIn(min = MIN_TOUCH_TARGET),
         ) {
             ActionContent(SimpIcons.Download, stringResource(Res.string.wrapped_save))
         }
@@ -424,6 +427,7 @@ private fun ShareActions(
             onClick = onShare,
             shape = CircleShape,
             contentPadding = ACTION_CONTENT_PADDING,
+            modifier = Modifier.heightIn(min = MIN_TOUCH_TARGET),
         ) {
             ActionContent(SimpIcons.Share, stringResource(Res.string.wrapped_share))
         }
@@ -559,3 +563,6 @@ private val FIGURE_LABEL_TRACKING = 0.10.em
 
 /** ~44dp tall with Material's own icon metrics inside it — the artboard's pill, to the dp. */
 private val ACTION_CONTENT_PADDING = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+
+/** The platform's own minimum touch target. */
+private val MIN_TOUCH_TARGET = 48.dp
