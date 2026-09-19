@@ -1,4 +1,4 @@
-# SimpMusic Contributor Covenant Code of Conduct
+# Orinify Contributor Covenant Code of Conduct
 
 ## Our Pledge
 
@@ -55,10 +55,11 @@ a project may be further defined and clarified by project maintainers.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team at **ndtminh2608@gmail.com**. All
-complaints will be reviewed and investigated and will result in a response that
-is deemed necessary and appropriate to the circumstances. The project team is
-obligated to maintain confidentiality with regard to the reporter of an incident.
+reported by opening an issue at [github.com/hampikamayuq/Orinify/issues](https://github.com/hampikamayuq/Orinify/issues),
+or by contacting the repository owner directly through their GitHub profile if the report
+should not be public. All complaints will be reviewed and investigated and will result in
+a response that is deemed necessary and appropriate to the circumstances. The project team
+is obligated to maintain confidentiality with regard to the reporter of an incident.
 Further details of specific enforcement policies may be posted separately.
 
 Project maintainers who do not follow or enforce the Code of Conduct in good
