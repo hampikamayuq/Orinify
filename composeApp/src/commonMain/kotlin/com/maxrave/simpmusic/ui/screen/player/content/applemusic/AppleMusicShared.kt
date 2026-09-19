@@ -39,6 +39,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -296,6 +297,12 @@ internal fun AppleMusicGlyphButton(
         modifier =
             modifier
                 .appleMusicPressInflate()
+                // Pads the touch target out to 48dp even when [size] is smaller (the landscape
+                // transport's shuffle/repeat pass 40dp for visual hierarchy against the bigger
+                // prev/next/play buttons) — a no-op at the 48dp default. Must come BEFORE
+                // .size(), same order as HeartCheckBox: a fixed .size() further out would just
+                // clamp the node back down and cancel this out.
+                .minimumInteractiveComponentSize()
                 .size(size)
                 .clip(CircleShape)
                 .semantics { if (isSelected != null) selected = isSelected },

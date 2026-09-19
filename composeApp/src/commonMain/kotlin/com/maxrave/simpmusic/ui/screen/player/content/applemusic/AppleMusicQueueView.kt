@@ -32,6 +32,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -50,6 +51,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -86,6 +88,7 @@ import simpmusic.composeapp.generated.resources.continue_playing
 import simpmusic.composeapp.generated.resources.endless_queue
 import simpmusic.composeapp.generated.resources.now_playing
 import simpmusic.composeapp.generated.resources.queue_empty
+import simpmusic.composeapp.generated.resources.queue_position
 import simpmusic.composeapp.generated.resources.shuffle
 import simpmusic.composeapp.generated.resources.song_info
 
@@ -288,10 +291,21 @@ internal fun AppleMusicQueueView(
                         // Owner's call: the OLD queue sheet's row component, verbatim — no bespoke
                         // row. Long-press-drag reorders (list-level gesture above); ⋯ opens the
                         // same per-item sheet the queue sheet uses.
+                        //
+                        // TalkBack never announces where a row sits in the upcoming list — unlike a
+                        // list with visible numbering, this one has no other way to say it. Position
+                        // is 1-based over `upcoming`, the same collection the row was drawn from, so
+                        // it always agrees with what is actually on screen.
+                        val positionLabel =
+                            stringResource(
+                                Res.string.queue_position,
+                                (localIndex + 1).toString(),
+                                upcoming.size.toString(),
+                            )
                         SongFullWidthItems(
                             track = track,
                             isPlaying = false,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().semantics { contentDescription = positionLabel },
                             onClickListener = { videoId ->
                                 if (videoId == track.videoId) actions.onSeekToQueueIndex(queueIndex)
                             },
@@ -378,6 +392,11 @@ private fun AppleMusicQueuePill(
                 // Gentler than the default 1.35×: a pill is 83dp wide with only a 10dp gap, so
                 // the full inflate would visibly overlap its neighbour on every tap.
                 .appleMusicPressInflate(pressedScale = 1.08f)
+                // Pads the touch target out to 48dp while the pill itself stays the design's
+                // 40dp tall — same order as HeartCheckBox: minimumInteractiveComponentSize()
+                // must come BEFORE .height(), or the fixed height below just clamps the node
+                // back down and cancels it out.
+                .minimumInteractiveComponentSize()
                 .height(40.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(if (lit) seed else AppleMusicPillInactive)

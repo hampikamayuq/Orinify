@@ -814,6 +814,7 @@
     <string name="listener_last_heard_days_ago">last heard %1$s days ago</string>
     <string name="listener_last_heard_on">last heard %1$s</string>
     <string name="queue_empty">Nothing queued after this</string>
+    <string name="queue_position">Song %1$s of %2$s</string>
     <string name="today">Today</string>
     <string name="watch_again">Watch again</string>
     <string name="done">Done</string>

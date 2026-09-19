@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +84,11 @@ fun PlayerControlLayout(
                 modifier =
                     Modifier
                         .background(Color.Transparent)
+                        // Pads the touch target out to 48dp while the glyph/container stays the
+                        // capsule's compact `smallIcon.second` — must come BEFORE .size(), same
+                        // order as HeartCheckBox, or the fixed size below just clamps the node
+                        // back down and cancels it out.
+                        .minimumInteractiveComponentSize()
                         .size(smallIcon.second)
                         .aspectRatio(1f)
                         .clip(
@@ -119,6 +125,9 @@ fun PlayerControlLayout(
                 modifier =
                     Modifier
                         .background(Color.Transparent)
+                        // See the shuffle button above: pads the touch target to 48dp without
+                        // growing the visual container, and must stay before .size().
+                        .minimumInteractiveComponentSize()
                         .size(mediumIcon.second)
                         .aspectRatio(1f)
                         .clip(
@@ -178,6 +187,9 @@ fun PlayerControlLayout(
                 modifier =
                     Modifier
                         .background(Color.Transparent)
+                        // See the shuffle button above: pads the touch target to 48dp without
+                        // growing the visual container, and must stay before .size().
+                        .minimumInteractiveComponentSize()
                         .size(mediumIcon.second)
                         .aspectRatio(1f)
                         .clip(
@@ -202,6 +214,9 @@ fun PlayerControlLayout(
             Box(
                 modifier =
                     Modifier
+                        // See the shuffle button above: pads the touch target to 48dp without
+                        // growing the visual container, and must stay before .size().
+                        .minimumInteractiveComponentSize()
                         .size(smallIcon.second)
                         .aspectRatio(1f)
                         .clip(

@@ -347,7 +347,9 @@ private fun NowPlayingM3ExpressiveLayout(
                                 containerColor = colorScheme.surfaceContainerHigh,
                                 contentColor = colorScheme.onSurface,
                             ),
-                        modifier = Modifier.size(44.dp),
+                        // 48dp, matching every other button on this screen (the connected
+                        // group's slots, the like/YouTube-liked circles) — was 44dp.
+                        modifier = Modifier.size(48.dp),
                     ) {
                         Icon(
                             imageVector = state.dismissIcon,
@@ -389,7 +391,8 @@ private fun NowPlayingM3ExpressiveLayout(
                                 containerColor = colorScheme.surfaceContainerHigh,
                                 contentColor = colorScheme.onSurface,
                             ),
-                        modifier = Modifier.size(44.dp),
+                        // 48dp, matching every other button on this screen — was 44dp.
+                        modifier = Modifier.size(48.dp),
                     ) {
                         Icon(
                             imageVector = SimpIcons.MoreVert,
