@@ -1,123 +1,291 @@
-# Product
+Product
 
-<!-- impeccable:product-schema 1 -->
-
-## Platform
+<!-- impeccable:product-schema 1 -->Platform
 
 android
 
-## Users
+Users
 
-One listener — the owner — plus a small circle he hands the APK to directly. No store
-listing, no onboarding funnel, no anonymous first-run traffic. Everyone who opens it got
-it from him.
+Orinify is designed primarily for personal use by its owner and a small circle of people
+who receive the APK directly.
 
-The situation is ordinary daily listening: phone, headphones or Bluetooth, often on 5G,
-music in the background while doing something else. The job is "play what I want without
-ads, and help me find what to play next out of what I already listen to."
+There is currently no store listing, public onboarding funnel, or large-scale distribution.
+The normal use case is everyday music listening on a phone, with headphones, Bluetooth,
+mobile data or Wi-Fi, often while the app is running in the background.
 
-Publishing is a live possibility, not a plan: *"and later if it turns out good, publish
-it."* That makes the obligations below real rather than theoretical, and it is why they
-are recorded as facts instead of deferred.
+The core job is simple:
 
-## Product Purpose
+«Play what I want without ads, and help me decide what to listen to next based on what I
+already enjoy.»
 
-A personal fork of [SimpMusic](https://github.com/maxrave-dev/SimpMusic) that streams
-YouTube Music without ads or tracking, and that **knows the listener**. Success is that
-the app opens and the first thing on screen came from this listener's own history rather
-than from YouTube's recommendation shelf.
+Public distribution remains a future possibility rather than a current product goal.
 
-## Positioning
+Product Purpose
 
-Every YouTube Music client can play what YouTube suggests. This one builds lists from
-`playback_event`, a table that never leaves the device:
+Orinify is a personal YouTube Music client for Android designed around the listener rather
+than around a generic recommendation feed.
 
-- **Rediscover** — tracks played at least 3 times before a 60-day cutoff and not once since.
-- **You might like** — radio seeded from the top of the last 90 days, minus everything
-  already in the history. The only list here that touches the network.
-- **Artist mixes** — one radio per artist by play count over 90 days.
-- **Recently played** — the history itself, newest first, one row per track; the spine of
-  the Library tab and the one list no stock client can show.
-- **The player's own line** — under the artist, in every style: "Play 12 · last heard
-  yesterday", the one sentence on that screen that is the listener's and not YouTube's.
-- Wrapped, monthly recap playlists, and the Analytics tab, all from the same table.
+The defining feature is its local listening history.
 
-Neither the upstream nor a stock client can copy this without collecting the history
-server-side. The mechanism is that the history is local and stays local.
+Orinify records playback events on the device and uses them to create personalized
+experiences without requiring that history to be uploaded to an Orinify server.
 
-The two tabs split the history by direction: **Home is forward-looking** (Rediscover, You
-might like, Artist mixes) and **Library is what you keep and what you did** (playlists,
-favorites, downloads, Recently played, Wrapped). A list belongs on one tab, never both.
+Success means the app can open and immediately show something meaningful from the
+listener's own history.
 
-## Operating Context
+Positioning
 
-Installed by sideload as `dev.diego.orinify` (debug builds carry `.dev`), so it sits
-beside SimpMusic rather than replacing it. Delivered as a GitHub Actions artifact, built
-by `.github/workflows/orinify-build.yml`, because the APK is far past any chat upload
-limit. Android only in practice.
+Orinify combines YouTube Music playback with a local personalization layer built around
+the "playback_event" database.
 
-## Capabilities and Constraints
+The main personalized experiences are:
 
-- **minSdk 26, targetSdk 36, compileSdk 37.** Jetpack Compose, Material 3, Media3/ExoPlayer,
-  Room (schema v26), Koin, Ktor.
-- **The Desktop app is out of scope for design, and still in the repository.** `desktopApp`
-  and the JVM media stack build and must keep building; nothing designed for the phone may
-  break `commonMain` for them. It cannot be run or inspected from the build container.
-- **26 locales** ship, inherited from upstream's Crowdin. Every user-visible string added
-  here lands untranslated until someone translates it.
-- **Local tracking is a setting, and it gates the personal half of the product.** With it
-  off, `playback_event` is empty and Rediscover, You might like, Artist mixes, Analytics
-  and Wrapped have nothing to show. Their empty states are load-bearing, not decoration.
-- **Three Now Playing styles** (Classic/Spotify, M3 Expressive, Apple Music) and two lyrics
-  styles are all live. A change to the player must say which style it is changing.
-- **The JVM test targets cannot be built in this container** — Maven Central resolution
-  fails for artifacts the Android build does not cache. Android `assembleDebug` plus CI is
-  the only gate available.
+- Rediscover — tracks played at least 3 times before a 60-day cutoff and not played
+  since.
 
-## Brand Commitments
+- You might like — a radio generated from the listener's strongest activity during the
+  previous 90 days while excluding tracks already present in local history.
 
-- **Name:** Orinify. The app says so in every language as of `a131af1c`.
-- **Mark:** a violet headphone-and-play glyph on a `#3B1E8A → #7C3AED` gradient, in
-  `ic_launcher_foreground.xml` and its three sibling surfaces.
-- **Deep link scheme:** `orinify://`.
-- **Accent:** `seed = #AD85FD` — the icon's hue at HCT tone 64. Closed the icon/interface
-  disagreement. The tone is set by the ~50 places `seed` is used LITERALLY over AMOLED black,
-  not by the generated scheme: `PaletteStyle.TonalSpot` reads only the seed's hue, so the icon's
-  own `#7C3AED` would have produced a byte-identical palette while dropping every literal accent
-  to 3.7:1, under WCAG AA. Tone 64 gives 7.6:1.
+- Artist mixes — personalized artist radios ordered using local play counts.
 
-## Evidence on Hand
+- Recently played — the listener's local history ordered from newest to oldest.
 
-Real, and all local: the owner's own `playback_event` history is what every personal list
-renders from. There is no user research, no analytics backend, no testimonials, no install
-counts — and future work must not invent any. The one screenshot of the running app in this
-project's history is the Home screen at 21:40 on a Samsung device.
+- Wrapped — listening summaries generated from local playback data.
 
-## Product Principles
+- Monthly recaps — playlist-style summaries generated for individual months.
 
-1. **The history is the product, and it stays on the device.** Any feature that would need
-   it uploaded is the wrong feature.
-2. **Start from the listener, not from YouTube.** When both have something to show, the
-   listener's own history goes first.
-3. **An empty personal list is a state, not a bug.** It means "not enough listening yet"
-   and must say so; a spinner that never resolves is the failure mode to avoid.
-4. **Credit what is not ours.** This is a GPL-3 fork of someone else's work, carrying
-   third-party services under their own names.
-5. **Inherit upstream deliberately.** `core/` is vendored, not a submodule, so every
-   divergence is a merge cost paid later. Change what serves the product; leave the rest.
+- Analytics — on-device listening statistics including listening time, streaks, top
+  tracks, artists and albums.
 
-## Accessibility & Inclusion
+- Listening context in Now Playing — the player can show information such as play count
+  and when the track was last heard.
 
-No requirement has been established with the user, and none is inferred here. Two facts
-that constrain any future one: the app is dark-first with artwork-derived backgrounds on
-several immersive screens, and 26 locales mean text length varies far beyond the English
-that gets designed against.
+The personalization model is local-first. Most of these features operate directly on
+information stored on the device.
 
-## Open Obligations
+The main navigation follows the same principle:
 
-These follow from *"publish it later if it turns out good"* and are unresolved today:
+Home is forward-looking:
 
-- **GPL-3.** The fork inherits it. Publishing means publishing this source, keeping the
-  licence, and stating the changes made.
-- **Translations.** 313 translated strings were renamed automatically and 100 unused keys
-  deleted; no locale has been read by a speaker.
+- Rediscover
+- You might like
+- Artist mixes
+
+Library represents what the listener keeps and what they have already done:
+
+- Playlists
+- Favorites
+- Downloads
+- Recently played
+- Wrapped
+
+A personal section should have one clear home rather than appearing redundantly across
+multiple tabs.
+
+Operating Context
+
+Orinify is currently distributed as a sideloaded Android application.
+
+Primary package:
+
+"dev.diego.orinify"
+
+Development builds may use a separate debug application ID.
+
+Build artifacts are generated through:
+
+".github/workflows/orinify-build.yml"
+
+Android is the primary supported product platform.
+
+Capabilities and Constraints
+
+- minSdk 26
+- targetSdk 36
+- compileSdk 37
+- UI: Jetpack Compose / Compose Multiplatform
+- Design system: Material 3
+- Playback: Media3 / ExoPlayer
+- Database: Room, schema v26
+- Dependency injection: Koin
+- Networking: Ktor
+
+Desktop and JVM targets also exist in the repository, but Android is the current product
+focus.
+
+Shared code must remain compatible with those targets where applicable.
+
+The application ships with 26 locales. Any new user-visible string must therefore be
+written with localization in mind.
+
+Local listening tracking is configurable.
+
+When tracking is disabled, features that depend on "playback_event" no longer have
+listening history available. This affects:
+
+- Rediscover
+- You might like
+- Artist mixes
+- Analytics
+- Wrapped
+- listening context shown in the player
+
+Empty states for these features are therefore part of the normal product experience.
+
+Orinify includes three active Now Playing designs:
+
+- Classic
+- Material 3 Expressive
+- Apple Music
+
+Player changes must account for the style or styles affected.
+
+Two lyrics presentation styles are also active.
+
+Android "assembleDebug" and the GitHub Actions build are the primary available build
+validation paths for the Android product.
+
+Brand Commitments
+
+- Name: Orinify
+- Package: "dev.diego.orinify"
+- Deep-link scheme: "orinify://"
+- Primary visual identity: violet
+- Accent seed: "#AD85FD"
+
+The Orinify mark uses a headphone-and-play symbol over a violet gradient:
+
+"#3B1E8A → #7C3AED"
+
+The primary accent uses HCT tone 64 to maintain stronger contrast when the accent value is
+used directly over AMOLED black surfaces.
+
+The visual identity should remain recognizably Orinify across launcher icons, player
+surfaces, navigation and promotional material.
+
+Evidence on Hand
+
+Current product decisions are based primarily on direct use of Orinify and the listening
+history generated on the owner's device.
+
+The "playback_event" database provides the real data used by the personalized features.
+
+There is currently:
+
+- no analytics backend
+- no formal user research
+- no public install count
+- no testimonials
+- no large external user base
+
+Product documentation must not invent evidence that does not exist.
+
+Product Principles
+
+1. The listener's history is central to Orinify.
+   
+   Personal playback data should be used to make the application more useful to the
+   listener.
+
+2. Listening history stays local whenever possible.
+   
+   Features should not require uploading the user's full listening history to an Orinify
+   backend.
+
+3. Start with the listener.
+   
+   When both local history and generic recommendations have useful content, the listener's
+   own activity should receive priority.
+
+4. Empty states are real product states.
+   
+   A lack of listening data should produce a clear explanation rather than an endless
+   loading state or broken interface.
+
+5. Keep product behavior intentional.
+   
+   New features should strengthen the central listening experience rather than add
+   complexity without a clear purpose.
+
+6. Respect external services and dependencies.
+   
+   Third-party APIs, libraries, protocols and services should retain the names, licences
+   and attribution required by their respective projects.
+
+7. Android comes first.
+   
+   Product decisions should optimize the Android experience while avoiding unnecessary
+   breakage of shared multiplatform code.
+
+Accessibility & Inclusion
+
+Orinify is currently designed primarily around a dark interface.
+
+Several immersive surfaces use artwork-derived backgrounds, so contrast must be considered
+whenever text or controls are placed over dynamic imagery.
+
+The application also supports 26 locales, meaning layouts must tolerate substantial
+variation in text length.
+
+New interfaces should avoid assuming that English text dimensions represent every
+supported language.
+
+Privacy
+
+Orinify does not require a proprietary analytics backend for its personalized listening
+features.
+
+Listening history used by the personalization system is stored locally in
+"playback_event".
+
+Features such as:
+
+- Rediscover
+- Wrapped
+- monthly recaps
+- Recently played
+- listening analytics
+- artist rankings
+
+can therefore be generated directly on the device.
+
+Some online functionality necessarily communicates with external services, including
+YouTube Music and optional integrations selected by the user.
+
+These integrations should remain separate from Orinify's own local listening-history
+system.
+
+Open Obligations
+
+If Orinify moves from personal distribution toward a public release, several areas need to
+be treated as release requirements:
+
+- Licensing — ensure the distributed application and source comply with the project's
+  GPL-3.0 licence and all applicable dependency licences.
+
+- Third-party attribution — retain notices and attribution required by libraries,
+  services, APIs and other external components.
+
+- Translations — review supported locales and validate translated strings before
+  presenting broad language support as production-ready.
+
+- Unofficial APIs — YouTube Music integration depends on interfaces that may change
+  without notice. Graceful failure and maintainability are therefore product concerns.
+
+- Release signing — public distribution requires a stable signing and release process.
+
+- Device validation — broader distribution requires testing beyond the owner's primary
+  devices.
+
+- Privacy communication — any public release should clearly explain what data stays
+  local, what external services receive requests, and which integrations are optional.
+
+Product Definition
+
+Orinify is not defined simply by being another way to access YouTube Music.
+
+Its identity comes from combining music playback with a personal, local listening memory.
+
+The service knows what music exists.
+
+Orinify knows what you listened to.
