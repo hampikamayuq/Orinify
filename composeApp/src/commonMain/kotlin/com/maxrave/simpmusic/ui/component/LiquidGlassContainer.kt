@@ -177,6 +177,9 @@ fun LiquidGlassIconButton(
     tint: Color = Color.White,
     interactive: Boolean = true,
     highlight: Highlight = Highlight.Default,
+    // Forwarded to the inner button: the icon is its only content, so without this every glass
+    // button announces as a bare "Button". Null keeps the existing call sites unchanged.
+    contentDescription: String? = null,
     onClick: () -> Unit,
 ) {
     LiquidGlassContainer(
@@ -189,6 +192,7 @@ fun LiquidGlassIconButton(
         RippleIconButton(
             imageVector = imageVector,
             tint = tint,
+            contentDescription = contentDescription,
             onClick = onClick,
         )
     }

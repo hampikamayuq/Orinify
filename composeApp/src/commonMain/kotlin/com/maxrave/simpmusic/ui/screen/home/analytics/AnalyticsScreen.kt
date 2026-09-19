@@ -1,5 +1,6 @@
 package com.maxrave.simpmusic.ui.screen.home.analytics
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,11 +27,13 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,10 +42,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
@@ -55,6 +65,14 @@ import simpmusic.composeapp.generated.resources.analytics_listening_clock
 import simpmusic.composeapp.generated.resources.analytics_music_ratio
 import simpmusic.composeapp.generated.resources.analytics_quick_facts
 import simpmusic.composeapp.generated.resources.analytics_vs_previous
+import simpmusic.composeapp.generated.resources.analytics_vs_span
+import simpmusic.composeapp.generated.resources.chart_bars_alt
+import simpmusic.composeapp.generated.resources.earlier
+import simpmusic.composeapp.generated.resources.later
+import simpmusic.composeapp.generated.resources.load_failed
+import simpmusic.composeapp.generated.resources.plays_over_time
+import simpmusic.composeapp.generated.resources.retry
+import simpmusic.composeapp.generated.resources.today
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
@@ -82,8 +100,8 @@ import com.maxrave.simpmusic.expect.ui.PlatformBackdrop
 import com.maxrave.simpmusic.expect.ui.layerBackdrop
 import com.maxrave.simpmusic.expect.ui.rememberBackdrop
 import com.maxrave.simpmusic.expect.ui.toImageBitmap
+import com.maxrave.simpmusic.extension.copy
 import com.maxrave.simpmusic.extension.getScreenSizeInfo
-import com.maxrave.simpmusic.extension.getStringBlocking
 import com.maxrave.simpmusic.extension.smoothScrimBrush
 import com.maxrave.simpmusic.extension.toImmersiveBackground
 import com.maxrave.simpmusic.ui.component.AddToPlaylistModalBottomSheet
@@ -122,17 +140,12 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.artists
-import simpmusic.composeapp.generated.resources.date_range
-import simpmusic.composeapp.generated.resources.last_30_days
-import simpmusic.composeapp.generated.resources.last_7_days
-import simpmusic.composeapp.generated.resources.last_90_days
 import simpmusic.composeapp.generated.resources.listened_time
 import simpmusic.composeapp.generated.resources.lower_plays
 import simpmusic.composeapp.generated.resources.more
 import simpmusic.composeapp.generated.resources.analytics_no_data_period
 import simpmusic.composeapp.generated.resources.no_data_analytics
 import simpmusic.composeapp.generated.resources.songs_played
-import simpmusic.composeapp.generated.resources.this_year
 import simpmusic.composeapp.generated.resources.top_song
 import simpmusic.composeapp.generated.resources.total_listened_time
 import simpmusic.composeapp.generated.resources.your_recently_played
@@ -173,12 +186,20 @@ fun AnalyticsScreen(
     sharedViewModel: SharedViewModel = koinInject(),
 ) {
     val screenSizeInfo = getScreenSizeInfo()
-    val uiState by analyticsViewModel.analyticsUIState.collectAsStateWithLifecycle()
+    val liveState by analyticsViewModel.analyticsUIState.collectAsStateWithLifecycle()
+    // What the sections read: the live state, except that a resource caught mid-reload keeps its
+    // last resolved value. The page dims while that is the case instead of blanking.
+    val uiState = rememberSettledState(liveState)
+    val isRefreshing = liveState.stats is LocalResource.Loading && uiState.stats is LocalResource.Success
+    val contentAlpha by animateFloatAsState(if (isRefreshing) 0.6f else 1f)
     // Held only to decide whether the Wrapped banner has anything to point at. The entry needs
     // this year's own figures to say what is waiting, so there is no cheaper question to ask —
     // and the banner must be absent, not empty, when the year is too thin to fill a reel.
     val wrappedState by wrappedViewModel.uiState.collectAsStateWithLifecycle()
-    val playingTrack by sharedViewModel.nowPlayingState.map { it?.track?.videoId }.collectAsState(null)
+    // Remembered: `.map` builds a new flow on every recomposition, and collectAsState would
+    // resubscribe to each one.
+    val playingTrackFlow = remember(sharedViewModel) { sharedViewModel.nowPlayingState.map { it?.track?.videoId } }
+    val playingTrack by playingTrackFlow.collectAsState(null)
 
     // Which header is used depends on the window's aspect ratio alone, exactly as on Album and
     // Playlist: a portrait window gets the edge-to-edge artwork header, a landscape one gets the
@@ -203,6 +224,15 @@ fun AnalyticsScreen(
     val onAlbumClick: (browseId: String) -> Unit = {
         navController.navigate(AlbumDestination(browseId = it))
     }
+    // The hero plays exactly what its own row in "Your top tracks" plays: the same five, the same
+    // queue name, the same handoff.
+    val topTracksName = stringResource(Res.string.your_top_tracks)
+    val onPlayTopTrack: (() -> Unit)? =
+        uiState.topTracks.data?.takeIf { it.isNotEmpty() }?.let { list ->
+            val five = list.take(5).map { it.second }
+            val play: () -> Unit = { playFromList(sharedViewModel, five, five.first(), topTracksName) }
+            play
+        }
 
     // The page takes the top track's dominant tone, the Apple Music treatment the other immersive
     // screens use. Regenerating is keyed on the URL so recycling the header item does not flash.
@@ -297,7 +327,12 @@ fun AnalyticsScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .layerBackdrop(headerBackdrop),
+                    .layerBackdrop(headerBackdrop)
+                    .alpha(contentAlpha),
+            // The header draws under the status bar itself; the bottom inset keeps the last
+            // section above the mini player and the nav bar. EndOfPage adds its own clearance on
+            // top, the same double-count Home and Library accept.
+            contentPadding = innerPadding.copy(top = 0.dp),
             // A LazyColumn puts NOTHING between its items. The old screen hid that by giving every
             // section header its own `.padding(top = 12.dp)`; the shared SectionHeader dropped it,
             // and every section went flush against the one above.
@@ -313,6 +348,10 @@ fun AnalyticsScreen(
                         uiState = uiState,
                         isPortrait = isPortrait,
                         onStep = analyticsViewModel::stepPeriod,
+                        // The only public path that re-runs the load. It also returns to the
+                        // present period, which a failed step can live with.
+                        onRetry = { analyticsViewModel.setDayRange(uiState.dayRange) },
+                        onPlayTopTrack = onPlayTopTrack,
                         headerHeight = (screenSizeInfo.hDP / 2.5).dp,
                         scrimStartY = (screenSizeInfo.hPX / 2.5f) / 2,
                         scrimColor = pageBackground,
@@ -334,7 +373,7 @@ fun AnalyticsScreen(
                 item {
                     WrappedEntryCard(
                         wrapped = ready.wrapped,
-                        onClick = { navController.navigate(WrappedDestination) },
+                        onClick = { navController.navigate(WrappedDestination(ready.wrapped.year)) },
                         modifier =
                             Modifier.padding(
                                 horizontal = if (isPortrait) CONTENT_INSET else LANDSCAPE_GUTTER + CONTENT_INSET,
@@ -444,6 +483,8 @@ fun AnalyticsScreen(
             // A 48dp circle catches only a short arc of the default directional sweep and reads
             // as rimless; 1.dp is the smallest step that stays visible without looking a border.
             highlight = Highlight(width = 1.dp),
+            // No back/close string key exists; the other three back buttons hardcode this too.
+            contentDescription = "Back",
             modifier =
                 Modifier
                     .align(Alignment.TopStart)
@@ -479,15 +520,10 @@ private fun DayRangePill(
     modifier: Modifier = Modifier,
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
-    val label =
-        stringResource(
-            when (uiState.dayRange) {
-                AnalyticsUiState.DayRange.LAST_7_DAYS -> Res.string.last_7_days
-                AnalyticsUiState.DayRange.LAST_30_DAYS -> Res.string.last_30_days
-                AnalyticsUiState.DayRange.LAST_90_DAYS -> Res.string.last_90_days
-                AnalyticsUiState.DayRange.THIS_YEAR -> Res.string.this_year
-            },
-        )
+    // The pill names the LENGTH of the window; the navigator under the header names which one.
+    // "Last 7 days" is still what the dropdown offers, and the Today button beside the span is what
+    // says the window has been stepped off the present.
+    val label = stringResource(uiState.dayRange.labelRes())
     Box(modifier) {
         Row(
             modifier =
@@ -512,17 +548,7 @@ private fun DayRangePill(
             AnalyticsUiState.DayRange.entries.forEach { range ->
                 DropdownMenuItem(
                     text = {
-                        Text(
-                            stringResource(
-                                when (range) {
-                                    AnalyticsUiState.DayRange.LAST_7_DAYS -> Res.string.last_7_days
-                                    AnalyticsUiState.DayRange.LAST_30_DAYS -> Res.string.last_30_days
-                                    AnalyticsUiState.DayRange.LAST_90_DAYS -> Res.string.last_90_days
-                                    AnalyticsUiState.DayRange.THIS_YEAR -> Res.string.this_year
-                                },
-                            ),
-                            style = typo().labelSmall,
-                        )
+                        Text(stringResource(range.labelRes()), style = typo().labelSmall)
                     },
                     onClick = {
                         onPick(range)
@@ -541,6 +567,8 @@ private fun AnalyticsHeader(
     uiState: AnalyticsUiState,
     isPortrait: Boolean,
     onStep: (Int) -> Unit,
+    onRetry: () -> Unit,
+    onPlayTopTrack: (() -> Unit)?,
     headerHeight: androidx.compose.ui.unit.Dp,
     scrimStartY: Float,
     // The colour the page itself is painted with. The scrim has to dissolve into THIS rather than
@@ -558,14 +586,55 @@ private fun AnalyticsHeader(
                 CenterLoadingBox(modifier = Modifier.fillMaxSize())
             }
 
+        // A load that threw. Without this branch it looked exactly like an empty period, and
+        // "play some music" is the wrong sentence for a database error.
+        topTracks is LocalResource.Error || uiState.stats is LocalResource.Error ->
+            FailedPeriodHeader(uiState, isPortrait, onStep, onRetry)
+
         topTrack == null ->
             EmptyPeriodHeader(uiState, isPortrait, onStep)
 
         isPortrait ->
-            PortraitHeader(topTrack, headerHeight, scrimStartY, scrimColor, onBitmap)
+            PortraitHeader(topTrack, headerHeight, scrimStartY, scrimColor, onBitmap, onPlayTopTrack)
 
         else ->
-            LandscapeHeader(uiState, topTrack, onStep, onBitmap)
+            LandscapeHeader(uiState, topTrack, onStep, onBitmap, onPlayTopTrack)
+    }
+}
+
+@Composable
+private fun FailedPeriodHeader(
+    uiState: AnalyticsUiState,
+    isPortrait: Boolean,
+    onStep: (Int) -> Unit,
+    onRetry: () -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .padding(
+                    start = if (isPortrait) CONTENT_INSET else LANDSCAPE_GUTTER + CONTENT_INSET,
+                    end = if (isPortrait) CONTENT_INSET else LANDSCAPE_GUTTER + CONTENT_INSET,
+                    top = TOP_STRIP,
+                    bottom = 32.dp,
+                ),
+        horizontalAlignment = if (isPortrait) Alignment.CenterHorizontally else Alignment.Start,
+    ) {
+        Text(
+            text = stringResource(Res.string.load_failed),
+            style = typo().bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        TextButton(onClick = onRetry) {
+            Text(stringResource(Res.string.retry), style = typo().labelSmall, color = seed)
+        }
+        // Same reason as EmptyPeriodHeader: landscape has no other navigator.
+        if (!isPortrait) {
+            Spacer(Modifier.height(8.dp))
+            PeriodNavigator(uiState, onStep, 0.dp)
+        }
     }
 }
 
@@ -639,8 +708,15 @@ private fun PortraitHeader(
     // own background leaves a visible seam exactly where the header ends.
     scrimColor: Color,
     onBitmap: (ImageBitmap) -> Unit,
+    onPlay: (() -> Unit)?,
 ) {
-    Box(Modifier.fillMaxWidth().height(headerHeight)) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(headerHeight)
+            // The whole hero is one target; the glass buttons over it are siblings and win.
+            .clickable(enabled = onPlay != null, role = Role.Button) { onPlay?.invoke() },
+    ) {
         ArtworkImage(
             url = topTrack.second.thumbnails,
             onBitmap = onBitmap,
@@ -726,7 +802,11 @@ private fun LandscapeHeader(
     topTrack: Pair<TopPlayedTracks, SongEntity>,
     onStep: (Int) -> Unit,
     onBitmap: (ImageBitmap) -> Unit,
+    onPlay: (() -> Unit)?,
 ) {
+    // Not the whole Row: the navigator and the headline count share it, and a miss beside an
+    // arrow must not start playback.
+    val playable = Modifier.clickable(enabled = onPlay != null, role = Role.Button) { onPlay?.invoke() }
     Column(
         modifier =
             Modifier
@@ -746,7 +826,7 @@ private fun LandscapeHeader(
             ArtworkImage(
                 url = topTrack.second.thumbnails,
                 onBitmap = onBitmap,
-                modifier = Modifier.size(LANDSCAPE_ARTWORK).clip(RoundedCornerShape(8.dp)),
+                modifier = Modifier.size(LANDSCAPE_ARTWORK).clip(RoundedCornerShape(8.dp)).then(playable),
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -756,24 +836,26 @@ private fun LandscapeHeader(
                     maxLines = 1,
                 )
                 Spacer(Modifier.height(6.dp))
-                Text(
-                    text = topTrack.second.title,
-                    style = typo().labelMedium,
-                    // The app accent, standing in for the brand red Apple uses on this line.
-                    color = seed,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    text =
-                        "${topTrack.second.artistName?.connectArtists() ?: ""} · " +
-                            "${stringResource(Res.string.listened_time)} " +
-                            formatListeningTime(topTrack.first.totalListeningTime),
-                    style = typo().bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Column(playable) {
+                    Text(
+                        text = topTrack.second.title,
+                        style = typo().labelMedium,
+                        // The app accent, standing in for the brand red Apple uses on this line.
+                        color = seed,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text =
+                            "${topTrack.second.artistName?.connectArtists() ?: ""} · " +
+                                "${stringResource(Res.string.listened_time)} " +
+                                formatListeningTime(topTrack.first.totalListeningTime),
+                        style = typo().bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Spacer(Modifier.height(22.dp))
                 PeriodNavigator(uiState, onStep, 0.dp)
                 Spacer(Modifier.height(20.dp))
@@ -798,7 +880,8 @@ private fun ArtworkImage(
                 .diskCacheKey(url ?: "")
                 .crossfade(550)
                 .build(),
-        contentDescription = "",
+        // Decorative: the title beside it names the track. Empty would still be a focus stop.
+        contentDescription = null,
         contentScale = ContentScale.Crop,
         onSuccess = { onBitmap(it.result.image.toImageBitmap()) },
         modifier = modifier,
@@ -826,14 +909,29 @@ private fun PeriodNavigator(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = if (gutter == 0.dp) Arrangement.spacedBy(14.dp) else Arrangement.SpaceBetween,
     ) {
-        StepArrow(SimpIcons.ArrowBackIosNew, enabled = true) { onStep(-1) }
-        Text(
-            text = if (start != null && end != null) formatPeriodSpan(start, end) else "",
-            style = typo().bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-        )
-        StepArrow(SimpIcons.ArrowForwardIos, enabled = uiState.canStepForward) { onStep(1) }
+        StepArrow(SimpIcons.ArrowBackIosNew, enabled = true, contentDescription = stringResource(Res.string.earlier)) { onStep(-1) }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = if (start != null && end != null) formatPeriodSpan(start, end) else "",
+                style = typo().bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                // Announces the new span after a step; the arrows themselves say nothing new.
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            )
+            // Only while stepped back: it is the one signal that this is not the present window,
+            // and the way home without walking every step. stepPeriod subtracts, so the offset
+            // itself is the delta that lands on zero.
+            if (uiState.canStepForward) {
+                TextButton(
+                    onClick = { onStep(uiState.periodOffset) },
+                    contentPadding = PaddingValues(horizontal = 8.dp),
+                ) {
+                    Text(stringResource(Res.string.today), style = typo().labelSmall, color = seed, maxLines = 1)
+                }
+            }
+        }
+        StepArrow(SimpIcons.ArrowForwardIos, enabled = uiState.canStepForward, contentDescription = stringResource(Res.string.later)) { onStep(1) }
     }
 }
 
@@ -841,25 +939,46 @@ private fun PeriodNavigator(
 private fun StepArrow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     enabled: Boolean,
+    contentDescription: String,
     onClick: () -> Unit,
 ) {
-    Box(
+    // A real IconButton: 48dp target, and `enabled` is what makes the dimmed forward arrow
+    // announce as disabled rather than as a button that does nothing.
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
         modifier =
             Modifier
-                .size(36.dp)
+                .size(48.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 0.12f else 0.05f))
-                .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
-        contentAlignment = Alignment.Center,
+                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 0.12f else 0.05f)),
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = contentDescription,
             tint = if (enabled) Color.White else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
             modifier = Modifier.size(16.dp),
         )
     }
 }
+
+/** "vs 9 – 15 Sep 2026" when the compared span is known, the generic "vs previous period" otherwise. */
+@Composable
+private fun vsPreviousLabel(uiState: AnalyticsUiState): String {
+    val span = previousSpan(uiState)
+    return if (span != null) stringResource(Res.string.analytics_vs_span, span) else stringResource(Res.string.analytics_vs_previous)
+}
+
+@Composable
+private fun previousSpan(uiState: AnalyticsUiState): String? {
+    val start = uiState.previousPeriodStart ?: return null
+    val end = uiState.previousPeriodEnd ?: return null
+    return formatPeriodSpan(start, end)
+}
+
+/** Positive changes take the accent; a drop is muted, so the sign is carried by more than a glyph. */
+@Composable
+private fun deltaColor(delta: Int): Color = if (delta >= 0) seed else MaterialTheme.colorScheme.onSurfaceVariant
 
 /**
  * The period's play count, and how it moved.
@@ -881,7 +1000,7 @@ private fun HeadlineCount(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("${stats.plays}", style = typo().titleLarge, color = Color.White, maxLines = 1)
+            Text(formatCount(stats.plays), style = typo().titleLarge, color = Color.White, maxLines = 1)
             Text(stringResource(Res.string.songs_played), style = typo().bodyMedium, maxLines = 1)
         }
         if (delta != null) {
@@ -892,10 +1011,10 @@ private fun HeadlineCount(
                 Text(
                     text = if (delta >= 0) "+$delta%" else "$delta%",
                     style = typo().labelSmall,
-                    color = seed,
+                    color = deltaColor(delta),
                     maxLines = 1,
                 )
-                Text(stringResource(Res.string.analytics_vs_previous), style = typo().bodySmall, maxLines = 1)
+                Text(vsPreviousLabel(uiState), style = typo().bodySmall, maxLines = 1)
             }
         }
     }
@@ -929,17 +1048,17 @@ private fun QuickFactsSection(
             ),
             Triple(
                 stringResource(Res.string.analytics_avg_per_day),
-                "${stats.playsPerActiveDay} $plays",
+                "${formatCount(stats.playsPerActiveDay)} $plays",
                 percentDelta(stats.playsPerActiveDay.toLong(), prev?.playsPerActiveDay?.toLong()),
             ),
             Triple(
                 stringResource(Res.string.analytics_busiest_day),
-                stats.busiestDay?.let { "${stats.busiestDayPlays} $plays · ${formatChartDayShort(it)}" } ?: "—",
+                stats.busiestDay?.let { "${formatCount(stats.busiestDayPlays)} $plays · ${formatChartDayShort(it)}" } ?: "—",
                 percentDelta(stats.busiestDayPlays.toLong(), prev?.busiestDayPlays?.toLong()),
             ),
             Triple(
                 stringResource(Res.string.artists),
-                "${stats.distinctArtists}",
+                formatCount(stats.distinctArtists),
                 percentDelta(stats.distinctArtists.toLong(), prev?.distinctArtists?.toLong()),
             ),
         )
@@ -967,7 +1086,7 @@ private fun QuickFactsSection(
                                     Text(
                                         text = if (delta >= 0) "+$delta%" else "$delta%",
                                         style = typo().bodySmall,
-                                        color = seed,
+                                        color = deltaColor(delta),
                                         maxLines = 1,
                                     )
                                 }
@@ -977,6 +1096,15 @@ private fun QuickFactsSection(
                     // Keeps a short final row aligned with the one above it.
                     repeat(columns - rowFacts.size) { Spacer(Modifier.weight(1f)) }
                 }
+            }
+            // One caption for all four deltas: which span they are measured against.
+            if (prev != null) {
+                Text(
+                    vsPreviousLabel(uiState),
+                    style = typo().bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    maxLines = 1,
+                )
             }
         }
     }
@@ -995,6 +1123,7 @@ private fun MusicRatioSection(
         MusicRatioChart(
             stats = stats,
             previous = uiState.previousStats,
+            previousSpan = previousSpan(uiState),
             modifier = Modifier.fillMaxWidth().padding(horizontal = gutter),
         )
     }
@@ -1013,6 +1142,7 @@ private fun FingerprintSection(
         FingerprintChart(
             current = stats.fingerprint,
             previous = uiState.previousStats?.fingerprint,
+            previousSpan = previousSpan(uiState),
             modifier = Modifier.fillMaxWidth().padding(horizontal = gutter),
         )
     }
@@ -1063,7 +1193,9 @@ private fun SectionHeader(
     ) {
         Text(
             text = title,
-            style = typo().labelMedium,
+            // titleMedium, not labelMedium: the quick-fact VALUES are labelMedium, and a heading
+            // set in the same 16sp Bold weighed the same as a datum.
+            style = typo().titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
@@ -1093,15 +1225,18 @@ private fun RecentlyPlayedSection(
 ) {
     val records = uiState.recentlyRecord.data ?: return
     if (records.isEmpty()) return
+    // Read once above the loop: the old getStringBlocking was a runBlocking per row.
+    val queueName = stringResource(Res.string.your_recently_played)
+    val songs = remember(records) { records.map { it.second } }
     Column {
-        SectionHeader(stringResource(Res.string.your_recently_played), gutter) {
+        SectionHeader(queueName, gutter) {
             navController.navigate(RecentlySongsDestination)
         }
         records.forEach { pair ->
             SongRow(
                 pair = pair.second,
-                all = records.map { it.second },
-                playlistName = getStringBlocking(Res.string.your_recently_played),
+                all = songs,
+                playlistName = queueName,
                 playingTrack = playingTrack,
                 sharedViewModel = sharedViewModel,
                 selectionState = selectionState,
@@ -1142,6 +1277,7 @@ private fun TopArtistsSection(
             )
         }
         Spacer(Modifier.height(16.dp))
+        val plays = stringResource(Res.string.lower_plays)
         FiveImagesComponent(
             modifier = Modifier.fillMaxWidth().padding(horizontal = gutter),
             landscape = landscape,
@@ -1150,7 +1286,7 @@ private fun TopArtistsSection(
                     ImageData(
                         imageUrl = artist.thumbnails ?: "",
                         title = artist.name,
-                        subtitle = "${played.playCount} ${stringResource(Res.string.lower_plays)}",
+                        subtitle = "${formatCount(played.playCount)} $plays",
                         onClick = { onArtistClick(artist.channelId) },
                     )
                 },
@@ -1179,6 +1315,7 @@ private fun TopAlbumsSection(
             )
         }
         Spacer(Modifier.height(16.dp))
+        val plays = stringResource(Res.string.lower_plays)
         FiveImagesComponent(
             modifier = Modifier.fillMaxWidth().padding(horizontal = gutter),
             landscape = landscape,
@@ -1188,7 +1325,7 @@ private fun TopAlbumsSection(
                         imageUrl = album.thumbnails ?: "",
                         title = album.title,
                         subtitle = album.artistName?.connectArtists() ?: "",
-                        thirdTitle = "${played.playCount} ${stringResource(Res.string.lower_plays)}",
+                        thirdTitle = "${formatCount(played.playCount)} $plays",
                         onClick = { onAlbumClick(album.browseId) },
                     )
                 },
@@ -1208,8 +1345,11 @@ private fun TopTracksSection(
 ) {
     val tracks = uiState.topTracks.data?.take(5) ?: return
     if (tracks.isEmpty()) return
+    val queueName = stringResource(Res.string.your_top_tracks)
+    val plays = stringResource(Res.string.lower_plays)
+    val songs = remember(tracks) { tracks.map { it.second } }
     Column {
-        SectionHeader(stringResource(Res.string.your_top_tracks), gutter) {
+        SectionHeader(queueName, gutter) {
             navController.navigate(
                 LibraryDynamicPlaylistDestination(
                     // The period on screen, not the latest one: the playlist opens its own view
@@ -1221,8 +1361,8 @@ private fun TopTracksSection(
         tracks.forEach { pair ->
             SongRow(
                 pair = pair.second,
-                all = tracks.map { it.second },
-                playlistName = getStringBlocking(Res.string.your_top_tracks),
+                all = songs,
+                playlistName = queueName,
                 playingTrack = playingTrack,
                 sharedViewModel = sharedViewModel,
                 selectionState = selectionState,
@@ -1233,7 +1373,7 @@ private fun TopTracksSection(
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Text(
-                            text = "${pair.first.playCount} ${stringResource(Res.string.lower_plays)}",
+                            text = "${formatCount(pair.first.playCount)} $plays",
                             style = typo().bodySmall,
                             color = Color.White,
                             maxLines = 1,
@@ -1264,52 +1404,75 @@ private fun DateRangeSection(
     val data = uiState.scrobblesLineChart.data ?: return
     if (data.isEmpty()) return
     val maxPlays = data.maxOf { it.second }.coerceAtLeast(1)
+    val plays = stringResource(Res.string.lower_plays)
     Column(modifier = Modifier.padding(horizontal = gutter)) {
         Text(
-            text = stringResource(Res.string.date_range),
-            style = typo().labelMedium,
+            text = stringResource(Res.string.plays_over_time),
+            style = typo().titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(Modifier.height(16.dp))
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             data.forEach { (bucket, playCount) ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                val label =
+                    when (bucket) {
+                        is AnalyticsUiState.ChartType.Day -> formatChartDay(bucket.day)
+                        is AnalyticsUiState.ChartType.Week -> formatChartWeek(bucket.start, bucket.end)
+                        is AnalyticsUiState.ChartType.Month -> formatChartMonth(bucket.month, bucket.year)
+                    }
+                val count = formatCount(playCount)
+                val fraction = (playCount.toFloat() / maxPlays).coerceIn(0.001f, 1f)
+                // Below this the fill is shorter than its own label, and a surface-coloured label
+                // on the 12% track was invisible. The number then sits beside the fill instead.
+                val labelInside = fraction >= 0.35f
+                val description = stringResource(Res.string.chart_bars_alt, label, count)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    // One announcement per bar, not a label node, a bar and a number read apart.
+                    modifier = Modifier.clearAndSetSemantics { contentDescription = description },
+                ) {
                     Text(
-                        text =
-                            when (bucket) {
-                                is AnalyticsUiState.ChartType.Day -> formatChartDay(bucket.day)
-                                is AnalyticsUiState.ChartType.Week -> formatChartWeek(bucket.start, bucket.end)
-                                is AnalyticsUiState.ChartType.Month -> formatChartMonth(bucket.month, bucket.year)
-                            },
+                        text = label,
                         style = typo().bodySmall,
                         maxLines = 1,
                         modifier = Modifier.width(108.dp),
                     )
                     Spacer(Modifier.width(12.dp))
-                    Box(
+                    Row(
                         Modifier
                             .weight(1f)
                             .height(24.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f)),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             Modifier
-                                .fillMaxWidth((playCount.toFloat() / maxPlays).coerceIn(0.001f, 1f))
+                                .fillMaxWidth(fraction)
                                 .height(24.dp)
                                 .clip(CircleShape)
                                 .background(seed),
-                        )
-                        Text(
-                            text = "$playCount ${stringResource(Res.string.lower_plays)}",
-                            style = typo().bodySmall,
-                            color = MaterialTheme.colorScheme.surface,
-                            maxLines = 1,
-                            modifier =
-                                Modifier
-                                    .align(Alignment.CenterStart)
-                                    .padding(horizontal = 10.dp),
-                        )
+                            contentAlignment = Alignment.CenterStart,
+                        ) {
+                            if (labelInside) {
+                                Text(
+                                    text = "$count $plays",
+                                    style = typo().bodySmall,
+                                    color = MaterialTheme.colorScheme.surface,
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(horizontal = 10.dp),
+                                )
+                            }
+                        }
+                        if (!labelInside) {
+                            Text(
+                                text = "$count $plays",
+                                style = typo().bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                modifier = Modifier.padding(start = 8.dp),
+                            )
+                        }
                     }
                 }
             }
@@ -1338,25 +1501,7 @@ private fun SongRow(
         isPlaying = song.videoId == playingTrack,
         modifier = Modifier.fillMaxWidth(),
         onMoreClickListener = { onItemMoreClick(pair) },
-        onClickListener = {
-            with(sharedViewModel) {
-                setQueueData(
-                    QueueData.Data(
-                        listTracks = all.toArrayListTrack(),
-                        firstPlayedTrack = pair.toTrack(),
-                        playlistId = null,
-                        playlistName = playlistName,
-                        playlistType = PlaylistType.RADIO,
-                        continuation = null,
-                    ),
-                )
-                loadMediaItem(
-                    pair.toTrack(),
-                    Config.PLAYLIST_CLICK,
-                    all.indexOf(pair).coerceAtLeast(0),
-                )
-            }
-        },
+        onClickListener = { playFromList(sharedViewModel, all, pair, playlistName) },
         onAddToQueue = { sharedViewModel.addListToQueue(arrayListOf(song)) },
         selectionMode = selectionState.isActive,
         isSelected = selectionState.isSelected(song.videoId),
@@ -1367,3 +1512,59 @@ private fun SongRow(
         },
     )
 }
+
+/**
+ * Plays [song] out of [all] as one queue. The hero and every row on this screen hand off through
+ * this one function, so tapping the top track's artwork does exactly what its row does.
+ */
+private fun playFromList(
+    sharedViewModel: SharedViewModel,
+    all: List<SongEntity>,
+    song: SongEntity,
+    playlistName: String,
+) {
+    with(sharedViewModel) {
+        setQueueData(
+            QueueData.Data(
+                listTracks = all.toArrayListTrack(),
+                firstPlayedTrack = song.toTrack(),
+                playlistId = null,
+                playlistName = playlistName,
+                playlistType = PlaylistType.RADIO,
+                continuation = null,
+            ),
+        )
+        loadMediaItem(
+            song.toTrack(),
+            Config.PLAYLIST_CLICK,
+            all.indexOf(song).coerceAtLeast(0),
+        )
+    }
+}
+
+/**
+ * The last figures that actually resolved, held while the next period loads.
+ *
+ * Every section returns on null data, so a step used to blank the whole page for the round trip
+ * and rebuild it. A resource that is Loading now but was Success a moment ago keeps its old value
+ * here; the screen dims instead. An Error is never held over — it replaces the old value, so a
+ * failed load is seen rather than hidden behind stale figures.
+ */
+@Composable
+private fun rememberSettledState(live: AnalyticsUiState): AnalyticsUiState {
+    val held = remember { mutableStateOf(live) }
+    val settled =
+        live.copy(
+            stats = live.stats.orHeld(held.value.stats),
+            topTracks = live.topTracks.orHeld(held.value.topTracks),
+            topArtists = live.topArtists.orHeld(held.value.topArtists),
+            topAlbums = live.topAlbums.orHeld(held.value.topAlbums),
+            recentlyRecord = live.recentlyRecord.orHeld(held.value.recentlyRecord),
+            scrobblesLineChart = live.scrobblesLineChart.orHeld(held.value.scrobblesLineChart),
+        )
+    SideEffect { held.value = settled }
+    return settled
+}
+
+private fun <T> LocalResource<T>.orHeld(previous: LocalResource<T>): LocalResource<T> =
+    if (this is LocalResource.Loading && previous is LocalResource.Success) previous else this

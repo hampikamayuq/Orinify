@@ -4,7 +4,6 @@ import androidx.compose.foundation.MarqueeAnimationMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +23,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
@@ -149,7 +150,7 @@ private fun MosaicTile(
     modifier: Modifier,
 ) {
     Box(
-        modifier.clickable { image.onClick() },
+        modifier.clickable(role = Role.Button) { image.onClick() },
     ) {
         AsyncImage(
             model =
@@ -160,7 +161,8 @@ private fun MosaicTile(
                     .diskCacheKey(image.imageUrl)
                     .crossfade(550)
                     .build(),
-            contentDescription = "",
+            // The labels below already name the tile; a description here would be read twice.
+            contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier =
                 Modifier
@@ -181,9 +183,11 @@ private fun MosaicTile(
         ) {
             // Styles kept exactly as they were: title labelSmall in white, subtitle bodySmall
             // in white, and the optional third line bodySmall in whatever the theme gives it.
+            // Only the title scrolls: three marquees per tile is fifteen moving lines per mosaic,
+            // and the subtitle/count are short enough that an ellipsis loses nothing.
             MarqueeLine(image.title, typo().labelSmall, Color.White)
-            MarqueeLine(image.subtitle, typo().bodySmall, Color.White)
-            image.thirdTitle?.let { MarqueeLine(it, typo().bodySmall, null) }
+            StaticLine(image.subtitle, typo().bodySmall, Color.White)
+            image.thirdTitle?.let { StaticLine(it, typo().bodySmall, null) }
         }
     }
 }
@@ -199,14 +203,32 @@ private fun MarqueeLine(
         style = style,
         color = color ?: Color.Unspecified,
         maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         modifier =
             Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(align = Alignment.CenterVertically)
+                // No `.focusable()`: it made every line its own focus stop, 10-15 extra per mosaic.
                 .basicMarquee(
-                    iterations = Int.MAX_VALUE,
+                    iterations = marqueeIterations(Int.MAX_VALUE),
                     animationMode = MarqueeAnimationMode.Immediately,
-                ).focusable(),
+                ),
+    )
+}
+
+@Composable
+private fun StaticLine(
+    text: String,
+    style: TextStyle,
+    color: Color?,
+) {
+    Text(
+        text = text,
+        style = style,
+        color = color ?: Color.Unspecified,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 

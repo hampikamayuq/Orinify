@@ -1,6 +1,7 @@
 package com.maxrave.simpmusic.ui.screen.home.analytics
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.intl.Locale
 import com.maxrave.simpmusic.viewModel.AnalyticsUiState
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -60,6 +61,42 @@ fun formatListeningTime(totalSeconds: Long): String {
         else -> stringResource(Res.string.listening_time_seconds, safe)
     }
 }
+
+/**
+ * A count with its thousands grouped: `1,234`, `18,430`.
+ *
+ * By hand, because common Kotlin has no `NumberFormat`. Grouped from four digits up — "1234 plays"
+ * reads as a year — with the separator chosen per language, since in most of the app's locales a
+ * comma is the DECIMAL mark and "18,430" would read as eighteen and a bit. Not @Composable on
+ * purpose: `Locale.current` is a plain read, so a view model can call this too.
+ */
+fun formatCount(value: Long): String = groupDigits(value, groupingSeparatorFor(Locale.current.language))
+
+fun formatCount(value: Int): String = formatCount(value.toLong())
+
+private fun groupDigits(
+    value: Long,
+    separator: Char,
+): String {
+    val digits = value.toString()
+    val negative = digits.startsWith('-')
+    val body = if (negative) digits.drop(1) else digits
+    if (body.length < 4) return digits
+    val grouped =
+        body
+            .reversed()
+            .chunked(3)
+            .joinToString(separator.toString())
+            .reversed()
+    return if (negative) "-$grouped" else grouped
+}
+
+/** A short allowlist, not a rule: the shipped languages where a comma marks the decimal point. */
+private fun groupingSeparatorFor(language: String): Char =
+    when (language.lowercase()) {
+        "de", "es", "it", "nl", "pt", "id", "tr", "vi", "da", "ca", "ro", "el", "sr", "hr", "sl", "az", "uk", "ru", "bg", "cs", "sk", "pl", "hu", "fi", "sv", "nb", "no", "lv", "lt", "et" -> '.'
+        else -> ','
+    }
 
 /**
  * Abbreviated month name for the reader's language.
