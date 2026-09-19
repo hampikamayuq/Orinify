@@ -73,6 +73,7 @@ import com.maxrave.simpmusic.ui.icon.SimpIcons
 import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentActions
 import com.maxrave.simpmusic.ui.screen.player.content.NowPlayingContentState
 import com.maxrave.simpmusic.ui.theme.seed
+import com.maxrave.simpmusic.ui.theme.typo
 import com.maxrave.simpmusic.viewModel.UIEvent
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.map
@@ -84,6 +85,7 @@ import simpmusic.composeapp.generated.resources.add_to_playlist
 import simpmusic.composeapp.generated.resources.continue_playing
 import simpmusic.composeapp.generated.resources.endless_queue
 import simpmusic.composeapp.generated.resources.now_playing
+import simpmusic.composeapp.generated.resources.queue_empty
 import simpmusic.composeapp.generated.resources.shuffle
 import simpmusic.composeapp.generated.resources.song_info
 
@@ -256,6 +258,17 @@ internal fun AppleMusicQueueView(
                             )
                         },
             ) {
+                // An empty list said nothing at all; one line says what the silence means.
+                if (upcoming.isEmpty()) {
+                    item(key = "queue:empty") {
+                        Text(
+                            text = stringResource(Res.string.queue_empty),
+                            style = typo().bodySmall,
+                            color = AppleMusicTextSecondary,
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 12.dp),
+                        )
+                    }
+                }
                 itemsIndexed(
                     upcoming,
                     // Absolute index in the key: `upcoming` is a sublist, so a bare local index

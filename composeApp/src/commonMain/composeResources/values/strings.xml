@@ -813,4 +813,5 @@
     <string name="listener_last_heard_yesterday">last heard yesterday</string>
     <string name="listener_last_heard_days_ago">last heard %1$s days ago</string>
     <string name="listener_last_heard_on">last heard %1$s</string>
+    <string name="queue_empty">Nothing queued after this</string>
 </resources>

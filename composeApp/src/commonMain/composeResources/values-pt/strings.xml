@@ -487,4 +487,5 @@
     <string name="listener_last_heard_yesterday">última ontem</string>
     <string name="listener_last_heard_days_ago">última há %1$s dias</string>
     <string name="listener_last_heard_on">última em %1$s</string>
+    <string name="queue_empty">Nada na fila depois desta</string>
 </resources>

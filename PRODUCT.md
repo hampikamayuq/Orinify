@@ -38,6 +38,8 @@ Every YouTube Music client can play what YouTube suggests. This one builds lists
 - **Artist mixes** — one radio per artist by play count over 90 days.
 - **Recently played** — the history itself, newest first, one row per track; the spine of
   the Library tab and the one list no stock client can show.
+- **The player's own line** — under the artist, in every style: "Play 12 · last heard
+  yesterday", the one sentence on that screen that is the listener's and not YouTube's.
 - Wrapped, monthly recap playlists, and the Analytics tab, all from the same table.
 
 Neither the upstream nor a stock client can copy this without collecting the history
