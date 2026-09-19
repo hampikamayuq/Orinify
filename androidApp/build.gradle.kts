@@ -137,7 +137,12 @@ android {
             }
             splits {
                 abi {
-                    isEnable = true
+                    // Only for `assembleRelease` (split + universal APKs, e.g. for GitHub
+                    // releases/F-Droid). Leaving this on for `bundleRelease` makes AGP shrink
+                    // resources once per ABI and fails buildReleasePreBundle with
+                    // "Multiple shrunk-resources files found" — the Bundle task expects the
+                    // single, ABI-agnostic .aab that `bundle {}` below already produces.
+                    isEnable = gradle.startParameter.taskNames.none { it.contains("bundle", ignoreCase = true) }
                     reset()
                     isUniversalApk = true
                     include(*abis)
