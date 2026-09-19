@@ -31,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -108,6 +110,9 @@ fun CreditScreen(
             text = stringResource(Res.string.app_name),
             style = typo().titleLarge,
             fontSize = 22.sp,
+            // This is the page's actual heading — the TopAppBar title below shows the same
+            // string, but only this one should be where a screen reader user jumps to.
+            modifier = Modifier.semantics { heading() },
         )
 
         Text(
@@ -189,9 +194,10 @@ fun CreditScreen(
                 RippleIconButton(
                     SimpIcons.ArrowBackIosNew,
                     Modifier
-                        .size(32.dp),
+                        .size(48.dp),
                     true,
                     tint = MaterialTheme.colorScheme.onSurface,
+                    contentDescription = "Back",
                 ) {
                     navController.navigateUp()
                 }

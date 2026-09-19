@@ -63,6 +63,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -212,6 +217,12 @@ fun ArtistScreen(
     // Accent color for the action buttons, sourced from the artist name-logo image's dominant
     // color (hidden catalog). Falls back to white until the logo loads (or if none exists).
     val artistAccent = artistLogo?.bgColorHex?.hexToColorOrNull() ?: Color.White
+    // Icon tint for Shuffle/Follow, which fill their circle with `artistAccent` — that color is
+    // untrusted (straight from artistLogo.bgColorHex), so the icon on top of it needs a contrast
+    // fallback rather than the fixed `mutedPaletteBg` it used to get. Same perceived-luminance
+    // formula UIExt.toImmersiveBackground() already uses to decide how hard to darken artwork.
+    val accentLuminance = 0.299f * artistAccent.red + 0.587f * artistAccent.green + 0.114f * artistAccent.blue
+    val accentContrastTint = if (accentLuminance > 0.5f) Color.Black else Color.White
 
     val hazeState = rememberHazeState(blurEnabled = true)
     val lazyState = rememberLazyListState()
@@ -391,6 +402,13 @@ fun ArtistScreen(
                                                     // Lift the name + subtitle together with the action row.
                                                     .offset(y = (-36).dp)
                                                     .fillMaxWidth()
+                                                    // Cheap contrast safety net: the gradient scrim above only
+                                                    // reaches full opacity at the very bottom edge, so the
+                                                    // title/subtitle can sit over a partially-transparent zone
+                                                    // against arbitrary album-art colors. A flat low-alpha
+                                                    // layer directly behind the text guarantees a minimum
+                                                    // contrast floor without real contrast math.
+                                                    .background(Color.Black.copy(alpha = 0.3f))
                                                     .padding(horizontal = 20.dp)
                                                     .padding(bottom = 16.dp),
                                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -437,6 +455,7 @@ fun ArtistScreen(
                                     LiquidGlassIconButton(
                                         backdrop = artworkBackdrop,
                                         imageVector = SimpIcons.ArrowBackIosNew,
+                                        contentDescription = "Back",
                                         shape = RoundedCornerShape(24.dp),
                                         // Matching the other three headers: the pill-style directional rim, thickened
                                         // from the 0.5.dp default so it stays visible around a 48dp circle.
@@ -510,7 +529,7 @@ fun ArtistScreen(
                                         Icon(
                                             imageVector = SimpIcons.Shuffle,
                                             contentDescription = "Shuffle",
-                                            tint = mutedPaletteBg,
+                                            tint = accentContrastTint,
                                             modifier = Modifier.size(28.dp),
                                         )
                                     }
@@ -529,13 +548,19 @@ fun ArtistScreen(
                                                         if (isFollowed) 0 else 1,
                                                         state.data.channelId ?: return@clickable,
                                                     )
+                                                }
+                                                // The description names the ACTION; the state rides on `selected`,
+                                                // mirroring HeartCheckBox's idiom (ModalBottomSheet.kt).
+                                                .semantics {
+                                                    role = Role.Checkbox
+                                                    selected = isFollowed
                                                 },
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         Icon(
                                             imageVector = if (isFollowed) SimpIcons.Check else SimpIcons.PersonAdd,
                                             contentDescription = if (isFollowed) "Followed" else "Follow",
-                                            tint = if (isFollowed) mutedPaletteBg else artistAccent,
+                                            tint = if (isFollowed) accentContrastTint else artistAccent,
                                             modifier = Modifier.size(22.dp),
                                         )
                                     }
@@ -714,7 +739,7 @@ private fun ArtistSections(
                         text = stringResource(Res.string.popular),
                         style = typo().labelMedium,
                         color = Color.White,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).semantics { heading() },
                     )
                     TextButton(
                         onClick = {
@@ -790,7 +815,7 @@ private fun ArtistSections(
                         text = stringResource(Res.string.singles),
                         style = typo().labelMedium,
                         color = Color.White,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).semantics { heading() },
                     )
                     TextButton(
                         onClick = {
@@ -858,7 +883,7 @@ private fun ArtistSections(
                         text = stringResource(Res.string.albums),
                         style = typo().labelMedium,
                         color = Color.White,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).semantics { heading() },
                     )
                     TextButton(
                         onClick = {
@@ -926,7 +951,7 @@ private fun ArtistSections(
                         text = stringResource(Res.string.videos),
                         style = typo().labelMedium,
                         color = Color.White,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).semantics { heading() },
                     )
                     TextButton(
                         onClick = {

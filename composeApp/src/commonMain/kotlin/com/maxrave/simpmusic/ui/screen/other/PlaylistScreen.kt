@@ -443,6 +443,13 @@ fun PlaylistScreen(
                                                             Modifier
                                                                 .align(Alignment.BottomCenter)
                                                                 .fillMaxWidth()
+                                                                // Cheap contrast safety net: the gradient scrim above
+                                                                // only reaches full opacity at the very bottom edge, so
+                                                                // this text can sit over a partially-transparent zone
+                                                                // against arbitrary artwork colors. A flat low-alpha
+                                                                // layer behind the text guarantees a contrast floor
+                                                                // without real contrast math.
+                                                                .background(Color.Black.copy(alpha = 0.3f))
                                                                 .padding(horizontal = 20.dp)
                                                                 .padding(bottom = 16.dp),
                                                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -510,6 +517,7 @@ fun PlaylistScreen(
                                                     LiquidGlassIconButton(
                                                         backdrop = artworkBackdrop,
                                                         imageVector = SimpIcons.ArrowBackIosNew,
+                                                        contentDescription = "Back",
                                                         modifier =
                                                             Modifier
                                                                 .size(48.dp),
@@ -795,6 +803,7 @@ fun PlaylistScreen(
                                                     LiquidGlassIconButton(
                                                         backdrop = headerBackdrop,
                                                         imageVector = SimpIcons.ArrowBackIosNew,
+                                                        contentDescription = "Back",
                                                         shape = RoundedCornerShape(24.dp),
                                                         // Same directional style as the like/⋯ pill, a touch thicker. The default
                                                         // width of 0.5.dp becomes a ~2px stroke (HighlightModifier: ceil(width.toPx()) * 2),
@@ -1367,8 +1376,9 @@ fun PlaylistScreen(
                                 RippleIconButton(
                                     SimpIcons.ArrowBackIosNew,
                                     Modifier
-                                        .size(32.dp),
+                                        .size(48.dp),
                                     true,
+                                    contentDescription = "Back",
                                 ) {
                                     navController.navigateUp()
                                 }
