@@ -32,9 +32,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.screen.home.analytics.formatListeningTime
 import com.maxrave.simpmusic.ui.screen.home.wrapped.WrappedTokens
-import com.maxrave.simpmusic.ui.screen.home.wrapped.formatCount
 import com.maxrave.simpmusic.viewModel.WrappedArtist
 import com.maxrave.simpmusic.viewModel.WrappedYear
 import org.jetbrains.compose.resources.stringResource
@@ -76,7 +76,7 @@ fun WrappedTopArtistsCard(
             Box(Modifier.fillMaxSize().background(portraitScrim(MaterialTheme.colorScheme.background)))
         }
         Column(Modifier.fillMaxSize()) {
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(WrappedTokens.CardTopGap))
             WrappedEyebrow(
                 text = stringResource(Res.string.wrapped_artists_title),
                 modifier = Modifier.padding(horizontal = WrappedTokens.ScreenPadding),
@@ -126,7 +126,7 @@ fun WrappedTopArtistsCard(
  */
 @Composable
 private fun LeaderMeta(artist: WrappedArtist) {
-    val plays = stringResource(Res.string.wrapped_plays, formatCount(artist.playCount))
+    val plays = stringResource(Res.string.wrapped_plays, formatCount(artist.playCount.toLong()))
     val listened = formatListeningTime(artist.listenedSeconds)
     val badge =
         if (artist.wasTopArtistLastYear) stringResource(Res.string.wrapped_artists_two_years) else null

@@ -18,8 +18,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.screen.home.wrapped.WrappedTokens
-import com.maxrave.simpmusic.ui.screen.home.wrapped.formatCount
 import com.maxrave.simpmusic.ui.screen.home.wrapped.wholeDays
 import com.maxrave.simpmusic.ui.screen.home.wrapped.wholeMinutes
 import com.maxrave.simpmusic.viewModel.WrappedYear

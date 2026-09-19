@@ -34,6 +34,14 @@ object WrappedTokens {
     val SegmentGap = 3.dp
 
     /**
+     * The gap between the shell's header and a card's eyebrow, and between a card's last line and
+     * the shell's footer. Every card that starts with an eyebrow uses the pair — they were five
+     * private copies of the same two numbers before, which is one file away from drifting.
+     */
+    val CardTopGap = 14.dp
+    val CardBottomGap = 22.dp
+
+    /**
      * The rim width for the small round glass buttons.
      *
      * `Highlight`'s default is DIRECTIONAL — lit along one angle — which an elongated pill catches
@@ -43,9 +51,6 @@ object WrappedTokens {
      */
     val GlassRimWidth = 1.dp
 
-    /** How long each card holds before the reel advances on its own. */
+    /** How long each card holds before the reel advances on its own. The last card never does. */
     const val CARD_DURATION_MS = 6_000L
-
-    /** The share card holds longer — it is the one the user is meant to act on. */
-    const val SHARE_CARD_DURATION_MS = 30_000L
 }

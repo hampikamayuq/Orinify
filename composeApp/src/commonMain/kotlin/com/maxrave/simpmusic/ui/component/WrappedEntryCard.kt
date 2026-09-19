@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.maxrave.simpmusic.ui.icon.PlayArrow
 import com.maxrave.simpmusic.ui.icon.SimpIcons
-import com.maxrave.simpmusic.ui.screen.home.wrapped.formatCount
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.screen.home.wrapped.wholeMinutes
 import com.maxrave.simpmusic.ui.theme.typo
 import com.maxrave.simpmusic.viewModel.WrappedYear
@@ -98,7 +98,7 @@ fun WrappedEntryCard(
                         stringResource(
                             Res.string.wrapped_entry_subtitle,
                             formatCount(wholeMinutes(wrapped.stats.listenedSeconds)),
-                            formatCount(wrapped.stats.distinctArtists),
+                            formatCount(wrapped.stats.distinctArtists.toLong()),
                         ),
                     style = typo().bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

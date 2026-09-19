@@ -26,12 +26,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.screen.home.wrapped.WrappedTokens
-import com.maxrave.simpmusic.ui.screen.home.wrapped.formatCount
 import com.maxrave.simpmusic.viewModel.WrappedYear
 import org.jetbrains.compose.resources.stringResource
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.wrapped_opening_days
+import simpmusic.composeapp.generated.resources.wrapped_opening_days_so_far
 import simpmusic.composeapp.generated.resources.wrapped_opening_lead
 import simpmusic.composeapp.generated.resources.wrapped_opening_title
 import simpmusic.composeapp.generated.resources.wrapped_opening_tracks
@@ -126,7 +127,11 @@ private fun YearFigure(year: Int) {
 }
 
 /**
- * "You opened SimpMusic on 287 of 365 days. 1,204 tracks went past."
+ * "You opened Orinify on 287 of 365 days. 1,204 tracks went past."
+ *
+ * A year still running is measured against the days it has had, not the days it will have: "41 of
+ * 365" in March reads as a bad year rather than a young one, so the current year prints "of the 78
+ * days so far" over [WrappedYear.daysElapsed].
  *
  * Three resources rather than one sentence, so the middle clause can be lifted from body colour to
  * `onSurface` — it is the only figure on this card and the surrounding prose is there to frame it,
@@ -137,12 +142,20 @@ private fun YearFigure(year: Int) {
 private fun OpeningLead(wrapped: WrappedYear) {
     val lead = stringResource(Res.string.wrapped_opening_lead)
     val days =
-        stringResource(
-            Res.string.wrapped_opening_days,
-            formatCount(wrapped.stats.activeDays),
-            formatCount(wrapped.daysInYear),
-        )
-    val tracks = stringResource(Res.string.wrapped_opening_tracks, formatCount(wrapped.stats.distinctTracks))
+        if (wrapped.isCurrentYear) {
+            stringResource(
+                Res.string.wrapped_opening_days_so_far,
+                formatCount(wrapped.stats.activeDays.toLong()),
+                formatCount(wrapped.daysElapsed.toLong()),
+            )
+        } else {
+            stringResource(
+                Res.string.wrapped_opening_days,
+                formatCount(wrapped.stats.activeDays.toLong()),
+                formatCount(wrapped.daysInYear.toLong()),
+            )
+        }
+    val tracks = stringResource(Res.string.wrapped_opening_tracks, formatCount(wrapped.stats.distinctTracks.toLong()))
     val highlight = MaterialTheme.colorScheme.onSurface
     Text(
         text =

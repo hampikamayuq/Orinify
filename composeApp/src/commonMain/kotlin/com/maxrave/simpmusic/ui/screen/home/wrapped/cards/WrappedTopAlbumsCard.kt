@@ -22,8 +22,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.maxrave.domain.utils.connectArtists
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.screen.home.wrapped.WrappedTokens
-import com.maxrave.simpmusic.ui.screen.home.wrapped.formatCount
 import com.maxrave.simpmusic.viewModel.WrappedAlbum
 import com.maxrave.simpmusic.viewModel.WrappedYear
 import org.jetbrains.compose.resources.stringResource
@@ -89,7 +89,7 @@ fun WrappedTopAlbumsCard(
                 ),
         )
         Column(Modifier.fillMaxSize()) {
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(WrappedTokens.CardTopGap))
             WrappedEyebrow(
                 text = stringResource(Res.string.wrapped_albums_title),
                 modifier = Modifier.padding(horizontal = WrappedTokens.ScreenPadding),
@@ -162,7 +162,7 @@ private fun LeaderBanner(
 /** "HIEUTHUHAI · 186 plays", or the plays alone where the album carries no artist. */
 @Composable
 private fun albumSubtitle(album: WrappedAlbum): String {
-    val plays = stringResource(Res.string.wrapped_plays, formatCount(album.playCount))
+    val plays = stringResource(Res.string.wrapped_plays, formatCount(album.playCount.toLong()))
     val artists = album.album.artistName?.connectArtists()?.takeIf { it.isNotBlank() }
     return if (artists == null) plays else "$artists · $plays"
 }

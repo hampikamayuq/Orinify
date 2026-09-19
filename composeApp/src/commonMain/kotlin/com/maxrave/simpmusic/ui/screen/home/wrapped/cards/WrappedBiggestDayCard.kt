@@ -16,15 +16,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.maxrave.domain.data.entities.SongEntity
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.screen.home.analytics.monthShortName
 import com.maxrave.simpmusic.ui.screen.home.wrapped.WrappedTokens
-import com.maxrave.simpmusic.ui.screen.home.wrapped.formatCount
 import com.maxrave.simpmusic.viewModel.WrappedBiggestDay
 import com.maxrave.simpmusic.viewModel.WrappedYear
 import org.jetbrains.compose.resources.stringResource
@@ -57,7 +59,7 @@ fun WrappedBiggestDayCard(
     val day = wrapped.biggestDay ?: return
 
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Spacer(Modifier.height(CARD_TOP_GAP))
+        Spacer(Modifier.height(WrappedTokens.CardTopGap))
         WrappedEyebrow(
             text = stringResource(Res.string.wrapped_biggest_day_title),
             modifier = Modifier.padding(horizontal = WrappedTokens.ScreenPadding),
@@ -88,7 +90,7 @@ fun WrappedBiggestDayCard(
 
         Spacer(Modifier.weight(1.00f))
         day.topTrack?.let { TopTrackLine(it, day.topTrackPlays) }
-        Spacer(Modifier.height(CARD_BOTTOM_GAP))
+        Spacer(Modifier.height(WrappedTokens.CardBottomGap))
     }
 }
 
@@ -100,7 +102,7 @@ private fun PlayCountLine(day: WrappedBiggestDay) {
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
-            text = formatCount(day.plays),
+            text = formatCount(day.plays.toLong()),
             // Straight off the scale at its own size: the date above is what carries the card, and
             // a second enlarged figure would compete with it rather than rank under it. The accent
             // is the one thing named here, and it is the artwork's own — the same `primary` the
@@ -115,7 +117,7 @@ private fun PlayCountLine(day: WrappedBiggestDay) {
             text =
                 stringResource(
                     Res.string.wrapped_biggest_day_plays,
-                    formatCount(day.typicalPlays),
+                    formatCount(day.typicalPlays.toLong()),
                 ),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.alignByBaseline(),
@@ -146,8 +148,16 @@ private fun DayAgainstTypical(day: WrappedBiggestDay) {
             (day.typicalPlays.toFloat() / day.plays).coerceIn(TYPICAL_BAR_FLOOR, 1f)
         }
 
+    // The same sentence PlayCountLine prints, so the picture reads as the line it illustrates.
+    val plays = formatCount(day.plays.toLong())
+    val barsDescription = "$plays ${stringResource(Res.string.wrapped_biggest_day_plays, formatCount(day.typicalPlays.toLong()))}"
+
     Row(
-        modifier = Modifier.fillMaxWidth().height(COMPARISON_HEIGHT),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(COMPARISON_HEIGHT)
+                .semantics { contentDescription = barsDescription },
         horizontalArrangement = Arrangement.spacedBy(3.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
@@ -176,7 +186,7 @@ private fun TopTrackLine(
         stringResource(
             Res.string.wrapped_biggest_day_caption,
             song.title,
-            formatCount(plays),
+            formatCount(plays.toLong()),
         )
     val titleStart = sentence.indexOf(song.title)
     val emphasis = MaterialTheme.colorScheme.onSurface
@@ -219,9 +229,3 @@ private val COMPARISON_HEIGHT = 116.dp
 
 /** A typical day is never drawn as nothing, however lopsided the year's best day was. */
 private const val TYPICAL_BAR_FLOOR = 0.04f
-
-/** Gap between the shell's header and this card's eyebrow. */
-private val CARD_TOP_GAP = 14.dp
-
-/** Gap between this card's last line and the shell's footer. */
-private val CARD_BOTTOM_GAP = 22.dp

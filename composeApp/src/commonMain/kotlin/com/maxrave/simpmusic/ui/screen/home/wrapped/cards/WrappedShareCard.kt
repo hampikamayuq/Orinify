@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,7 +31,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -39,8 +42,8 @@ import androidx.compose.ui.unit.sp
 import com.maxrave.simpmusic.ui.icon.Download
 import com.maxrave.simpmusic.ui.icon.Share
 import com.maxrave.simpmusic.ui.icon.SimpIcons
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.screen.home.wrapped.WrappedTokens
-import com.maxrave.simpmusic.ui.screen.home.wrapped.formatCount
 import com.maxrave.simpmusic.ui.screen.home.wrapped.wholeMinutes
 import com.maxrave.simpmusic.viewModel.WrappedArchetype
 import com.maxrave.simpmusic.viewModel.WrappedYear
@@ -48,6 +51,7 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.app_name
 import simpmusic.composeapp.generated.resources.mono
 import simpmusic.composeapp.generated.resources.wrapped_archetype_deep_diver
 import simpmusic.composeapp.generated.resources.wrapped_archetype_devotee
@@ -98,7 +102,7 @@ fun WrappedShareCard(
         modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(Modifier.height(CARD_TOP_GAP))
+        Spacer(Modifier.height(WrappedTokens.CardTopGap))
         WrappedEyebrow(
             text = stringResource(Res.string.wrapped_share_title),
             modifier =
@@ -183,7 +187,7 @@ private fun SharePoster(
 private fun PosterHeader(year: Int) {
     Column {
         PosterLabel(
-            text = stringResource(Res.string.wrapped_share_card_title).uppercase(),
+            text = stringResource(Res.string.wrapped_share_card_title).toUpperCase(Locale.current),
             tracking = HEADER_TRACKING,
         )
         Spacer(Modifier.height(2.dp))
@@ -231,7 +235,9 @@ private fun RankedColumn(
         // favourites that do not exist.
         entries.take(POSTER_RANK_LIMIT).forEachIndexed { index, entry ->
             Row(
-                modifier = Modifier.fillMaxWidth().height(RANK_ROW_HEIGHT),
+                // A floor, not a height: at font scale 1.3 `titleSmall`'s line box outgrows 20dp
+                // and a fixed row clipped the descenders off every title.
+                modifier = Modifier.fillMaxWidth().heightIn(min = RANK_ROW_MIN_HEIGHT),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -259,11 +265,11 @@ private fun PosterFigures(wrapped: WrappedYear) {
             label = stringResource(Res.string.wrapped_share_minutes),
         )
         PosterFigure(
-            value = formatCount(stats.distinctArtists),
+            value = formatCount(stats.distinctArtists.toLong()),
             label = stringResource(Res.string.wrapped_share_artists),
         )
         PosterFigure(
-            value = formatCount(stats.activeDays),
+            value = formatCount(stats.activeDays.toLong()),
             label = stringResource(Res.string.wrapped_share_days),
         )
     }
@@ -374,9 +380,9 @@ private fun PosterSignature(wrapped: WrappedYear) {
                 )
             }
             Text(
-                // A brand name, not copy — it is spelled this way in every language, exactly as
-                // the lyrics share card spells it, and set in the same muted weight it uses there.
-                text = "SimpMusic",
+                // The app's own name resource, so the poster signs itself as whatever the build
+                // is called; set in the same muted weight the lyrics share card signs with.
+                text = stringResource(Res.string.app_name),
                 style = MaterialTheme.typography.bodySmall,
             )
         }
@@ -393,15 +399,10 @@ private fun PosterSignature(wrapped: WrappedYear) {
  * (`secondaryContainer`), which is exactly the loud/quiet pair the artboard draws and is seeded
  * from the user's own artwork for free.
  *
- * The band is exactly the height of the shell's footer and the buttons sit at the TOP of it, which
- * puts them where the artboard draws them and leaves the remaining 30dp as clearance. That
- * clearance is load-bearing, not white space: it is what keeps the buttons off the system
- * navigation inset, so the band must not be shrunk to the buttons.
- *
- * This is the only card that gets that band. The shell subtracts [WrappedTokens.FooterHeight] per
- * page inside its card slot rather than from the pager's own box — the pager therefore stays one
- * constant size and nothing re-lays-out mid-swipe, while this page alone keeps the strip its
- * footer would have covered and draws its own actions into it.
+ * They sit above the shell's footer band like every other card's last line, not inside it: this
+ * is the last card, and the band under it now belongs to the reel's own way out — Watch again and
+ * Done — which cannot share 74dp with two more buttons. The band's inset is therefore the shell's
+ * business, and the card ends on the same [WrappedTokens.CardBottomGap] the others do.
  */
 @Composable
 private fun ShareActions(
@@ -409,7 +410,7 @@ private fun ShareActions(
     onShare: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().height(WrappedTokens.FooterHeight),
+        modifier = Modifier.fillMaxWidth().padding(bottom = WrappedTokens.CardBottomGap),
         horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
     ) {
         Button(
@@ -536,8 +537,8 @@ private const val POSTER_RANK_LIMIT = 5
 
 private val ARTIST_COLUMN_WIDTH = 88.dp
 
-/** Tall enough for `titleSmall`'s own line box; the artboard's 18px was drawn around 10.5px type. */
-private val RANK_ROW_HEIGHT = 20.dp
+/** `titleSmall`'s own line box at default scale; the artboard's 18px was drawn around 10.5px type. */
+private val RANK_ROW_MIN_HEIGHT = 20.dp
 
 /** Wide enough for a two-digit rank, so the titles start on one line however long the list is. */
 private val RANK_NUMBER_WIDTH = 14.dp
@@ -558,6 +559,3 @@ private val FIGURE_LABEL_TRACKING = 0.10.em
 
 /** ~44dp tall with Material's own icon metrics inside it — the artboard's pill, to the dp. */
 private val ACTION_CONTENT_PADDING = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
-
-/** Gap between the shell's header and this card's eyebrow. */
-private val CARD_TOP_GAP = 14.dp

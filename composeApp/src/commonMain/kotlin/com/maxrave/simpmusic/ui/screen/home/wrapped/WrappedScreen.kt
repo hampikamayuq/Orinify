@@ -43,7 +43,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -67,7 +72,9 @@ import com.maxrave.simpmusic.ui.component.capture.CaptureController
 import com.maxrave.simpmusic.ui.component.capture.capturable
 import com.maxrave.simpmusic.ui.component.capture.rememberCaptureController
 import com.maxrave.simpmusic.ui.component.liquidGlass
+import com.maxrave.simpmusic.ui.icon.Check
 import com.maxrave.simpmusic.ui.icon.Close
+import com.maxrave.simpmusic.ui.icon.Repeat
 import com.maxrave.simpmusic.ui.icon.Share
 import com.maxrave.simpmusic.ui.icon.SimpIcons
 import com.maxrave.simpmusic.ui.screen.home.wrapped.cards.WrappedBiggestDayCard
@@ -95,11 +102,17 @@ import multiplatform.network.cmptoast.showToast
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.close_player
+import simpmusic.composeapp.generated.resources.done
+import simpmusic.composeapp.generated.resources.next
+import simpmusic.composeapp.generated.resources.previous
 import simpmusic.composeapp.generated.resources.share_lyrics_permission_denied
 import simpmusic.composeapp.generated.resources.share_lyrics_save_failed
 import simpmusic.composeapp.generated.resources.share_lyrics_saved
 import simpmusic.composeapp.generated.resources.share_lyrics_saved_desktop
 import simpmusic.composeapp.generated.resources.share_lyrics_share_failed
+import simpmusic.composeapp.generated.resources.watch_again
+import simpmusic.composeapp.generated.resources.wrapped_card_of
 import simpmusic.composeapp.generated.resources.wrapped_share
 import simpmusic.composeapp.generated.resources.wrapped_tap_to_begin
 import simpmusic.composeapp.generated.resources.wrapped_tap_to_continue
@@ -107,7 +120,7 @@ import simpmusic.composeapp.generated.resources.wrapped_year
 import kotlin.random.Random
 
 /**
- * SimpMusic Wrapped: the year told as a story reel.
+ * Wrapped: the year told as a story reel.
  *
  * The screen is a shell around cards it does not draw. Everything constant lives here — the
  * progress segments, the year label, the close button, the footer, the timer, the capture — and
@@ -119,12 +132,18 @@ import kotlin.random.Random
  */
 @Composable
 fun WrappedScreen(
+    year: Int,
     navController: NavController,
     hideNavBar: () -> Unit,
     showNavBar: () -> Unit,
     wrappedViewModel: WrappedViewModel = koinViewModel(),
 ) {
     val state by wrappedViewModel.uiState.collectAsStateWithLifecycle()
+
+    // The destination names the year; the view model composes it. Everything below reads the year
+    // back off the composed `WrappedYear` rather than this argument, so a card can never print a
+    // year the figures were not computed for.
+    LaunchedEffect(year) { wrappedViewModel.setYear(year) }
 
     // The reel is a takeover, the way the fullscreen player is: the bottom bar would sit across
     // the footer's own hint and share pill, and the mini player rides in the same slot. Restoring
@@ -186,6 +205,11 @@ private fun WrappedTheme(
     // colour during composition, so a fresh client every pass would key a fresh loader and a fresh
     // state, and the colour would reset to the fallback on the very recomposition it caused.
     val httpClient = remember { HttpClient(CIO) }
+    // Closed with the composable, as HomeScreen closes its palette client: a CIO client holds a
+    // thread pool and remembered-but-never-closed leaks one per visit.
+    DisposableEffect(httpClient) {
+        onDispose { httpClient.close() }
+    }
     val networkLoader = rememberNetworkLoader(httpClient)
     val dominantColorState =
         rememberDominantColorState(
@@ -235,7 +259,7 @@ private fun WrappedReel(
     val scope = rememberCoroutineScope()
 
     val page = pagerState.currentPage
-    val isShareCard = cards[page] == WrappedCard.SHARE
+    val isLastCard = page == cards.lastIndex
 
     // How far through the current card's hold we are, 0..1. Held as a float state and read only
     // inside the segment's progress lambda, so sixty writes a second repaint three pixels of bar
@@ -261,20 +285,28 @@ private fun WrappedReel(
     val backdrop = rememberBackdrop(MaterialTheme.colorScheme.background)
 
     /**
-     * The one way the reel moves. Past the last card is not a page — it is the end of the story,
-     * and the reel closes rather than sitting on a card with nothing after it.
+     * The one way the reel moves. Either edge is a wall: past the last card the reel stays put and
+     * the footer offers Watch again and Done, rather than closing under a user who was still
+     * reading the poster.
      */
     fun goTo(target: Int) {
-        when {
-            target < 0 -> Unit
-            target >= cards.size -> onClose()
-            else -> scope.launch { pagerState.animateScrollToPage(target) }
-        }
+        if (target in cards.indices) scope.launch { pagerState.animateScrollToPage(target) }
+    }
+
+    /** A jump, not a scroll back through nine cards: the reel starts over, it does not rewind. */
+    fun restart() {
+        scope.launch { pagerState.scrollToPage(0) }
     }
 
     LaunchedEffect(page, cards) {
         progress = 0f
-        val holdMs = if (cards[page] == WrappedCard.SHARE) WrappedTokens.SHARE_CARD_DURATION_MS else WrappedTokens.CARD_DURATION_MS
+        if (page == cards.lastIndex) {
+            // The end of the story is a place, not a timeout. The segment fills so the header reads
+            // as complete, and the reel waits for the footer's two buttons.
+            progress = 1f
+            return@LaunchedEffect
+        }
+        val holdMs = WrappedTokens.CARD_DURATION_MS
         var elapsed = 0L
         var lastFrame = 0L
         while (elapsed < holdMs) {
@@ -291,10 +323,30 @@ private fun WrappedReel(
         goTo(page + 1)
     }
 
+    // For a reader who cannot see the segments or find the half-screen tap targets: which card this
+    // is, and two named actions that step the reel the same way a tap does.
+    val cardOfLabel = stringResource(Res.string.wrapped_card_of, (page + 1).toString(), cards.size.toString())
+    val nextLabel = stringResource(Res.string.next)
+    val previousLabel = stringResource(Res.string.previous)
+
     Box(
         modifier =
             Modifier
                 .fillMaxSize()
+                .semantics {
+                    contentDescription = cardOfLabel
+                    customActions =
+                        listOf(
+                            CustomAccessibilityAction(nextLabel) {
+                                goTo(page + 1)
+                                true
+                            },
+                            CustomAccessibilityAction(previousLabel) {
+                                goTo(page - 1)
+                                true
+                            },
+                        )
+                }
                 .pointerInput(cards) {
                     detectTapGestures(
                         onPress = {
@@ -322,16 +374,14 @@ private fun WrappedReel(
         // Everything the glass samples. matchParentSize, so it takes part in no measurement and the
         // chrome above it is laid out against the reel's own bounds.
         Box(modifier = Modifier.matchParentSize().layerBackdrop(backdrop)) {
-            // Only the header is subtracted here. The footer band is subtracted inside each page
-            // instead, because the share card is the one card that needs it back — and taking it
-            // off the pager's own box would resize every page the moment the pager decided card 10
-            // was the current one, which is halfway through the swipe that brings it in.
+            // Header and footer bands both come off the pager's box: every card, the share card
+            // included, draws between them, and the footer band belongs to the shell on every page.
             Box(
                 modifier =
                     Modifier
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.systemBars)
-                        .padding(top = WrappedTokens.HeaderHeight),
+                        .padding(top = WrappedTokens.HeaderHeight, bottom = WrappedTokens.FooterHeight),
             ) {
                 HorizontalPager(
                     state = pagerState,
@@ -381,12 +431,13 @@ private fun WrappedReel(
 
         WrappedFooter(
             isFirstCard = page == 0,
-            // The share card carries its own Save and Share, so the footer stands down entirely
-            // there rather than offering a third button and a hint to tap past the thing the user
-            // was just invited to act on.
-            showActions = !isShareCard,
+            // The last card is the poster, which carries its own Save and Share; the footer there
+            // is the reel's way out rather than a third copy of the share button.
+            isLastCard = isLastCard,
             backdrop = backdrop,
             onShare = share.onShare,
+            onRestart = ::restart,
+            onDone = onClose,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
@@ -413,12 +464,6 @@ private fun WrappedCardSlot(
     val slot =
         Modifier
             .fillMaxSize()
-            // The share card owns the footer band as well, and gets it here rather than from the
-            // pager's box so no other page changes size when it arrives. The footer draws nothing
-            // over it, so its Save and Share pills land where every other card's footer row sits.
-            // Applied BEFORE background and capture, so both see the slot's real bounds — after
-            // them, a captured card would carry 74dp of empty ground along the bottom.
-            .padding(bottom = if (isShareCard) 0.dp else WrappedTokens.FooterHeight)
             .background(MaterialTheme.colorScheme.background)
             .then(if (isShareCard) Modifier else capture)
 
@@ -508,6 +553,7 @@ private fun WrappedHeader(
             LiquidGlassIconButton(
                 backdrop = backdrop,
                 imageVector = SimpIcons.Close,
+                contentDescription = stringResource(Res.string.close_player),
                 tint = MaterialTheme.colorScheme.onSurface,
                 // Round buttons need the rim named: Highlight's default is a DIRECTIONAL sweep that
                 // an elongated pill catches along its long edge and a circle barely catches at all.
@@ -519,63 +565,101 @@ private fun WrappedHeader(
     }
 }
 
-/** The hint on the left, the way to send this card on the right. */
+/**
+ * The hint on the left, the way to send this card on the right — and on the last card, the two
+ * ways out: Watch again at the start of the row, Done at its end.
+ */
 @Composable
 private fun WrappedFooter(
     isFirstCard: Boolean,
-    showActions: Boolean,
+    isLastCard: Boolean,
     backdrop: PlatformBackdrop,
     onShare: () -> Unit,
+    onRestart: () -> Unit,
+    onDone: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (!showActions) return
-
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.systemBars)
                 .height(WrappedTokens.FooterHeight)
-                // The row is not centred in the band: the artboard hangs the pill from the top of
-                // it with 34dp underneath, which leaves the 40dp pill filling the remainder
-                // exactly. Centring it instead drops everything 17dp and closes that gap.
-                .padding(start = 24.dp, end = 24.dp, bottom = 34.dp),
+                // The row is not centred in the band: the pills hang from the top of it and the
+                // inset underneath is whatever the band has left once a 48dp pill is taken out.
+                // Centring instead would drop everything by half that and close the gap.
+                .padding(start = 24.dp, end = 24.dp, bottom = WrappedTokens.FooterHeight - FOOTER_PILL_HEIGHT),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text =
-                stringResource(
-                    if (isFirstCard) Res.string.wrapped_tap_to_begin else Res.string.wrapped_tap_to_continue,
-                ),
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.weight(1f),
-        )
-        // The same glass pill the Analytics day-range trigger is: liquidGlass for the surface, then
-        // clip + clickable so the ripple and the hit target follow the same shape. Highlight is left
-        // at its directional default here — an elongated pill is exactly the geometry that catches
-        // the sweep along its long edge, which is what makes it read as glass rather than as a rim.
-        Row(
-            modifier =
-                Modifier
-                    .height(SHARE_PILL_HEIGHT)
-                    .liquidGlass(backdrop, RoundedCornerShape(SHARE_PILL_HEIGHT / 2))
-                    .clip(RoundedCornerShape(SHARE_PILL_HEIGHT / 2))
-                    .clickable(onClick = onShare)
-                    .padding(horizontal = 18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = SimpIcons.Share,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(15.dp),
+        if (isLastCard) {
+            WrappedFooterPill(
+                icon = SimpIcons.Repeat,
+                label = stringResource(Res.string.watch_again),
+                backdrop = backdrop,
+                onClick = onRestart,
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.weight(1f))
+            WrappedFooterPill(
+                icon = SimpIcons.Check,
+                label = stringResource(Res.string.done),
+                backdrop = backdrop,
+                onClick = onDone,
+            )
+        } else {
             Text(
-                text = stringResource(Res.string.wrapped_share),
-                style = MaterialTheme.typography.titleSmall,
+                text =
+                    stringResource(
+                        if (isFirstCard) Res.string.wrapped_tap_to_begin else Res.string.wrapped_tap_to_continue,
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f),
+            )
+            WrappedFooterPill(
+                icon = SimpIcons.Share,
+                label = stringResource(Res.string.wrapped_share),
+                backdrop = backdrop,
+                onClick = onShare,
             )
         }
+    }
+}
+
+/**
+ * The same glass pill the Analytics day-range trigger is: liquidGlass for the surface, then clip +
+ * clickable so the ripple and the hit target follow the same shape. Highlight is left at its
+ * directional default — an elongated pill is exactly the geometry that catches the sweep along its
+ * long edge, which is what makes it read as glass rather than as a rim. 48dp tall: the platform's
+ * own minimum touch target, so nothing has to be padded out behind the user's back.
+ */
+@Composable
+private fun WrappedFooterPill(
+    icon: ImageVector,
+    label: String,
+    backdrop: PlatformBackdrop,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .height(FOOTER_PILL_HEIGHT)
+                .liquidGlass(backdrop, RoundedCornerShape(FOOTER_PILL_HEIGHT / 2))
+                .clip(RoundedCornerShape(FOOTER_PILL_HEIGHT / 2))
+                .clickable(onClick = onClick)
+                .padding(horizontal = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            // Decorative: the label beside it is the button's name.
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(15.dp),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleSmall,
+        )
     }
 }
 
@@ -614,7 +698,7 @@ private fun rememberWrappedShare(
     // reel must not silently overwrite the first.
     val fileName =
         remember(wrapped.year) {
-            "SimpMusic_Wrapped_${wrapped.year}_${Random.nextInt(100_000, 999_999)}.png"
+            "Orinify_Wrapped_${wrapped.year}_${Random.nextInt(100_000, 999_999)}.png"
         }
 
     // Only saving can be refused; sharing goes through the app's own cache and needs nothing. On
@@ -670,9 +754,8 @@ private val SEGMENT_TOP_INSET = 12.dp
 private val SEGMENT_BOTTOM_INSET = 9.dp
 private val CLOSE_BUTTON_SIZE = 48.dp
 
-/** Matches the footer band's 40dp remainder after its 34dp bottom inset. */
-private val SHARE_PILL_HEIGHT = 40.dp
-
+/** The footer's pills. 48dp is the platform minimum touch target; the band's remainder is inset. */
+private val FOOTER_PILL_HEIGHT = 48.dp
 
 /** Spent and unspent segments are the same ink; the unspent ones are simply held back. */
 private const val SEGMENT_TRACK_ALPHA = 0.24f

@@ -20,6 +20,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.intl.Locale
@@ -29,15 +31,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.screen.home.wrapped.WrappedTokens
 import com.maxrave.simpmusic.ui.screen.home.wrapped.bandBounds
 import com.maxrave.simpmusic.ui.screen.home.wrapped.formatPercent
+import com.maxrave.simpmusic.ui.screen.home.wrapped.hourLabel
 import com.maxrave.simpmusic.ui.screen.home.wrapped.hourMeridiem
 import com.maxrave.simpmusic.ui.screen.home.wrapped.hourNumber
 import com.maxrave.simpmusic.viewModel.WrappedListeningBand
 import com.maxrave.simpmusic.viewModel.WrappedYear
 import org.jetbrains.compose.resources.stringResource
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.chart_clock_alt
 import simpmusic.composeapp.generated.resources.wrapped_clock_band_afternoon
 import simpmusic.composeapp.generated.resources.wrapped_clock_band_evening
 import simpmusic.composeapp.generated.resources.wrapped_clock_band_morning
@@ -81,7 +86,7 @@ fun WrappedClockCard(
     val bandLabel = stringResource(clock.band.labelRes())
 
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Spacer(Modifier.height(CARD_TOP_GAP))
+        Spacer(Modifier.height(WrappedTokens.CardTopGap))
         WrappedEyebrow(
             text = stringResource(Res.string.wrapped_clock_title),
             modifier = Modifier.padding(horizontal = WrappedTokens.ScreenPadding),
@@ -126,7 +131,7 @@ fun WrappedClockCard(
                 style = MaterialTheme.typography.bodyMedium.copy(lineHeight = CAPTION_LINE_HEIGHT),
             )
         }
-        Spacer(Modifier.height(CARD_BOTTOM_GAP))
+        Spacer(Modifier.height(WrappedTokens.CardBottomGap))
     }
 }
 
@@ -155,8 +160,16 @@ private fun ListeningRing(
     val accent = MaterialTheme.colorScheme.primary
     val track = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = TRACK_ALPHA)
 
+    // The ring's one fact, for a reader who cannot see it: the hour it peaks at and how hard.
+    val ringDescription =
+        stringResource(
+            Res.string.chart_clock_alt,
+            hourLabel(peakHour, use24Hour),
+            formatCount(hours.getOrElse(peakHour) { 0 }.toLong()),
+        )
+
     Box(modifier, contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) {
+        Canvas(Modifier.fillMaxSize().semantics { contentDescription = ringDescription }) {
             val outer = size.minDimension / 2f
             val inner = outer * RING_INNER_RATIO
             hours.forEachIndexed { hour, count ->
@@ -300,9 +313,3 @@ private val MERIDIEM_SIZE = 21.sp
 private val STACKED_LINE_HEIGHT = 1.12.em
 
 private val CAPTION_LINE_HEIGHT = 1.5.em
-
-/** Gap between the shell's header and this card's eyebrow. */
-private val CARD_TOP_GAP = 14.dp
-
-/** Gap between this card's last line and the shell's footer. */
-private val CARD_BOTTOM_GAP = 22.dp

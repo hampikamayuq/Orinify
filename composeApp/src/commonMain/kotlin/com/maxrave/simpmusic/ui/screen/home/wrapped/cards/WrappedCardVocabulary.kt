@@ -11,6 +11,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import coil3.compose.AsyncImage
@@ -129,7 +131,8 @@ internal fun WrappedEyebrow(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = text.uppercase(),
+        // Locale-aware, or a Turkish "i" comes back as the wrong letter on a card that leaves the app.
+        text = text.toUpperCase(Locale.current),
         style =
             MaterialTheme.typography.bodySmall.copy(
                 fontWeight = FontWeight.Bold,

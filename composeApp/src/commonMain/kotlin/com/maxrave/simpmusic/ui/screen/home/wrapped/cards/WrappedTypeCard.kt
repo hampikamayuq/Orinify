@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -36,8 +38,8 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import com.maxrave.domain.data.model.analytics.ListeningFingerprint
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.screen.home.wrapped.WrappedTokens
-import com.maxrave.simpmusic.ui.screen.home.wrapped.formatCount
 import com.maxrave.simpmusic.ui.screen.home.wrapped.formatPercent
 import com.maxrave.simpmusic.viewModel.WrappedArchetype
 import com.maxrave.simpmusic.viewModel.WrappedYear
@@ -50,6 +52,7 @@ import simpmusic.composeapp.generated.resources.analytics_axis_discovery
 import simpmusic.composeapp.generated.resources.analytics_axis_diversity
 import simpmusic.composeapp.generated.resources.analytics_axis_replay
 import simpmusic.composeapp.generated.resources.analytics_no_previous
+import simpmusic.composeapp.generated.resources.chart_fingerprint_alt
 import simpmusic.composeapp.generated.resources.wrapped_archetype_deep_diver
 import simpmusic.composeapp.generated.resources.wrapped_archetype_deep_diver_desc
 import simpmusic.composeapp.generated.resources.wrapped_archetype_devotee
@@ -60,6 +63,7 @@ import simpmusic.composeapp.generated.resources.wrapped_archetype_omnivore
 import simpmusic.composeapp.generated.resources.wrapped_archetype_omnivore_desc
 import simpmusic.composeapp.generated.resources.wrapped_archetype_regular
 import simpmusic.composeapp.generated.resources.wrapped_archetype_regular_desc
+import simpmusic.composeapp.generated.resources.wrapped_archetype_regular_desc_so_far
 import simpmusic.composeapp.generated.resources.wrapped_type_the
 import simpmusic.composeapp.generated.resources.wrapped_type_title
 import kotlin.math.PI
@@ -92,7 +96,7 @@ fun WrappedTypeCard(
     val archetypeName = stringResource(wrapped.archetype.nameRes())
 
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Spacer(Modifier.height(CARD_TOP_GAP))
+        Spacer(Modifier.height(WrappedTokens.CardTopGap))
         WrappedEyebrow(
             text = stringResource(Res.string.wrapped_type_title),
             modifier = Modifier.padding(horizontal = WrappedTokens.ScreenPadding),
@@ -128,11 +132,11 @@ fun WrappedTypeCard(
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                text = stringResource(wrapped.archetype.descRes(), archetypeFigure(wrapped)),
+                text = stringResource(wrapped.archetype.descRes(wrapped.isCurrentYear), archetypeFigure(wrapped)),
                 style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 1.55.em),
             )
         }
-        Spacer(Modifier.height(CARD_BOTTOM_GAP))
+        Spacer(Modifier.height(WrappedTokens.CardBottomGap))
     }
 }
 
@@ -156,8 +160,15 @@ private fun FingerprintRadar(
     val accent = MaterialTheme.colorScheme.primary
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
 
+    // The polygon said in words — the five figures it is drawn from, in the order it draws them.
+    val chartDescription =
+        stringResource(
+            Res.string.chart_fingerprint_alt,
+            labels.zip(current.axes) { label, value -> "$label ${formatPercent(value)}" }.joinToString(", "),
+        )
+
     Box(modifier, contentAlignment = Alignment.Center) {
-        Canvas(Modifier.fillMaxSize()) {
+        Canvas(Modifier.fillMaxSize().semantics { contentDescription = chartDescription }) {
             val radius = size.minDimension / 2f * POLYGON_RADIUS_RATIO
             val dash = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx()))
 
@@ -276,15 +287,18 @@ private fun RadarLegend(
  * Each description names a different quantity, so the value follows the wording rather than the
  * axis that chose the archetype: "the regular" is picked by the consistency axis but talks about
  * how much of the year had music in it, which is a share of days and not the axis's own score.
+ * For the year still running that share is of the days elapsed — a full-year denominator would
+ * cap it at "24%" in March however faithfully the user listened.
  */
 @Composable
 private fun archetypeFigure(wrapped: WrappedYear): String {
     val stats = wrapped.stats
-    val activeShare = stats.activeDays.toFloat() / wrapped.daysInYear.coerceAtLeast(1)
+    val dayCount = if (wrapped.isCurrentYear) wrapped.daysElapsed else wrapped.daysInYear
+    val activeShare = stats.activeDays.toFloat() / dayCount.coerceAtLeast(1)
     return when (wrapped.archetype) {
         WrappedArchetype.THE_REGULAR -> formatPercent(activeShare)
         WrappedArchetype.THE_EXPLORER -> formatPercent(stats.fingerprint.discovery)
-        WrappedArchetype.THE_OMNIVORE -> formatCount(stats.distinctArtists)
+        WrappedArchetype.THE_OMNIVORE -> formatCount(stats.distinctArtists.toLong())
         WrappedArchetype.THE_DEVOTEE -> formatPercent(stats.fingerprint.concentration)
         WrappedArchetype.THE_DEEP_DIVER -> formatPercent(stats.fingerprint.replay)
     }
@@ -299,9 +313,15 @@ private fun WrappedArchetype.nameRes(): StringResource =
         WrappedArchetype.THE_DEEP_DIVER -> Res.string.wrapped_archetype_deep_diver
     }
 
-private fun WrappedArchetype.descRes(): StringResource =
+/** Only the regular's sentence mentions the year's length, so only it has a "so far" reading. */
+private fun WrappedArchetype.descRes(isCurrentYear: Boolean): StringResource =
     when (this) {
-        WrappedArchetype.THE_REGULAR -> Res.string.wrapped_archetype_regular_desc
+        WrappedArchetype.THE_REGULAR ->
+            if (isCurrentYear) {
+                Res.string.wrapped_archetype_regular_desc_so_far
+            } else {
+                Res.string.wrapped_archetype_regular_desc
+            }
         WrappedArchetype.THE_EXPLORER -> Res.string.wrapped_archetype_explorer_desc
         WrappedArchetype.THE_OMNIVORE -> Res.string.wrapped_archetype_omnivore_desc
         WrappedArchetype.THE_DEVOTEE -> Res.string.wrapped_archetype_devotee_desc
@@ -379,9 +399,3 @@ private val ARCHETYPE_SIZE = 42.sp
 
 /** 0.98 of the size — "THE" and the name read as one stacked word. */
 private val ARCHETYPE_LINE_HEIGHT = 0.98.em
-
-/** Gap between the shell's header and this card's eyebrow. */
-private val CARD_TOP_GAP = 14.dp
-
-/** Gap between this card's last line and the shell's footer. */
-private val CARD_BOTTOM_GAP = 22.dp

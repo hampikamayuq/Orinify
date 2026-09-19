@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,8 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.maxrave.domain.utils.connectArtists
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.screen.home.wrapped.WrappedTokens
-import com.maxrave.simpmusic.ui.screen.home.wrapped.formatCount
 import com.maxrave.simpmusic.viewModel.WrappedTrack
 import com.maxrave.simpmusic.viewModel.WrappedYear
 import org.jetbrains.compose.resources.stringResource
@@ -73,13 +75,21 @@ fun WrappedTopTracksCard(
             Box(Modifier.fillMaxSize().background(heroScrim(MaterialTheme.colorScheme.background)))
         }
         Column(Modifier.fillMaxSize()) {
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(WrappedTokens.CardTopGap))
             WrappedEyebrow(
                 text = stringResource(Res.string.wrapped_tracks_title),
                 modifier = Modifier.padding(horizontal = WrappedTokens.ScreenPadding),
             )
             Spacer(Modifier.weight(SPACE_ABOVE_LEADER))
-            Column(Modifier.padding(horizontal = WrappedTokens.ScreenPadding)) {
+            // Scrollable so five rows at font scale 1.3 on a short phone lose their bottom to a
+            // scroll rather than to the footer: the weighted spacers around it collapse first, and
+            // only once they are gone does the list itself give ground. At default scale nothing
+            // moves and the layout is the artboard's.
+            Column(
+                Modifier
+                    .padding(horizontal = WrappedTokens.ScreenPadding)
+                    .verticalScroll(rememberScrollState()),
+            ) {
                 LeaderRow(leader)
                 if (runnersUp.isNotEmpty()) {
                     Spacer(Modifier.height(22.dp))
@@ -205,7 +215,7 @@ private fun RunnerUpRow(track: WrappedTrack) {
  */
 @Composable
 private fun trackSubtitle(track: WrappedTrack): String {
-    val plays = stringResource(Res.string.wrapped_plays, formatCount(track.playCount))
+    val plays = stringResource(Res.string.wrapped_plays, formatCount(track.playCount.toLong()))
     val artists = track.song.artistName?.connectArtists()?.takeIf { it.isNotBlank() }
     return if (artists == null) plays else "$artists · $plays"
 }

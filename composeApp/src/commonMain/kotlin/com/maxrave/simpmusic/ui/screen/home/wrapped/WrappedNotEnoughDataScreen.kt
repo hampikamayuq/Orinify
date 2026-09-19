@@ -28,11 +28,13 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.maxrave.simpmusic.ui.component.RippleIconButton
+import com.maxrave.simpmusic.ui.screen.home.analytics.formatCount
 import com.maxrave.simpmusic.ui.icon.ArrowBackIosNew
 import com.maxrave.simpmusic.ui.icon.SimpIcons
 import com.maxrave.simpmusic.viewModel.WrappedUiState
 import org.jetbrains.compose.resources.stringResource
 import simpmusic.composeapp.generated.resources.Res
+import simpmusic.composeapp.generated.resources.close_player
 import simpmusic.composeapp.generated.resources.wrapped
 import simpmusic.composeapp.generated.resources.wrapped_not_enough_body
 import simpmusic.composeapp.generated.resources.wrapped_not_enough_days
@@ -80,6 +82,8 @@ fun WrappedNotEnoughDataScreen(
             RippleIconButton(
                 imageVector = SimpIcons.ArrowBackIosNew,
                 tint = MaterialTheme.colorScheme.onSurface,
+                // No "back" string ships; this is the one the reel's own close button reads.
+                contentDescription = stringResource(Res.string.close_player),
                 onClick = onBack,
             )
             Spacer(modifier = Modifier.width(14.dp))
@@ -147,7 +151,7 @@ fun WrappedNotEnoughDataScreen(
  */
 @Composable
 private fun notEnoughBody(activeDays: Int): AnnotatedString {
-    val days = stringResource(Res.string.wrapped_not_enough_days, formatCount(activeDays))
+    val days = stringResource(Res.string.wrapped_not_enough_days, formatCount(activeDays.toLong()))
     val sentence = stringResource(Res.string.wrapped_not_enough_body, days)
     val start = sentence.indexOf(days)
     val emphasis = MaterialTheme.colorScheme.onSurface
@@ -197,8 +201,8 @@ private fun WrappedDaysProgress(
             text =
                 stringResource(
                     Res.string.wrapped_not_enough_progress,
-                    formatCount(activeDays),
-                    formatCount(requiredDays),
+                    formatCount(activeDays.toLong()),
+                    formatCount(requiredDays.toLong()),
                 ),
             style = MaterialTheme.typography.bodySmall,
         )

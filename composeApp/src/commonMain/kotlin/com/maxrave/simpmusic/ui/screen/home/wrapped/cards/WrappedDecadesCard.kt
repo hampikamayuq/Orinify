@@ -28,6 +28,7 @@ import com.maxrave.simpmusic.viewModel.WrappedYear
 import org.jetbrains.compose.resources.stringResource
 import simpmusic.composeapp.generated.resources.Res
 import simpmusic.composeapp.generated.resources.analytics_decade_pre
+import simpmusic.composeapp.generated.resources.decade_label
 import simpmusic.composeapp.generated.resources.wrapped_decades_caption
 import simpmusic.composeapp.generated.resources.wrapped_decades_title
 
@@ -48,7 +49,7 @@ fun WrappedDecadesCard(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Spacer(Modifier.height(CARD_TOP_GAP))
+        Spacer(Modifier.height(WrappedTokens.CardTopGap))
         WrappedEyebrow(
             text = stringResource(Res.string.wrapped_decades_title),
             modifier = Modifier.padding(horizontal = WrappedTokens.ScreenPadding),
@@ -71,7 +72,7 @@ fun WrappedDecadesCard(
             style = MaterialTheme.typography.bodySmall.copy(lineHeight = 1.5.em),
             modifier = Modifier.padding(horizontal = WrappedTokens.ScreenPadding),
         )
-        Spacer(Modifier.height(CARD_BOTTOM_GAP))
+        Spacer(Modifier.height(WrappedTokens.CardBottomGap))
     }
 }
 
@@ -132,7 +133,7 @@ private fun decadeLabel(decade: Int): String =
     if (decade < EARLIEST_NAMED_DECADE) {
         stringResource(Res.string.analytics_decade_pre, EARLIEST_NAMED_DECADE)
     } else {
-        "${decade}s"
+        stringResource(Res.string.decade_label, decade.toString())
     }
 
 /**
@@ -202,9 +203,3 @@ private val WINNER_LABEL_SIZE = 40.sp
 
 /** Matches the Analytics decade chart's own first bucket. */
 private const val EARLIEST_NAMED_DECADE = 1960
-
-/** Gap between the shell's header and this card's eyebrow. */
-private val CARD_TOP_GAP = 14.dp
-
-/** Gap between this card's last line and the shell's footer. */
-private val CARD_BOTTOM_GAP = 22.dp
