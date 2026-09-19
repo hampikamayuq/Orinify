@@ -2,7 +2,9 @@ package com.maxrave.data.repository
 
 import com.maxrave.common.ITAG
 import com.maxrave.common.MERGING_DATA_TYPE
+import com.maxrave.common.PREMIUM_QUALITY_CHECK_KEY
 import com.maxrave.common.QUALITY
+import com.maxrave.common.STATUS_DONE
 import com.maxrave.common.VIDEO_QUALITY
 import com.maxrave.data.db.datasource.LocalDataSource
 import com.maxrave.data.mapping.toSponsorSkipSegments
@@ -142,6 +144,23 @@ internal class StreamRepositoryImpl(
                         response.streamingData?.adaptiveFormats?.filter { it.url.isNullOrEmpty().not() }
                             ?: emptyList(),
                     )
+                    // Checked once per login (SettingsViewModel.setUsedAccount resets the flag), not
+                    // once per install: the account's own YT Premium entitlement is what unlocks the
+                    // 256kbps itags, and there is no separate "is this account Premium" API to ask —
+                    // the first format list a logged-in account actually receives IS that signal.
+                    if (!isDownloading && dataStoreManager.getString(PREMIUM_QUALITY_CHECK_KEY).first() != STATUS_DONE) {
+                        val hasPremiumAudio =
+                            formatList.any { it.itag == ITAG.AUDIO_OPUS_HIGH || it.itag == ITAG.AUDIO_AAC_HIGH }
+                        if (hasPremiumAudio) {
+                            val normalizedQuality = QUALITY.normalize(dataStoreManager.quality.first())
+                            val currentIndex = QUALITY.items.indexOfFirst { it.toString() == normalizedQuality }
+                            if (currentIndex < 2) {
+                                dataStoreManager.setQuality(QUALITY.items[2].toString())
+                                Logger.w("Stream", "YT Premium audio itag detected, quality auto-raised to High Opus")
+                            }
+                        }
+                        dataStoreManager.putString(PREMIUM_QUALITY_CHECK_KEY, STATUS_DONE)
+                    }
                     Logger.w("Stream", "Get stream for video $isVideo")
                     val videoFormat =
                         formatList.find { it.itag == videoItag }

@@ -6,6 +6,7 @@ import coil3.SingletonImageLoader
 import coil3.annotation.ExperimentalCoilApi
 import com.eygraber.uri.Uri
 import com.maxrave.common.Config
+import com.maxrave.common.PREMIUM_QUALITY_CHECK_KEY
 import com.maxrave.common.QUALITY
 import com.maxrave.common.SELECTED_LANGUAGE
 import com.maxrave.common.VIDEO_QUALITY
@@ -1616,6 +1617,9 @@ class SettingsViewModel(
                 }
                 dataStoreManager.setCookie(acc.cache ?: "", acc.pageId)
                 dataStoreManager.setLoggedIn(true)
+                // Re-arm the one-time Premium-quality check for the newly active account — the
+                // signal (a 256kbps itag in the next format response) is per-account, not per-install.
+                dataStoreManager.putString(PREMIUM_QUALITY_CHECK_KEY, "")
                 delay(500)
                 getAllGoogleAccount()
                 getLoggedIn()

@@ -120,7 +120,7 @@ internal class DataStoreManagerImpl(
 
     override val quality: Flow<String> =
         settingsDataStore.data.map { preferences ->
-            preferences[QUALITY] ?: COMMON_QUALITY.items[0].toString()
+            preferences[QUALITY] ?: COMMON_QUALITY.items[1].toString()
         }
 
     override suspend fun setQuality(quality: String) {

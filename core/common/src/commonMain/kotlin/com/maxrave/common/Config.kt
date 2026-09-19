@@ -229,6 +229,22 @@ object SUPPORTED_LANGUAGE {
         return (items.getOrNull(index) ?: "English").toString()
     }
 
+    /**
+     * The supported [codes] entry for a device locale tag, or null when nothing supports it.
+     *
+     * Exact tag match first (e.g. "pt-PT" for a device reporting "pt-PT"), then falls back to the
+     * base language subtag (e.g. a device reporting "pt-BR" still matches "pt-PT" — this app has no
+     * separate Brazilian Portuguese entry, but sharing the closest regional variant of the same
+     * language beats falling through to English for millions of Portuguese-speaking devices whose
+     * region tag just isn't Portugal's). Ties resolve to the first matching entry.
+     */
+    fun codeForDeviceLocale(deviceTag: String): String? {
+        val normalized = if (deviceTag == "he-IL") "iw-IL" else deviceTag
+        codes.firstOrNull { it.equals(normalized, ignoreCase = true) }?.let { return it }
+        val base = normalized.substringBefore('-')
+        return codes.firstOrNull { it.substringBefore('-').equals(base, ignoreCase = true) }
+    }
+
     fun getCodeFromLanguage(language: String?): String {
         val index = items.indexOf(language ?: "English")
         Logger.d("Config", "getCodeFromLanguage: $index")
@@ -337,9 +353,9 @@ object QUALITY {
      * write. The stored text is replaced the next time the user picks an entry themselves.
      */
     fun normalize(saved: String?): String {
-        val label = saved ?: return items[0].toString()
+        val label = saved ?: return items[1].toString()
         if (items.any { it.toString() == label }) return label
-        return LEGACY_ITEMS[label] ?: items[0].toString()
+        return LEGACY_ITEMS[label] ?: items[1].toString()
     }
 
     /** The itag a stored label selects. Goes through [normalize], so older labels still resolve. */
@@ -648,6 +664,11 @@ const val EXOPLAYER_DB_NAME = "exoplayer_internal.db"
 
 const val FIRST_TIME_MIGRATION = "first_time_migration"
 const val SELECTED_LANGUAGE = "selected_language"
+
+/** Reset on every YouTube login/account switch (SettingsViewModel.setUsedAccount); read once per
+ *  login by StreamRepositoryImpl.getStream to auto-raise [QUALITY] when the account's first format
+ *  response reveals a 256kbps itag, since there is no separate "is this account Premium" API. */
+const val PREMIUM_QUALITY_CHECK_KEY = "premium_quality_autocheck"
 
 const val STATUS_DONE = "status_done"
 

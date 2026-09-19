@@ -133,17 +133,14 @@ class MainActivity : AppCompatActivity() {
 
         // Check if the migration has already been done or not
         if (getString(FIRST_TIME_MIGRATION) != STATUS_DONE) {
-            Logger.d("Locale Key", "onCreate: ${Locale.getDefault().toLanguageTag()}")
-            if (SUPPORTED_LANGUAGE.codes.contains(Locale.getDefault().toLanguageTag())) {
-                Logger.d(
-                    "Contains",
-                    "onCreate: ${
-                        SUPPORTED_LANGUAGE.codes.contains(
-                            Locale.getDefault().toLanguageTag(),
-                        )
-                    }",
-                )
-                putString(SELECTED_LANGUAGE, Locale.getDefault().toLanguageTag())
+            val deviceTag = Locale.getDefault().toLanguageTag()
+            // Exact tag match first, then the closest supported language's base subtag — a device
+            // reporting "pt-BR" still matches this app's "pt-PT" entry instead of falling through to
+            // English, which used to happen for every regional variant this app has no exact tag for.
+            val matchedCode = SUPPORTED_LANGUAGE.codeForDeviceLocale(deviceTag)
+            Logger.d("Locale Key", "onCreate: $deviceTag matched $matchedCode")
+            if (matchedCode != null) {
+                putString(SELECTED_LANGUAGE, matchedCode)
                 if (SUPPORTED_LOCATION.items.contains(Locale.getDefault().country)) {
                     putString("location", Locale.getDefault().country)
                 } else {
