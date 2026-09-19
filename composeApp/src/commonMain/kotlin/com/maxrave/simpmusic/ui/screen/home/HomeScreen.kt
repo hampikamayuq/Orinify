@@ -85,6 +85,8 @@ import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
@@ -956,7 +958,19 @@ fun HomeTopAppBar(navController: NavController) {
         // in portrait the Start inset is 0, which is why the exclusion looked free.
         windowInsets = TopAppBarDefaults.windowInsets,
         title = {
-            Column {
+            Column(
+                // Safety net: the title/greeting text sits directly on the artwork-derived
+                // gradient with no guaranteed contrast against it. This is a flat low-alpha
+                // scrim, not a luminance-based text-color system — just a minimum darkening
+                // behind the text regardless of the artwork's dominant color.
+                modifier =
+                    Modifier
+                        .background(
+                            color = Color.Black.copy(alpha = 0.25f),
+                            shape = RoundedCornerShape(8.dp),
+                        ).padding(horizontal = 8.dp, vertical = 4.dp)
+                        .semantics { heading() },
+            ) {
                 Text(
                     text = stringResource(Res.string.app_name),
                     style = typo().titleMedium,
@@ -1115,7 +1129,8 @@ fun QuickPicks(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 5.dp),
+                    .padding(vertical = 5.dp)
+                    .semantics { heading() },
         )
         LazyHorizontalGrid(
             rows = GridCells.Fixed(QUICK_PICKS_ROWS),
@@ -1192,7 +1207,8 @@ fun MoodMomentAndGenre(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 5.dp),
+                        .padding(vertical = 5.dp)
+                        .semantics { heading() },
             )
             LazyHorizontalGrid(
                 rows = GridCells.Fixed(MOOD_GRID_ROWS),
@@ -1232,7 +1248,8 @@ fun ChartTitle() {
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 5.dp),
+                    .padding(vertical = 5.dp)
+                    .semantics { heading() },
         )
     }
 }

@@ -530,7 +530,11 @@ fun SearchScreen(
                                 ) {
                                     Icon(
                                         imageVector = SimpIcons.History,
-                                        contentDescription = "Search history",
+                                        // Decorative: the row is already clickable with the
+                                        // search term's own text carrying the accessible label,
+                                        // so an identical description on every row was redundant
+                                        // noise before every item.
+                                        contentDescription = null,
                                         modifier = Modifier.size(24.dp),
                                     )
                                     Spacer(modifier = Modifier.padding(horizontal = 12.dp))

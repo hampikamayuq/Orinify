@@ -637,7 +637,7 @@ fun LibraryDynamicPlaylistScreen(
                         RippleIconButton(
                             SimpIcons.ArrowBackIosNew,
                             Modifier
-                                .size(32.dp),
+                                .size(48.dp),
                             true,
                             tint = MaterialTheme.colorScheme.onBackground,
                         ) {
@@ -680,7 +680,7 @@ fun LibraryDynamicPlaylistScreen(
                         }
                         RippleIconButton(
                             SimpIcons.Shuffle,
-                            Modifier.size(32.dp),
+                            Modifier.size(48.dp),
                             true,
                             tint = MaterialTheme.colorScheme.onBackground,
                         ) {
@@ -714,7 +714,7 @@ fun LibraryDynamicPlaylistScreen(
                         RippleIconButton(
                             if (showSearchBar) SimpIcons.Close else SimpIcons.Search,
                             Modifier
-                                .size(32.dp),
+                                .size(48.dp),
                             true,
                             tint = MaterialTheme.colorScheme.onBackground,
                         ) {

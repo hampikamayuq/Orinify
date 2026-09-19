@@ -423,7 +423,7 @@ private fun CreatePlaylistTile(
                         .wrapContentHeight(align = Alignment.CenterVertically)
                         .padding(top = 8.dp)
                         .basicMarquee(
-                            iterations = Int.MAX_VALUE,
+                            iterations = marqueeIterations(Int.MAX_VALUE),
                             animationMode = MarqueeAnimationMode.Immediately,
                         ).focusable(),
             )

@@ -47,6 +47,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -211,7 +213,10 @@ fun HomeItem(
                     style = typo().headlineMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .semantics { heading() },
                 )
             }
         }
@@ -668,7 +673,10 @@ fun QuickPicksItem(
                         .diskCachePolicy(CachePolicy.ENABLED)
                         .build(),
                 placeholder = rememberHolderPainter(),
-                contentDescription = stringResource(Res.string.description),
+                // Decorative: the row is already combinedClickable with the song title/artist
+                // text beside it carrying the accessible label, so an image-only description
+                // (which resolved to the literal word "Description") was just noise.
+                contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier =
                     Modifier

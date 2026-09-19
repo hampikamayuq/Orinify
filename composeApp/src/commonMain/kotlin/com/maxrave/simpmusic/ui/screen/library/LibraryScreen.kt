@@ -62,6 +62,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -779,6 +781,7 @@ private fun RecentlyPlayedHeader(onSeeAll: () -> Unit) {
                 style = typo().headlineMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
+                modifier = Modifier.semantics { heading() },
             )
         }
         TextButton(onClick = onSeeAll) {
